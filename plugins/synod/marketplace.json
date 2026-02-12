@@ -1,0 +1,92 @@
+{
+  "name": "synod",
+  "version": "1.0.0",
+  "displayName": "Synod: Multi-Agent Debate System",
+  "description": "Research-backed multi-agent deliberation with Claude, Gemini, and OpenAI - structured 3-round debates for superior decision-making",
+  "longDescription": "Synod brings peer-reviewed multi-agent debate methodologies to Claude Code. Instead of relying on a single LLM prone to confirmation bias and hallucination, Synod orchestrates structured debates between Claude, Gemini, and OpenAI across three rounds: Solver, Critic, and Defense/Prosecution. Built on ReConcile (ACL 2024), AgentsCourt, ConfMAD, and A-HMAD research, it features confidence scoring (0-100), trust calculation using the CortexDebate formula, and anti-conformity mechanisms. Perfect for code review, architecture design, debugging, and brainstorming. Research shows 3-round debates capture >95% of quality improvements with token-efficient parallel execution.",
+  "author": {
+    "name": "quantsquirrel",
+    "email": "",
+    "url": "https://github.com/quantsquirrel"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quantsquirrel/claude-synod-debate"
+  },
+  "homepage": "https://github.com/quantsquirrel/claude-synod-debate",
+  "license": "MIT",
+  "tags": [
+    "multi-agent",
+    "debate",
+    "llm",
+    "gemini",
+    "openai",
+    "research",
+    "deliberation",
+    "orchestration",
+    "code-review",
+    "architecture"
+  ],
+  "keywords": [
+    "multi-agent system",
+    "adversarial debate",
+    "llm orchestration",
+    "confidence scoring",
+    "trust calculation",
+    "code review",
+    "architecture design",
+    "debugging",
+    "ReConcile",
+    "AgentsCourt",
+    "ConfMAD",
+    "research-backed",
+    "gemini api",
+    "openai api",
+    "claude code plugin",
+    "structured deliberation",
+    "anti-conformity",
+    "courtroom debate",
+    "decision making"
+  ],
+  "categories": [
+    "AI & ML",
+    "Development Tools",
+    "Code Quality",
+    "Productivity"
+  ],
+  "features": [
+    "3-round structured debate (Solver → Critic → Defense/Prosecution)",
+    "Research-backed methodologies from peer-reviewed papers",
+    "Confidence scoring (0-100) with semantic focus",
+    "Trust calculation using CortexDebate formula",
+    "Anti-conformity mechanisms (Free-MAD)",
+    "5 specialized modes: review, design, debug, idea, general",
+    "Session management and resume capability",
+    "Parallel execution within rounds",
+    "Automatic retry with graceful degradation"
+  ],
+  "requirements": {
+    "claudeCode": ">=1.0.0",
+    "python": ">=3.9"
+  },
+  "externalDependencies": {
+    "apis": [
+      {
+        "name": "Google Gemini API",
+        "required": true,
+        "envVar": "GEMINI_API_KEY"
+      },
+      {
+        "name": "OpenAI API",
+        "required": true,
+        "envVar": "OPENAI_API_KEY"
+      }
+    ]
+  },
+  "skills": "./skills/",
+  "documentation": {
+    "quickStart": "https://github.com/quantsquirrel/claude-synod-debate#quick-start",
+    "userGuide": "https://github.com/quantsquirrel/claude-synod-debate#usage-examples",
+    "apiReference": "https://github.com/quantsquirrel/claude-synod-debate#research-foundation"
+  }
+}

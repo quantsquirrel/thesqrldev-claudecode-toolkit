@@ -1,0 +1,51 @@
+# Runtime state (contains session data, prompts)
+.omc/
+
+# Detection logs (runtime generated)
+data/detections/
+
+# OTEL session context
+*.ctx
+
+# Local skill evaluator storage
+.skill-evaluator/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Environment variables (secrets)
+.env
+.env.local
+.env.*.local
+
+# Node (if applicable)
+node_modules/
+
+# Python (if applicable)
+__pycache__/
+*.pyc
+.venv/
+
+# Development handoffs (internal session notes)
+.claude/handoffs/
+
+# OMC synod sessions
+.omc/synod/
+
+# PR check scripts (contains repo-specific references)
+scripts/com.skillforge.prcheck.plist
+scripts/check-pr-status.sh

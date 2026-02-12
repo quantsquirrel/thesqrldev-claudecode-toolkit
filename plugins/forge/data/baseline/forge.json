@@ -1,0 +1,31 @@
+{
+  "skill_name": "forge:forge",
+  "version": "v0.7",
+  "bootstrapping": {
+    "iterations": 1,
+    "baseline": {
+      "scores": [64, 69, 80],
+      "mean": 71.00,
+      "stddev": 8.19,
+      "ci": [50.66, 91.34]
+    },
+    "improved": {
+      "scores": [88, 89, 94],
+      "mean": 90.33,
+      "stddev": 3.21,
+      "ci": [82.34, 98.32]
+    },
+    "improvement": "+19.33",
+    "ci_separated": false,
+    "merged": true,
+    "reason": "Significant mean improvement despite CI overlap"
+  },
+  "timestamp": "2026-01-29T06:30:00Z",
+  "changes_applied": [
+    "Description changed to 'Use when...' pattern (CSO compliance)",
+    "Quick Reference synced with Workflow (11 steps)",
+    "Added 'When to Use' section",
+    "Added 'Arguments' section with table",
+    "Added 'Prerequisites' section"
+  ]
+}

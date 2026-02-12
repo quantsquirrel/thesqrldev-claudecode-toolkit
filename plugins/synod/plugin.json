@@ -1,0 +1,21 @@
+{
+  "name": "synod",
+  "version": "1.0.0",
+  "description": "Multi-agent deliberation system with Claude, Gemini, and OpenAI - structured debate for better decisions",
+  "author": {
+    "name": "quantsquirrel"
+  },
+  "repository": "https://github.com/quantsquirrel/claude-synod-debate",
+  "homepage": "https://github.com/quantsquirrel/claude-synod-debate",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "multi-agent",
+    "debate",
+    "deliberation",
+    "gemini",
+    "openai",
+    "llm-orchestration"
+  ],
+  "skills": "./skills/"
+}

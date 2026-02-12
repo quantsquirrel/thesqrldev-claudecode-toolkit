@@ -1,0 +1,87 @@
+# Synod Phase 4 Output Templates
+# Mode-specific markdown templates for synthesis output
+
+templates:
+  review: |
+    ## 코드 리뷰 결과
+
+    ### 발견된 문제
+    - **[ERROR]** {critical issue} - {explanation}
+    - **[WARNING]** {moderate issue} - {explanation}
+    - **[INFO]** {suggestion} - {explanation}
+
+    ### 권장 사항
+    {prioritized list of fixes}
+
+    ### 신뢰도: {FINAL_CONFIDENCE}%
+    {brief note on agreement/disagreement between models}
+
+  design: |
+    ## 아키텍처 결정
+
+    ### 권장 접근법
+    {description of chosen architecture}
+
+    ### 트레이드오프
+    | Aspect | Chosen Approach | Alternative | Rationale |
+    |--------|-----------------|-------------|-----------|
+    | ... | ... | ... | ... |
+
+    ### 구현 단계
+    1. {step}
+    2. {step}
+    ...
+
+    ### 신뢰도: {FINAL_CONFIDENCE}%
+    {note on design certainty}
+
+  debug: |
+    ## 디버그 분석
+
+    ### 근본 원인
+    {identified cause with evidence}
+
+    ### 증거 체인
+    1. {symptom} -> {cause}
+    2. {trace} -> {conclusion}
+
+    ### 권장 수정
+    {code or steps to fix}
+
+    ### 예방책
+    {how to avoid in future}
+
+    ### 신뢰도: {FINAL_CONFIDENCE}%
+
+  idea: |
+    ## 아이디어 평가
+
+    ### 순위별 아이디어
+
+    #### 1. {Top Idea}
+    **장점:** {list}
+    **단점:** {list}
+    **실현 가능성:** {high/medium/low}
+
+    #### 2. {Second Idea}
+    ...
+
+    ### 권장 사항
+    {which idea to pursue and why}
+
+    ### 신뢰도: {FINAL_CONFIDENCE}%
+
+  general: |
+    ## 답변
+
+    {comprehensive response}
+
+    ### 핵심 포인트
+    - {point 1}
+    - {point 2}
+    - {point 3}
+
+    ### 고려 사항
+    {nuances, edge cases, caveats}
+
+    ### 신뢰도: {FINAL_CONFIDENCE}%

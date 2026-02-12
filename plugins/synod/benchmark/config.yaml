@@ -1,0 +1,52 @@
+# Synod v3.0 Benchmark Configuration
+version: "1.0.0"
+
+# Model Configuration
+models:
+  claude: "claude-sonnet-4-20250514"
+  gemini: "gemini-2.0-flash"
+  openai:
+    primary: "gpt-4o"
+    expensive: "o3"
+
+# Benchmark Settings
+benchmarks:
+  gsm8k:
+    enabled: true
+    sample_size: 300  # Phase 1
+    seed: 42
+
+  truthfulqa:
+    enabled: false  # Phase 2
+    sample_size: 300
+    mode: "mc1"  # mc1 or mc2
+
+# Cost Settings
+cost:
+  estimated_per_question: 0.25  # USD
+  budget_limit: 100  # USD for Phase 1
+
+# Execution Settings
+execution:
+  parallel_workers: 1  # Sequential for rate limits
+  retry_attempts: 3
+  timeout_seconds: 300
+  delay_between_requests: 2  # seconds
+
+# Output Settings
+output:
+  save_raw_responses: true
+  save_parsed_answers: true
+  generate_report: true
+
+# Synod Settings
+synod:
+  mode: "general"  # review/design/debug/general
+  rounds: 3  # 2 or 3
+
+# Baselines to run
+baselines:
+  claude_only: true
+  gpt4o_only: true
+  majority_vote: true
+  self_consistency: false  # Expensive

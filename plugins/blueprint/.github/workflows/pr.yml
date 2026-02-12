@@ -1,0 +1,203 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pr-info:
+    name: PR Information
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: PR Details
+        run: |
+          echo "## Pull Request Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Title**: ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author**: @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Base**: \`${{ github.event.pull_request.base.ref }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Head**: \`${{ github.event.pull_request.head.ref }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commits**: ${{ github.event.pull_request.commits }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changed Files**: ${{ github.event.pull_request.changed_files }}" >> $GITHUB_STEP_SUMMARY
+
+  size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          CHANGED_FILES=${{ github.event.pull_request.changed_files }}
+          ADDITIONS=${{ github.event.pull_request.additions }}
+          DELETIONS=${{ github.event.pull_request.deletions }}
+
+          echo "## PR Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files Changed**: $CHANGED_FILES" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lines Added**: +$ADDITIONS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lines Deleted**: -$DELETIONS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          TOTAL_CHANGES=$((ADDITIONS + DELETIONS))
+
+          if [ $CHANGED_FILES -gt 50 ] || [ $TOTAL_CHANGES -gt 1000 ]; then
+            echo "⚠️ **Large PR**: Consider splitting into smaller PRs for easier review" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::This PR is quite large (${CHANGED_FILES} files, ${TOTAL_CHANGES} lines changed). Consider splitting it up."
+          elif [ $CHANGED_FILES -gt 20 ] || [ $TOTAL_CHANGES -gt 500 ]; then
+            echo "📊 **Medium PR**: Review may take some time" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Small PR**: Good size for review" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  validate-pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Check conventional commit format
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+
+          # Check if title follows conventional commits pattern
+          if echo "$TITLE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'; then
+            echo "✅ PR title follows conventional commits format" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          # Check if title starts with a verb
+          if echo "$TITLE" | grep -qE '^(Add|Update|Fix|Remove|Improve|Refactor|Move|Rename) .+'; then
+            echo "✅ PR title starts with action verb" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          echo "::warning::PR title doesn't follow conventional commits format. Consider using: feat/fix/docs/etc: description"
+          echo "⚠️ PR title doesn't follow recommended format" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Recommended formats:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`feat: add new feature\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`fix: resolve bug in X\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`docs: update README\`" >> $GITHUB_STEP_SUMMARY
+
+  changes-detection:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      has_code: ${{ steps.filter.outputs.code }}
+      has_tests: ${{ steps.filter.outputs.tests }}
+      has_docs: ${{ steps.filter.outputs.docs }}
+      has_config: ${{ steps.filter.outputs.config }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect file changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'hooks/**/*.{js,mjs,cjs}'
+              - 'skills/**/*.md'
+              - 'agents/**/*.md'
+              - 'mcp/**/*.{js,mjs,cjs}'
+            tests:
+              - 'tests/**/*.{js,mjs,cjs,test.js,test.mjs}'
+            docs:
+              - '*.md'
+              - 'docs/**'
+            config:
+              - 'config/**/*.json'
+              - 'package.json'
+              - 'plugin.json'
+              - '.github/**'
+
+  test-coverage:
+    name: Test Coverage Check
+    runs-on: ubuntu-latest
+    needs: changes-detection
+    if: needs.changes-detection.outputs.has_code == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Check for test updates
+        if: needs.changes-detection.outputs.has_code == 'true' && needs.changes-detection.outputs.has_tests == 'false'
+        run: |
+          echo "::warning::Code changes detected but no test updates. Consider adding tests for new functionality."
+          echo "⚠️ **No test updates**: Code was modified but tests weren't updated" >> $GITHUB_STEP_SUMMARY
+
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          npm audit --audit-level=moderate || true
+          echo "## Security Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=moderate || echo "Some vulnerabilities found (see above)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  required-checks:
+    name: Required PR Checks
+    runs-on: ubuntu-latest
+    needs: [pr-info, size-check, validate-pr-title, changes-detection, test-coverage, security-check]
+    if: always() && github.event.pull_request.draft == false
+
+    steps:
+      - name: Check all required jobs
+        run: |
+          echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if critical jobs failed
+          if [ "${{ needs.test-coverage.result }}" == "failure" ]; then
+            echo "❌ Tests failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "✅ All required checks passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This PR is ready for review!" >> $GITHUB_STEP_SUMMARY

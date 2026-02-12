@@ -1,0 +1,24 @@
+{
+  "phases": [
+    {"index": 0, "name": "requirements", "agent": "blueprint:analyst", "gate": "requirements document exists"},
+    {"index": 1, "name": "architecture", "agent": "blueprint:architect", "gate": "architecture decision recorded"},
+    {"index": 2, "name": "design", "agent": "blueprint:design-writer", "gate": "design document exists"},
+    {"index": 3, "name": "implementation", "agent": "blueprint:executor", "gate": "code changes committed"},
+    {"index": 4, "name": "unit-test", "agent": "blueprint:test-engineer", "gate": "unit tests pass"},
+    {"index": 5, "name": "integration-test", "agent": "blueprint:test-engineer", "gate": "integration tests pass"},
+    {"index": 6, "name": "code-review", "agent": "blueprint:code-reviewer", "gate": "review approved"},
+    {"index": 7, "name": "gap-analysis", "agent": "blueprint:gap-detector", "gate": "no critical gaps"},
+    {"index": 8, "name": "verification", "agent": "blueprint:verifier", "gate": "all checks pass"}
+  ],
+  "presets": {
+    "full": {"phases": [0,1,2,3,4,5,6,7,8], "description": "Full 9-stage pipeline"},
+    "standard": {"phases": [0,2,3,4,6,8], "description": "Standard 6-stage pipeline"},
+    "minimal": {"phases": [2,3,8], "description": "Minimal 3-stage pipeline"},
+    "auto": {"phases": null, "description": "Auto-detect based on workspace complexity"}
+  },
+  "defaults": {
+    "preset": "auto",
+    "on_error": "pause",
+    "max_retries": 2
+  }
+}

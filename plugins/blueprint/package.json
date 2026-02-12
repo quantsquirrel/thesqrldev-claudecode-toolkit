@@ -1,0 +1,46 @@
+{
+  "name": "@quantsquirrel/claude-blueprint",
+  "version": "1.0.0",
+  "description": "PDCA cycle, Gap Analysis, and Dev Pipeline plugin for Claude Code - systematic development through iterative improvement",
+  "type": "module",
+  "main": "mcp/blueprint-server.cjs",
+  "files": [
+    "hooks/",
+    "skills/",
+    "agents/",
+    "mcp/",
+    "config/",
+    "plugin.json",
+    ".mcp.json",
+    ".claude-plugin/",
+    "README.md",
+    "README.ko.md",
+    "LICENSE",
+    "AGENTS.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node --test tests/unit/*.test.mjs"
+  },
+  "keywords": [
+    "claude-code",
+    "pdca",
+    "gap-analysis",
+    "dev-pipeline",
+    "development-methodology",
+    "claude-code-plugin"
+  ],
+  "author": {
+    "name": "quantsquirrel"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quantsquirrel/claude-blueprint-helix"
+  },
+  "homepage": "https://github.com/quantsquirrel/claude-blueprint-helix",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "private": false
+}

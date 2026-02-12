@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "blueprint",
+  "description": "PDCA cycle, Gap Analysis, and Dev Pipeline plugin for Claude Code - systematic development through iterative improvement",
+  "owner": {
+    "name": "quantsquirrel"
+  },
+  "plugins": [
+    {
+      "name": "blueprint",
+      "description": "PDCA cycle, Gap Analysis, and Dev Pipeline plugin for Claude Code - systematic development through iterative improvement",
+      "version": "1.0.0",
+      "author": {
+        "name": "quantsquirrel"
+      },
+      "source": "./",
+      "category": "productivity",
+      "homepage": "https://github.com/quantsquirrel/claude-blueprint-helix",
+      "tags": ["pdca", "gap-analysis", "dev-pipeline", "development-methodology", "quality-improvement"]
+    }
+  ]
+}

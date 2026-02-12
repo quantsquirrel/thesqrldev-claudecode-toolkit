@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Per-project agent override configuration. Copy this file to your project and modify as needed.",
+  "overrides": {
+    "analyst": {
+      "model": "opus",
+      "enabled": true
+    },
+    "architect": {
+      "model": "opus",
+      "enabled": true
+    },
+    "design-writer": {
+      "model": "sonnet",
+      "enabled": true
+    },
+    "executor": {
+      "model": "sonnet",
+      "enabled": true
+    },
+    "gap-detector": {
+      "model": "opus",
+      "enabled": true
+    },
+    "pdca-iterator": {
+      "model": "sonnet",
+      "enabled": true
+    },
+    "reviewer": {
+      "model": "sonnet",
+      "enabled": true
+    },
+    "tester": {
+      "model": "sonnet",
+      "enabled": true
+    },
+    "verifier": {
+      "model": "sonnet",
+      "enabled": true
+    }
+  },
+  "fallback": "inline-prompt"
+}

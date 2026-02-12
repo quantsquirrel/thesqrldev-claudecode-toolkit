@@ -1,0 +1,13 @@
+{
+  "name": "blueprint",
+  "version": "1.0.0",
+  "description": "PDCA cycle, Gap Analysis, and Dev Pipeline plugin for Claude Code - systematic development through iterative improvement",
+  "author": {
+    "name": "quantsquirrel"
+  },
+  "repository": "https://github.com/quantsquirrel/claude-blueprint-helix",
+  "homepage": "https://github.com/quantsquirrel/claude-blueprint-helix",
+  "license": "MIT",
+  "keywords": ["claude-code", "pdca", "gap-analysis", "dev-pipeline", "development-methodology"],
+  "skills": "./skills/"
+}

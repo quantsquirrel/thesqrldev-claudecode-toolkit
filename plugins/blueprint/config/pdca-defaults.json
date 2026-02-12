@@ -1,0 +1,11 @@
+{
+  "max_iterations": 4,
+  "phase_timeout_ms": 300000,
+  "auto_act": false,
+  "default_agents": {
+    "plan": ["blueprint:analyst", "blueprint:pdca-iterator"],
+    "do": ["blueprint:executor"],
+    "check": ["blueprint:verifier"],
+    "act": ["blueprint:pdca-iterator"]
+  }
+}

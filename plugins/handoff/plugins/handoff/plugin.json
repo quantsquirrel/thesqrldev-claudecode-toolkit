@@ -1,0 +1,11 @@
+{
+  "name": "handoff",
+  "version": "2.3.0",
+  "description": "Session context handoff with smart auto-scaling output",
+  "author": {
+    "name": "quantsquirrel"
+  },
+  "repository": "https://github.com/quantsquirrel/claude-handoff-baton",
+  "license": "MIT",
+  "skills": "./skills/"
+}

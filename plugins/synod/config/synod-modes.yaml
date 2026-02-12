@@ -1,0 +1,160 @@
+# Synod v2.0 Mode Configuration
+# Each mode defines model selection, thinking levels, and round parameters.
+
+modes:
+  review:
+    description: "Code review and static analysis"
+    models:
+      gemini:
+        model: "flash"
+        thinking: "high"
+      openai:
+        model: "o3"
+        reasoning: "medium"
+    rounds:
+      base: 3
+      dynamic_range: [2, 4]
+    focus:
+      gemini: "Code correctness, best practices, maintainability patterns"
+      openai: "Edge cases, error handling, security vulnerabilities"
+      claude: "Actionable issues with severity levels (ERROR/WARNING/INFO)"
+
+  design:
+    description: "Architecture and system design decisions"
+    models:
+      gemini:
+        model: "pro"
+        thinking: "high"
+      openai:
+        model: "o3"
+        reasoning: "high"
+    rounds:
+      base: 4
+      dynamic_range: [3, 4]
+    focus:
+      gemini: "System structure, patterns, scalability, architectural implications"
+      openai: "Trade-offs, alternatives, long-term maintainability"
+      claude: "Balanced synthesis with concrete decision framework"
+
+  debug:
+    description: "Troubleshooting and root cause analysis"
+    models:
+      gemini:
+        model: "flash"
+        thinking: "high"
+      openai:
+        model: "o3"
+        reasoning: "high"
+    rounds:
+      base: 3
+      dynamic_range: [2, 4]
+    focus:
+      gemini: "Systematic diagnosis, pattern matching, known issue identification"
+      openai: "Counter-examples, assumption challenging, edge case exploration"
+      claude: "Root cause chain with fix and prevention steps"
+
+  idea:
+    description: "Brainstorming and creative ideation"
+    models:
+      gemini:
+        model: "pro"
+        thinking: "high"
+      openai:
+        model: "gpt4o"
+        reasoning: null
+    rounds:
+      base: 4
+      dynamic_range: [3, 4]
+    focus:
+      gemini: "Creative connections, unconventional approaches, lateral thinking"
+      openai: "Feasibility analysis, implementation paths, risk assessment"
+      claude: "Ranked ideas with pros/cons and actionability"
+
+  general:
+    description: "Balanced comprehensive analysis"
+    models:
+      gemini:
+        model: "flash"
+        thinking: "medium"
+      openai:
+        model: "gpt4o"
+        reasoning: null
+    rounds:
+      base: 3
+      dynamic_range: [2, 4]
+    focus:
+      gemini: "Structured analysis, systematic approach"
+      openai: "Alternative perspectives, assumption checking"
+      claude: "Comprehensive balanced answer"
+
+# Complexity thresholds for dynamic rounds
+complexity:
+  simple:
+    max_score: 0.5
+    rounds: 2
+  medium:
+    max_score: 2.0
+    rounds: 3
+  complex:
+    max_score: null  # above 2.0
+    rounds: 4
+
+# Default timeouts (seconds)
+timeouts:
+  model: 110
+  outer: 120
+
+# Classifier keyword patterns (used by synod-classifier.py)
+keywords:
+  review:
+    - '리뷰'
+    - 'review'
+    - '검토'
+    - '코드\s*확인'
+    - 'PR\s*리뷰'
+    - '버그\s*찾'
+    - '문제\s*찾'
+    - '개선\s*점'
+    - '피드백'
+  design:
+    - '설계'
+    - 'design'
+    - '아키텍처'
+    - 'architecture'
+    - '구조'
+    - '시스템\s*설계'
+    - 'API\s*설계'
+    - 'DB\s*설계'
+    - '스키마'
+  debug:
+    - '디버그'
+    - 'debug'
+    - '에러'
+    - 'error'
+    - '버그'
+    - 'bug'
+    - '안\s*됨'
+    - '작동.*않'
+    - '실패'
+    - 'fail'
+    - '오류'
+    - 'exception'
+  idea:
+    - '아이디어'
+    - 'idea'
+    - '브레인스토밍'
+    - 'brainstorm'
+    - '제안'
+    - 'suggest'
+    - '어떻게\s*하면'
+    - '방법'
+    - '대안'
+
+# Operational thresholds
+thresholds:
+  low_confidence: 50
+  trust_exclude: 0.5
+  trust_good: 1.0
+  trust_high: 1.5
+  trust_cap: 2.0
+  early_exit_confidence: 90

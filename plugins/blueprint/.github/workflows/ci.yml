@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x, 25.x]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check file structure
+        run: |
+          echo "Checking critical files exist..."
+          test -f package.json || (echo "ERROR: package.json not found" && exit 1)
+          test -f plugin.json || (echo "ERROR: plugin.json not found" && exit 1)
+          test -d hooks || (echo "ERROR: hooks/ directory not found" && exit 1)
+          test -d skills || (echo "ERROR: skills/ directory not found" && exit 1)
+          test -d agents || (echo "ERROR: agents/ directory not found" && exit 1)
+          test -d mcp || (echo "ERROR: mcp/ directory not found" && exit 1)
+          echo "✓ All critical files and directories exist"
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON files..."
+          for file in package.json plugin.json config/*.json hooks/hooks.json; do
+            if [ -f "$file" ]; then
+              node -e "JSON.parse(require('fs').readFileSync('$file', 'utf8'))" || (echo "ERROR: Invalid JSON in $file" && exit 1)
+              echo "✓ $file is valid JSON"
+            fi
+          done
+
+  build-check:
+    name: Build and Package Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check package files
+        run: |
+          echo "Checking npm package configuration..."
+          node -e "
+          const pkg = require('./package.json');
+          const requiredFields = ['name', 'version', 'description', 'main', 'files', 'engines'];
+          const missing = requiredFields.filter(f => !pkg[f]);
+          if (missing.length > 0) {
+            console.error('Missing required fields:', missing);
+            process.exit(1);
+          }
+          console.log('✓ All required package.json fields present');
+          "
+
+      - name: Verify MCP server executable
+        run: |
+          test -f mcp/blueprint-server.cjs || (echo "ERROR: MCP server not found" && exit 1)
+          test -x mcp/blueprint-server.cjs || (echo "ERROR: MCP server not executable" && exit 1)
+          echo "✓ MCP server is present and executable"
+
+      - name: Test MCP server syntax
+        run: node --check mcp/blueprint-server.cjs
+
+  integration:
+    name: Integration Check
+    runs-on: ubuntu-latest
+    needs: [test, lint, build-check]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all tests
+        run: npm test
+
+      - name: Package integrity check
+        run: |
+          echo "Running npm pack dry-run..."
+          npm pack --dry-run
+          echo "✓ Package can be created successfully"
+
+  status-check:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs: [test, lint, build-check, integration]
+    if: always()
+
+    steps:
+      - name: Check job status
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.build-check.result }}" != "success" ] || \
+             [ "${{ needs.integration.result }}" != "success" ]; then
+            echo "❌ Some checks failed"
+            exit 1
+          fi
+          echo "✅ All checks passed"
