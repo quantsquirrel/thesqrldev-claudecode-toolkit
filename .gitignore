@@ -1,0 +1,17 @@
+# Update checker cache
+.cache/
+
+# OMC state
+.omc/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/

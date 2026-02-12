@@ -1,0 +1,20 @@
+{
+  "name": "thesqrldev-toolkit",
+  "version": "1.0.0",
+  "description": "thesqrldev team's Claude Code toolkit - handoff, synod, blueprint, forge",
+  "author": {
+    "name": "quantsquirrel",
+    "url": "https://github.com/quantsquirrel"
+  },
+  "repository": "https://github.com/quantsquirrel/thesqrldev-claudecode-toolkit",
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "toolkit",
+    "marketplace",
+    "handoff",
+    "synod",
+    "blueprint",
+    "forge"
+  ]
+}

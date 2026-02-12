@@ -1,0 +1,60 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "thesqrldev-toolkit",
+  "description": "thesqrldev team's Claude Code toolkit - handoff, synod, blueprint, forge",
+  "owner": {
+    "name": "quantsquirrel"
+  },
+  "plugins": [
+    {
+      "name": "handoff",
+      "description": "Session context handoff with fast/slow modes - save context before autocompact, restore with clipboard paste",
+      "version": "2.3.0",
+      "author": { "name": "quantsquirrel" },
+      "source": "./plugins/handoff/plugins/handoff",
+      "category": "productivity",
+      "homepage": "https://github.com/quantsquirrel/claude-handoff-baton",
+      "tags": ["handoff", "session", "context", "clipboard", "baton"]
+    },
+    {
+      "name": "synod",
+      "description": "Multi-agent deliberation system with structured debate between Claude, Gemini, and OpenAI",
+      "version": "3.0.0",
+      "author": { "name": "quantsquirrel" },
+      "source": "./plugins/synod",
+      "category": "productivity",
+      "homepage": "https://github.com/quantsquirrel/claude-synod-debate",
+      "tags": ["multi-agent", "deliberation", "debate", "gemini", "openai", "decision-making"]
+    },
+    {
+      "name": "blueprint",
+      "description": "PDCA cycle, Gap Analysis, and Dev Pipeline plugin - systematic development through iterative improvement",
+      "version": "1.0.0",
+      "author": { "name": "quantsquirrel" },
+      "source": "./plugins/blueprint",
+      "category": "productivity",
+      "homepage": "https://github.com/quantsquirrel/claude-blueprint-helix",
+      "tags": ["pdca", "gap-analysis", "dev-pipeline", "development-methodology", "quality-improvement"]
+    },
+    {
+      "name": "forge",
+      "description": "TDD-powered automatic skill evolution with statistical validation",
+      "version": "1.0.0",
+      "author": { "name": "quantsquirrel" },
+      "source": "./plugins/forge",
+      "category": "productivity",
+      "homepage": "https://github.com/quantsquirrel/claude-forge-smith",
+      "tags": ["skill", "tdd", "evaluation", "auto-upgrade", "forge"]
+    },
+    {
+      "name": "thesqrldev-toolkit",
+      "description": "Toolkit management skills - update, list, doctor",
+      "version": "1.0.0",
+      "author": { "name": "quantsquirrel" },
+      "source": "./",
+      "category": "utility",
+      "homepage": "https://github.com/quantsquirrel/thesqrldev-claudecode-toolkit",
+      "tags": ["toolkit", "management", "update", "doctor"]
+    }
+  ]
+}

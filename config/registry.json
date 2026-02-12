@@ -1,0 +1,36 @@
+{
+  "plugins": [
+    {
+      "name": "handoff",
+      "repo": "quantsquirrel/claude-handoff-baton",
+      "branch": "main",
+      "targetPath": "plugins/handoff"
+    },
+    {
+      "name": "synod",
+      "repo": "quantsquirrel/claude-synod-debate",
+      "branch": "main",
+      "targetPath": "plugins/synod"
+    },
+    {
+      "name": "blueprint",
+      "repo": "quantsquirrel/claude-blueprint-helix",
+      "branch": "main",
+      "targetPath": "plugins/blueprint"
+    },
+    {
+      "name": "forge",
+      "repo": "quantsquirrel/claude-forge-smith",
+      "branch": "main",
+      "targetPath": "plugins/forge"
+    }
+  ],
+  "exclude": [
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    "*.pyc",
+    ".DS_Store"
+  ]
+}

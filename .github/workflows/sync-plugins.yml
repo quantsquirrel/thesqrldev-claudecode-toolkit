@@ -1,0 +1,84 @@
+name: Sync Plugins
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout toolkit
+        uses: actions/checkout@v4
+
+      - name: Sync plugins from registry
+        run: |
+          set -euo pipefail
+
+          REGISTRY="config/registry.json"
+          CHANGED=false
+
+          # Read exclude patterns
+          EXCLUDE_ARGS=""
+          for pattern in $(jq -r '.exclude[]' "$REGISTRY"); do
+            EXCLUDE_ARGS="$EXCLUDE_ARGS --exclude=$pattern"
+          done
+
+          # Sync each plugin
+          for row in $(jq -c '.plugins[]' "$REGISTRY"); do
+            NAME=$(echo "$row" | jq -r '.name')
+            REPO=$(echo "$row" | jq -r '.repo')
+            BRANCH=$(echo "$row" | jq -r '.branch // "main"')
+            TARGET=$(echo "$row" | jq -r '.targetPath')
+
+            echo "::group::Syncing $NAME from $REPO"
+
+            # Clone source repo
+            TMPDIR=$(mktemp -d)
+            git clone --depth 1 --branch "$BRANCH" "https://github.com/${REPO}.git" "$TMPDIR"
+
+            # Get current SHA
+            CURRENT_SHA=$(cd "$TMPDIR" && git rev-parse HEAD)
+            SHA_FILE="${TARGET}/.git-sha"
+
+            # Check if update needed
+            if [ -f "$SHA_FILE" ] && [ "$(cat "$SHA_FILE")" = "$CURRENT_SHA" ]; then
+              echo "  $NAME is up to date ($CURRENT_SHA)"
+              rm -rf "$TMPDIR"
+              echo "::endgroup::"
+              continue
+            fi
+
+            # Rsync plugin content
+            mkdir -p "$TARGET"
+            rsync -a --delete $EXCLUDE_ARGS "$TMPDIR/" "$TARGET/"
+            rm -rf "${TARGET}/.git"
+
+            # Record SHA
+            echo "$CURRENT_SHA" > "$SHA_FILE"
+            echo "  $NAME updated to $CURRENT_SHA"
+
+            CHANGED=true
+            rm -rf "$TMPDIR"
+            echo "::endgroup::"
+          done
+
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+        id: sync
+
+      - name: Commit and push
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: sync plugins from upstream
+
+          Automated sync by sync-plugins workflow.
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          git push
