@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool.sh\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool.sh\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/forge/*/hooks/pre-tool.sh 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && bash \"$H\" || echo '{\"continue\":true}'",
             "timeout": 3000
           }
         ]
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool.sh\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool.sh\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/forge/*/hooks/post-tool.sh 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && bash \"$H\" || echo '{\"continue\":true}'",
             "timeout": 3000
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/skill-detector.sh\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/lib/skill-detector.sh\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/forge/*/hooks/lib/skill-detector.sh 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && bash \"$H\" || echo '{\"continue\":true}'",
             "timeout": 5000
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/skill-detector.sh\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/lib/skill-detector.sh\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/forge/*/hooks/lib/skill-detector.sh 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && bash \"$H\" || echo '{\"continue\":true}'",
             "timeout": 5000
           }
         ]

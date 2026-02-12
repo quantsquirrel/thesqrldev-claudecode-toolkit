@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/blueprint-detect.mjs\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/blueprint-detect.mjs\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/blueprint/*/hooks/blueprint-detect.mjs 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && node \"$H\" || echo '{\"continue\":true}'",
             "timeout": 5
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/phase-tracker.mjs\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/phase-tracker.mjs\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/blueprint/*/hooks/phase-tracker.mjs 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && node \"$H\" || echo '{\"continue\":true}'",
             "timeout": 5
           }
         ]
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-loader.mjs\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/session-loader.mjs\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/blueprint/*/hooks/session-loader.mjs 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && node \"$H\" || echo '{\"continue\":true}'",
             "timeout": 5
           }
         ]
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/compact-preserver.mjs\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/compact-preserver.mjs\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/blueprint/*/hooks/compact-preserver.mjs 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && node \"$H\" || echo '{\"continue\":true}'",
             "timeout": 10
           }
         ]
@@ -54,7 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/cycle-finalize.cjs\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/cycle-finalize.cjs\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/blueprint/*/hooks/cycle-finalize.cjs 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && node \"$H\" || echo '{\"continue\":true}'",
             "timeout": 10
           }
         ]
@@ -66,7 +66,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-cleanup.mjs\"",
+            "command": "H=\"${CLAUDE_PLUGIN_ROOT}/hooks/session-cleanup.mjs\"; [ -f \"$H\" ] || H=$(ls \"$HOME\"/.claude/plugins/cache/*/blueprint/*/hooks/session-cleanup.mjs 2>/dev/null | head -1); [ -n \"$H\" ] && [ -f \"$H\" ] && node \"$H\" || echo '{\"continue\":true}'",
             "timeout": 5
           }
         ]
