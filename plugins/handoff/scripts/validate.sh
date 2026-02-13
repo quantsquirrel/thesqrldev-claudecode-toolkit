@@ -33,7 +33,7 @@ usage() {
     echo "  - No secrets detected (+20)"
     echo "  - All required sections present (+20)"
     echo "  - Referenced files exist (+20)"
-    echo "  - Next Steps has at least 2 items (+20)"
+    echo "  - Next Step section has non-empty content (+20)"
     echo ""
     echo "Exit codes:"
     echo "  0 - PASS (score >= 70)"
@@ -164,13 +164,13 @@ else
     ((SCORE += 20))
 fi
 
-# Check 5: Next Steps has at least 2 items (+20)
-echo -n "Checking Next Steps... "
-NEXT_STEPS_COUNT=$(sed -n '/^##[^#].*Next Step/,/^##[^#]/p' "$HANDOFF_FILE" | grep -c '^[[:space:]]*[-*+][[:space:]]' || true)
+# Check 5: Next Step section has non-empty content (+20)
+echo -n "Checking Next Step content... "
+NEXT_STEP_CONTENT=$(sed -n '/^##[^#].*Next Step/,/^##[^#]/p' "$HANDOFF_FILE" | tail -n +2 | sed '/^##[^#]/d' | sed '/^[[:space:]]*$/d')
 
-if [[ $NEXT_STEPS_COUNT -lt 2 ]]; then
+if [[ -z "$NEXT_STEP_CONTENT" ]]; then
     echo -e "${RED}FAIL${NC}"
-    ISSUES+=("Next Steps section has fewer than 2 items (found: $NEXT_STEPS_COUNT)")
+    ISSUES+=("Next Step section is empty or missing content")
 else
     echo -e "${GREEN}PASS${NC}"
     ((SCORE += 20))

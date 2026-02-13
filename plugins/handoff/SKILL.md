@@ -28,10 +28,18 @@ Examples:
    - If none: output "No significant work in this session. Handoff skipped." and stop
 1. **Create** `.claude/handoffs/` directory if it doesn't exist (`mkdir -p`)
 2. **Analyze** the session: detect complexity, key decisions, failures, modified files
-3. **Scale** output based on session size:
-   - Under 10 messages: Summary + Next Step only
-   - 10-50 messages: Summary + User Requests + Key Decisions + Files Modified + Next Step
-   - Over 50 messages or multi-topic: Full template (all sections)
+3. **Scale** output using the L1/L2/L3 system:
+
+   | Level | Budget | Trigger | Sections |
+   |-------|--------|---------|----------|
+   | **L1** | ~100 tokens | Under 10 messages OR 1 file modified | Time, Topic, Summary, Next Step |
+   | **L2** | ~300 tokens | 10-50 messages OR 2-10 files modified | L1 + User Requests, Key Decisions, Failed Approaches, Files Modified |
+   | **L3** | ~500 tokens | 50+ messages OR 10+ files modified | Full template (all sections) |
+
+   - Default to the **higher** level when message count and file count suggest different levels
+   - L1 file naming: `l1-YYYYMMDD-HHMMSS-XXXX.md`
+   - L2 file naming: `l2-YYYYMMDD-HHMMSS-XXXX.md`
+   - L3 file naming: `l3-YYYYMMDD-HHMMSS-XXXX.md`
 4. **Redact** sensitive values before saving:
    - Pattern: env vars matching `KEY`, `SECRET`, `TOKEN`, `PASSWORD`, `CREDENTIAL`
    - Pattern: strings matching `sk-`, `pk_live_`, `ghp_`, `eyJ` (JWT), `AKIA` (AWS)
@@ -96,9 +104,10 @@ Examples:
 [Concrete next action]
 ```
 
-Sections with no content are omitted. Minimum output is always Summary + Next Step.
+Sections with no content MUST be omitted entirely. Do not output "None" or "N/A".
+Minimum output (L1) is always Time + Topic + Summary + Next Step.
 The Constraints section is only included when the user explicitly stated constraints.
-User Requests section is included for 10+ message sessions.
+User Requests section is included at L2+ (10+ message sessions).
 
 ## Clipboard Format
 

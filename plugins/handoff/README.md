@@ -128,17 +128,17 @@ Re-run the curl command from Quick Start to download the latest version.
 
 ---
 
-## Smart Auto-Scaling (v2.2)
+## Smart Auto-Scaling (v2.3 — L1/L2/L3)
 
 Output depth adjusts automatically based on session complexity:
 
-| Session Size | Output |
-|-------------|--------|
-| Under 10 messages | Summary + Next Step |
-| 10-50 messages | Summary + Key Decisions + Files Modified + Next Step |
-| Over 50 messages | Full detail (all sections) |
+| Level | Budget | Trigger | Sections |
+|-------|--------|---------|----------|
+| **L1** | ~100 tokens | Under 10 messages OR 1 file modified | Time, Topic, Summary, Next Step |
+| **L2** | ~300 tokens | 10-50 messages OR 2-10 files modified | L1 + User Requests, Key Decisions, Failed Approaches, Files Modified |
+| **L3** | ~500 tokens | 50+ messages OR 10+ files modified | Full template (all sections) |
 
-No manual level selection needed. Just run `/handoff`.
+When message count and file count suggest different levels, the **higher** level wins. No manual level selection needed — just run `/handoff`.
 
 ---
 
