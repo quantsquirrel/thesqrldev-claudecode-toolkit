@@ -1,0 +1,30 @@
+# Template workflow for upstream plugin repos.
+# Copy this file to .github/workflows/notify-toolkit.yml in each plugin repo.
+#
+# Required setup:
+#   1. Create a GitHub PAT with 'repo' scope (or fine-grained with 'contents: write')
+#   2. Add it as a repository secret named TOOLKIT_DISPATCH_TOKEN
+#      in the upstream plugin repo
+#   3. Set PLUGIN_NAME to the plugin's name as registered in the toolkit
+#      (must match the "name" field in config/registry.json)
+
+name: Notify Toolkit
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger toolkit sync
+        env:
+          # Change this to match your plugin name in registry.json
+          PLUGIN_NAME: "CHANGE_ME"
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.TOOLKIT_DISPATCH_TOKEN }}" \
+            "https://api.github.com/repos/quantsquirrel/thesqrldev-claudecode-toolkit/dispatches" \
+            -d "{\"event_type\":\"plugin-updated\",\"client_payload\":{\"plugin\":\"$PLUGIN_NAME\"}}"
