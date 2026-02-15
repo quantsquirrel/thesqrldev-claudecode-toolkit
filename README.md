@@ -26,6 +26,31 @@ claude plugin install forge@thesqrldev-claudecode-toolkit
 
 All four plugins + management skills are available after installation.
 
+### Team Setup (auto-install)
+
+Add this to your project's `.claude/settings.json` so team members get plugins automatically:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "thesqrldev-claudecode-toolkit": {
+      "source": {
+        "source": "github",
+        "repo": "quantsquirrel/thesqrldev-claudecode-toolkit"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "handoff@thesqrldev-claudecode-toolkit": true,
+    "synod@thesqrldev-claudecode-toolkit": true,
+    "blueprint@thesqrldev-claudecode-toolkit": true,
+    "forge@thesqrldev-claudecode-toolkit": true
+  }
+}
+```
+
+When a team member trusts the project folder, Claude Code will prompt them to install the marketplace and plugins.
+
 ## Management Skills
 
 | Skill | Description |

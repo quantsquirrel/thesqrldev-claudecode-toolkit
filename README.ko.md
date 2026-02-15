@@ -26,6 +26,31 @@ claude plugin install forge@thesqrldev-claudecode-toolkit
 
 4개 플러그인 + 관리 스킬이 설치됩니다.
 
+### 팀 설정 (자동 설치)
+
+프로젝트의 `.claude/settings.json`에 아래를 추가하면 팀원이 자동으로 플러그인을 설치할 수 있습니다:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "thesqrldev-claudecode-toolkit": {
+      "source": {
+        "source": "github",
+        "repo": "quantsquirrel/thesqrldev-claudecode-toolkit"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "handoff@thesqrldev-claudecode-toolkit": true,
+    "synod@thesqrldev-claudecode-toolkit": true,
+    "blueprint@thesqrldev-claudecode-toolkit": true,
+    "forge@thesqrldev-claudecode-toolkit": true
+  }
+}
+```
+
+팀원이 프로젝트 폴더를 trust하면 Claude Code가 마켓플레이스와 플러그인 설치를 자동으로 안내합니다.
+
 ## 관리 스킬
 
 | 스킬 | 설명 |
