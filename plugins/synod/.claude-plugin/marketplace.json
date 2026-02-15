@@ -9,7 +9,7 @@
     {
       "name": "synod",
       "description": "Multi-agent deliberation system with 3-round structured debate, SID confidence scoring, CortexDebate Trust Score, and 5 specialized modes (review, design, debug, idea, general)",
-      "version": "1.0.0",
+      "version": "3.0.0",
       "author": {
         "name": "quantsquirrel"
       },

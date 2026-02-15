@@ -22,58 +22,14 @@ import {
   TASK_SIZE_STATE_FILE,
 } from './constants.mjs';
 
+import {
+  acquireLock,
+  releaseLock,
+  loadJsonState,
+  saveJsonStateAtomic,
+} from './utils.mjs';
+
 const STATE_FILE = path.join(tmpdir(), TASK_SIZE_STATE_FILE);
-const LOCK_TIMEOUT_MS = 5000; // 5 seconds lock timeout
-
-/**
- * Acquire file lock with timeout
- * @param {string} lockFile - Lock file path
- * @param {number} timeout - Timeout in ms
- * @returns {boolean} - True if lock acquired
- */
-function acquireLock(lockFile, timeout = LOCK_TIMEOUT_MS) {
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < timeout) {
-    try {
-      // Try to create lock file exclusively
-      fs.writeFileSync(lockFile, String(process.pid), { flag: 'wx', mode: 0o600 });
-      return true;
-    } catch (e) {
-      if (e.code === 'EEXIST') {
-        // Check if lock is stale (older than timeout)
-        try {
-          const stat = fs.statSync(lockFile);
-          if (Date.now() - stat.mtimeMs > timeout) {
-            fs.unlinkSync(lockFile);
-            continue;
-          }
-        } catch (statErr) {
-          // Lock file was removed, retry
-          continue;
-        }
-        // Wait a bit before retrying
-        const waitStart = Date.now();
-        while (Date.now() - waitStart < 50) { /* busy wait 50ms */ }
-      } else {
-        return false;
-      }
-    }
-  }
-  return false;
-}
-
-/**
- * Release file lock
- * @param {string} lockFile - Lock file path
- */
-function releaseLock(lockFile) {
-  try {
-    fs.unlinkSync(lockFile);
-  } catch (e) {
-    // Ignore errors
-  }
-}
 
 /**
  * Analyze prompt for task size indicators
@@ -100,22 +56,6 @@ function analyzePrompt(prompt) {
 }
 
 /**
- * Load existing state with lock
- * @returns {object}
- */
-function loadState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      const data = fs.readFileSync(STATE_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (e) {
-    // Return empty state on error
-  }
-  return {};
-}
-
-/**
  * Save state with lock to prevent race conditions
  * @param {string} sessionId - Session ID
  * @param {object} sessionData - Session data to save
@@ -129,8 +69,7 @@ function saveTaskSizeState(sessionId, sessionData) {
   }
 
   try {
-    // Load existing state
-    const state = loadState();
+    const state = loadJsonState(STATE_FILE);
 
     // Update session data
     state[sessionId] = {
@@ -146,10 +85,7 @@ function saveTaskSizeState(sessionId, sessionData) {
       }
     }
 
-    // Write atomically by writing to temp file then renaming
-    const tempFile = STATE_FILE + '.tmp';
-    fs.writeFileSync(tempFile, JSON.stringify(state, null, 2), { mode: 0o600 });
-    fs.renameSync(tempFile, STATE_FILE);
+    saveJsonStateAtomic(STATE_FILE, state);
   } finally {
     releaseLock(lockFile);
   }

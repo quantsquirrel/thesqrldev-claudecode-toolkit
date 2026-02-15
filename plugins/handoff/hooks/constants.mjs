@@ -159,6 +159,11 @@ export const FILE_COUNT_THRESHOLDS = {
  */
 export const TASK_SIZE_STATE_FILE = 'task-size-state.json';
 
+/**
+ * Shared token tracking state file (used by both auto-handoff and auto-checkpoint)
+ */
+export const SHARED_TOKEN_STATE_FILE = 'shared-token-state.json';
+
 // ==========================================
 // Security Patterns (Synod Recommendation)
 // ==========================================

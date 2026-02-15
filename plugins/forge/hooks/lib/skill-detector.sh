@@ -80,7 +80,7 @@ handle_skill_detection() {
   local skill_name="$2"
 
   # 로그 디렉토리 확인
-  LOG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/data/detections"
+  LOG_DIR="${CLAUDE_PLUGIN_ROOT}/data/detections"
   mkdir -p "$LOG_DIR"
 
   # 감지 로그 기록

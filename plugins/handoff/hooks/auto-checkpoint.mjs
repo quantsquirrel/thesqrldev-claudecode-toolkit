@@ -31,8 +31,15 @@ import { tmpdir } from 'os';
 import {
   HANDOFF_THRESHOLD,
   CLAUDE_CONTEXT_LIMIT,
-  CHARS_PER_TOKEN,
 } from './constants.mjs';
+
+import {
+  loadJsonState,
+  saveJsonState,
+  createDebugLogger,
+  trackTokenUsage,
+  getSharedTokenCount,
+} from './utils.mjs';
 
 // Configuration
 const CONFIG = {
@@ -42,49 +49,13 @@ const CONFIG = {
   cooldownMinutes: 25, // Don't checkpoint more often than this
 };
 
-const DEBUG = process.env.AUTO_CHECKPOINT_DEBUG === '1';
 const STATE_FILE = path.join(tmpdir(), 'auto-checkpoint-state.json');
-const DEBUG_FILE = path.join(tmpdir(), 'auto-checkpoint-debug.log');
 
-/**
- * Debug logging
- */
-function debugLog(...args) {
-  if (DEBUG) {
-    const msg = `[${new Date().toISOString()}] [auto-checkpoint] ${args
-      .map((a) => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)))
-      .join(' ')}\n`;
-    fs.appendFileSync(DEBUG_FILE, msg);
-  }
-}
-
-/**
- * Load state from file
- */
-function loadState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      const data = fs.readFileSync(STATE_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (e) {
-    debugLog('Failed to load state:', e.message);
-  }
-  return {
-    sessions: {},
-  };
-}
-
-/**
- * Save state to file
- */
-function saveState(state) {
-  try {
-    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-  } catch (e) {
-    debugLog('Failed to save state:', e.message);
-  }
-}
+const debugLog = createDebugLogger(
+  'auto-checkpoint',
+  path.join(tmpdir(), 'auto-checkpoint-debug.log'),
+  'AUTO_CHECKPOINT_DEBUG',
+);
 
 /**
  * Get or create session state
@@ -98,13 +69,6 @@ function getSessionState(state, sessionId) {
     };
   }
   return state.sessions[sessionId];
-}
-
-/**
- * Estimate tokens from text
- */
-function estimateTokens(text) {
-  return Math.ceil(text.length / CHARS_PER_TOKEN);
 }
 
 /**
@@ -162,19 +126,18 @@ function main() {
   }
 
   // Load state
-  const state = loadState();
+  const state = loadJsonState(STATE_FILE, { sessions: {} });
   const sessionState = getSessionState(state, session_id);
 
-  // Track cumulative tokens if we have tool response
-  if (tool_response) {
-    const responseTokens = estimateTokens(tool_response);
-    sessionState.estimatedTokens += responseTokens;
-  }
+  // Track cumulative tokens (shared with auto-handoff, deduped)
+  const cumulativeTokens = tool_response
+    ? trackTokenUsage(session_id, tool_name, tool_response)
+    : getSharedTokenCount(session_id);
 
   const now = Date.now();
   const timeSinceLastCheckpoint = now - sessionState.lastCheckpointTime;
   const intervalMs = CONFIG.intervalMinutes * 60 * 1000;
-  const usageRatio = sessionState.estimatedTokens / CLAUDE_CONTEXT_LIMIT;
+  const usageRatio = cumulativeTokens / CLAUDE_CONTEXT_LIMIT;
 
   debugLog('Checkpoint check', {
     tool: tool_name,
@@ -201,20 +164,20 @@ function main() {
   }
 
   if (!shouldCheckpoint) {
-    saveState(state);
+    saveJsonState(STATE_FILE, state);
     return;
   }
 
   // Check recent checkpoint (cooldown)
   if (checkRecentCheckpoint()) {
     debugLog('Skipping - recent checkpoint exists');
-    saveState(state);
+    saveJsonState(STATE_FILE, state);
     return;
   }
 
   // Update checkpoint time
   sessionState.lastCheckpointTime = now;
-  saveState(state);
+  saveJsonState(STATE_FILE, state);
 
   // Output checkpoint trigger message
   const message = `\n🔖 자동 체크포인트 트리거 (${reason})\n`;

@@ -27,127 +27,46 @@ import { execSync } from 'node:child_process';
 
 import {
   HANDOFF_THRESHOLD,
-  WARNING_THRESHOLD,
-  CRITICAL_THRESHOLD,
   HANDOFF_COOLDOWN_MS,
   MAX_SUGGESTIONS,
   CLAUDE_CONTEXT_LIMIT,
-  CHARS_PER_TOKEN,
   HANDOFF_SUGGESTION_MESSAGE,
   HANDOFF_WARNING_MESSAGE,
   HANDOFF_CRITICAL_MESSAGE,
   AUTO_DRAFT_ENABLED,
   DRAFT_FILE_PREFIX,
-  // Task size imports (v2.0)
   TASK_SIZE,
   TASK_SIZE_THRESHOLDS,
   FILE_COUNT_THRESHOLDS,
   TASK_SIZE_STATE_FILE,
 } from './constants.mjs';
 
-const DEBUG = process.env.AUTO_HANDOFF_DEBUG === '1';
+import {
+  acquireLock,
+  releaseLock,
+  loadJsonState,
+  saveJsonState,
+  saveJsonStateAtomic,
+  estimateTokens,
+  createDebugLogger,
+  trackTokenUsage,
+} from './utils.mjs';
+
 const STATE_FILE = path.join(tmpdir(), 'auto-handoff-state.json');
-const DEBUG_FILE = path.join(tmpdir(), 'auto-handoff-debug.log');
-
-// Task size state file (shared with task-size-estimator.mjs)
 const TASK_SIZE_STATE_PATH = path.join(tmpdir(), TASK_SIZE_STATE_FILE);
-const LOCK_TIMEOUT_MS = 5000;
 
-/**
- * Debug logging
- */
-function debugLog(...args) {
-  if (DEBUG) {
-    const msg = `[${new Date().toISOString()}] [auto-handoff] ${args
-      .map((a) => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)))
-      .join(' ')}\n`;
-    fs.appendFileSync(DEBUG_FILE, msg);
-  }
-}
-
-/**
- * Load state from file
- */
-function loadState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      const data = fs.readFileSync(STATE_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (e) {
-    debugLog('Failed to load state:', e.message);
-  }
-  return {
-    sessions: {},
-  };
-}
-
-/**
- * Save state to file
- */
-function saveState(state) {
-  try {
-    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-  } catch (e) {
-    debugLog('Failed to save state:', e.message);
-  }
-}
-
-/**
- * Acquire file lock with timeout
- */
-function acquireLock(lockFile, timeout = LOCK_TIMEOUT_MS) {
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < timeout) {
-    try {
-      fs.writeFileSync(lockFile, String(process.pid), { flag: 'wx', mode: 0o600 });
-      return true;
-    } catch (e) {
-      if (e.code === 'EEXIST') {
-        try {
-          const stat = fs.statSync(lockFile);
-          if (Date.now() - stat.mtimeMs > timeout) {
-            fs.unlinkSync(lockFile);
-            continue;
-          }
-        } catch (statErr) {
-          continue;
-        }
-        const waitStart = Date.now();
-        while (Date.now() - waitStart < 50) { /* busy wait */ }
-      } else {
-        return false;
-      }
-    }
-  }
-  return false;
-}
-
-/**
- * Release file lock
- */
-function releaseLock(lockFile) {
-  try {
-    fs.unlinkSync(lockFile);
-  } catch (e) {
-    // Ignore
-  }
-}
+const debugLog = createDebugLogger(
+  'auto-handoff',
+  path.join(tmpdir(), 'auto-handoff-debug.log'),
+  'AUTO_HANDOFF_DEBUG',
+);
 
 /**
  * Load task size state for session
  */
 function loadTaskSizeState(sessionId) {
-  try {
-    if (fs.existsSync(TASK_SIZE_STATE_PATH)) {
-      const data = JSON.parse(fs.readFileSync(TASK_SIZE_STATE_PATH, 'utf8'));
-      return data[sessionId] || { taskSize: TASK_SIZE.MEDIUM };
-    }
-  } catch (e) {
-    debugLog('Failed to load task size state:', e.message);
-  }
-  return { taskSize: TASK_SIZE.MEDIUM };
+  const data = loadJsonState(TASK_SIZE_STATE_PATH);
+  return data[sessionId] || { taskSize: TASK_SIZE.MEDIUM };
 }
 
 /**
@@ -162,14 +81,7 @@ function saveTaskSizeState(sessionId, taskSize) {
   }
 
   try {
-    let state = {};
-    try {
-      if (fs.existsSync(TASK_SIZE_STATE_PATH)) {
-        state = JSON.parse(fs.readFileSync(TASK_SIZE_STATE_PATH, 'utf8'));
-      }
-    } catch (e) {
-      // Start fresh
-    }
+    const state = loadJsonState(TASK_SIZE_STATE_PATH);
 
     state[sessionId] = {
       ...(state[sessionId] || {}),
@@ -177,9 +89,7 @@ function saveTaskSizeState(sessionId, taskSize) {
       updatedAt: Date.now(),
     };
 
-    const tempFile = TASK_SIZE_STATE_PATH + '.tmp';
-    fs.writeFileSync(tempFile, JSON.stringify(state, null, 2), { mode: 0o600 });
-    fs.renameSync(tempFile, TASK_SIZE_STATE_PATH);
+    saveJsonStateAtomic(TASK_SIZE_STATE_PATH, state);
   } finally {
     releaseLock(lockFile);
   }
@@ -231,13 +141,6 @@ function getSessionState(state, sessionId) {
     };
   }
   return state.sessions[sessionId];
-}
-
-/**
- * Estimate tokens from text
- */
-function estimateTokens(text) {
-  return Math.ceil(text.length / CHARS_PER_TOKEN);
 }
 
 /**
@@ -381,21 +284,20 @@ function main() {
   }
 
   // Load state
-  const state = loadState();
+  const state = loadJsonState(STATE_FILE, { sessions: {} });
   const sessionState = getSessionState(state, session_id);
 
-  // Track cumulative tokens
-  const responseTokens = estimateTokens(tool_response);
-  sessionState.estimatedTokens += responseTokens;
+  // Track cumulative tokens (shared with auto-checkpoint, deduped)
+  const cumulativeTokens = trackTokenUsage(session_id, toolLower, tool_response);
 
   debugLog('Tracking output', {
     tool: toolLower,
-    tokens: responseTokens,
-    cumulative: sessionState.estimatedTokens,
+    tokens: estimateTokens(tool_response),
+    cumulative: cumulativeTokens,
   });
 
-  // Calculate usage ratio
-  const usageRatio = sessionState.estimatedTokens / CLAUDE_CONTEXT_LIMIT;
+  // Calculate usage ratio from shared token count
+  const usageRatio = cumulativeTokens / CLAUDE_CONTEXT_LIMIT;
 
   // === Task Size Dynamic Thresholds (v2.0) ===
   // Load task size from PrePromptSubmit hook or default
@@ -422,13 +324,13 @@ function main() {
 
   // Save auto-draft at 70% threshold
   if (usageRatio >= HANDOFF_THRESHOLD && !sessionState.draftSaved) {
-    saveDraft(session_id, sessionState.estimatedTokens);
+    saveDraft(session_id, cumulativeTokens);
     sessionState.draftSaved = true;
   }
 
   // Check if below threshold
   if (usageRatio < dynamicThresholds.handoff) {
-    saveState(state);
+    saveJsonState(STATE_FILE, state);
     return;
   }
 
@@ -436,14 +338,14 @@ function main() {
   const now = Date.now();
   if (now - sessionState.lastSuggestionTime < HANDOFF_COOLDOWN_MS) {
     debugLog('Skipping - cooldown active');
-    saveState(state);
+    saveJsonState(STATE_FILE, state);
     return;
   }
 
   // Check max suggestions
   if (sessionState.suggestionCount >= MAX_SUGGESTIONS) {
     debugLog('Skipping - max suggestions reached');
-    saveState(state);
+    saveJsonState(STATE_FILE, state);
     return;
   }
 
@@ -451,14 +353,14 @@ function main() {
   if (checkRecentHandoff()) {
     debugLog('Skipping - recent handoff detected');
     sessionState.handoffCreated = true;
-    saveState(state);
+    saveJsonState(STATE_FILE, state);
     return;
   }
 
   // Record suggestion
   sessionState.lastSuggestionTime = now;
   sessionState.suggestionCount++;
-  saveState(state);
+  saveJsonState(STATE_FILE, state);
 
   // Determine message based on DYNAMIC threshold
   let message;

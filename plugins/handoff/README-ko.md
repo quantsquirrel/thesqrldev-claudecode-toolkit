@@ -10,7 +10,7 @@
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-success?style=flat-square)](https://github.com/anthropics/claude-code)
-[![Version](https://img.shields.io/badge/version-2.3.0-blue?style=flat-square)](https://github.com/quantsquirrel/claude-handoff-baton)
+[![Version](https://img.shields.io/badge/version-2.4.0-blue?style=flat-square)](https://github.com/quantsquirrel/claude-handoff-baton)
 [![Task Size Detection](https://img.shields.io/badge/Task%20Size-Dynamic-orange?style=flat-square)](https://github.com/quantsquirrel/claude-handoff-baton)
 
 </div>
@@ -19,15 +19,40 @@
 
 ## 빠른 시작
 
-```bash
-# 1. 설치
-/plugin install quantsquirrel/claude-handoff-baton
+### 옵션 1: 스킬만 (가장 간단)
 
-# 2. 사용
-/handoff
+```bash
+curl -o ~/.claude/commands/handoff.md \
+  https://raw.githubusercontent.com/quantsquirrel/claude-handoff-baton/main/SKILL.md
 ```
 
-**끝.** 다음 세션을 위해 컨텍스트가 보존됩니다.
+**끝.** `/handoff`로 수동 컨텍스트 저장/복원이 가능합니다.
+
+### 옵션 2: 전체 설치 + 훅 (권장)
+
+자동 토큰 모니터링, 컴팩션 보호, 세션 복원까지:
+
+```bash
+# 저장소 클론
+git clone https://github.com/quantsquirrel/claude-handoff-baton.git ~/.claude/skills/handoff
+
+# 4개 훅 등록
+cd ~/.claude/skills/handoff && bash hooks/install.sh
+```
+
+**끝.** 이후 모든 것이 자동으로 작동합니다.
+
+### 비교
+
+|  | 스킬만 | 전체 설치 |
+|--|:---:|:---:|
+| `/handoff` 명령어 | O | O |
+| 토큰 자동 모니터링 | - | O |
+| 임계값 핸드오프 알림 | - | O |
+| 컴팩션 전 자동 스냅샷 | - | O |
+| 세션 복원 자동 주입 | - | O |
+
+**옵션 1로 시작**하고, 자동화가 필요하면 **옵션 2로 업그레이드**하세요.
 
 ---
 
@@ -102,28 +127,7 @@
 
 ## 설치
 
-### 옵션 1: 단일 파일 (권장)
-
-```bash
-curl -o ~/.claude/commands/handoff.md \
-  https://raw.githubusercontent.com/quantsquirrel/claude-handoff-baton/main/SKILL.md
-```
-
-**끝.** 이제 `/handoff`를 사용할 수 있습니다.
-
-### 옵션 2: 전체 플러그인 (고급)
-
-컨텍스트 70% 도달 시 자동 알림을 원하면:
-
-```bash
-/plugin marketplace add quantsquirrel/claude-handoff-baton
-/plugin install handoff@quantsquirrel
-```
-
-포함 기능:
-- 70% 컨텍스트 도달 시 자동 알림
-- 작업 크기 추정
-- `/handoff` CLI 자동완성
+자세한 설치 방법은 위의 [빠른 시작](#빠른-시작) 섹션을 참조하세요.
 
 ---
 
@@ -272,9 +276,25 @@ v2.3은 원본 컨텍스트를 더 충실하게 보존합니다:
 
 ---
 
-## 자동 핸드오프 훅
+## 자동 핸드오프 훅 (v2.4)
 
-컨텍스트 사용량을 모니터링하고 70%에 도달하면 핸드오프 생성을 권유합니다.
+**v2.4 신규:** 컴팩션 전후 컨텍스트 보존 + 통합 토큰 추적!
+
+### 4개 훅 구성
+
+| 훅 | 파일 | 용도 |
+|----|------|------|
+| **PrePromptSubmit** | `task-size-estimator.mjs` | 프롬프트 키워드로 작업 크기 감지 |
+| **PostToolUse** | `auto-handoff.mjs` | 토큰 사용량 모니터링, 동적 임계값 핸드오프 제안 |
+| **PreCompact** | `pre-compact.mjs` | 컴팩션 전 메타데이터 스냅샷 저장 |
+| **SessionStart** | `session-restore.mjs` | compact/resume 후 최적 컨텍스트 복원 |
+
+### 컨텍스트 보존 (v2.4)
+
+- 통합 토큰 추적: call-level dedup으로 이중 카운트 방지
+- PreCompact가 git 상태, 수정 파일, 토큰 수를 자동 저장
+- SessionStart가 `score = base × freshness + relevance`로 최적 소스 선택
+- 오래된 스냅샷 자동 정리 (최근 3개만 보관)
 
 ```bash
 # 설치

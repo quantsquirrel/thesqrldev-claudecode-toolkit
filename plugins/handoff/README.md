@@ -10,7 +10,7 @@
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-success?style=flat-square)](https://github.com/anthropics/claude-code)
-[![Version](https://img.shields.io/badge/version-2.3.0-blue?style=flat-square)](https://github.com/quantsquirrel/claude-handoff-baton)
+[![Version](https://img.shields.io/badge/version-2.4.0-blue?style=flat-square)](https://github.com/quantsquirrel/claude-handoff-baton)
 [![Task Size Detection](https://img.shields.io/badge/Task%20Size-Dynamic-orange?style=flat-square)](https://github.com/quantsquirrel/claude-handoff-baton)
 
 </div>
@@ -19,28 +19,40 @@
 
 ## Quick Start
 
-### Option 1: Single File (Recommended)
+### Option 1: Skill Only (Simplest)
 
 ```bash
 curl -o ~/.claude/commands/handoff.md \
   https://raw.githubusercontent.com/quantsquirrel/claude-handoff-baton/main/SKILL.md
 ```
 
-**Done.** Now you can use `/handoff`.
+**Done.** Now you can use `/handoff` to save and resume context manually.
 
-### Option 2: Full Plugin (Advanced)
+### Option 2: Full Install with Hooks (Recommended)
 
-For auto-notifications when context reaches 70%:
+Get automatic context monitoring, compaction protection, and session restoration:
 
 ```bash
-/plugin marketplace add quantsquirrel/claude-handoff-baton
-/plugin install handoff@quantsquirrel
+# Clone the repository
+git clone https://github.com/quantsquirrel/claude-handoff-baton.git ~/.claude/skills/handoff
+
+# Register all 4 hooks
+cd ~/.claude/skills/handoff && bash hooks/install.sh
 ```
 
-This includes:
-- Auto-handoff reminder at 70% context
-- Task size estimation
-- CLI autocomplete for `/handoff`
+**Done.** Everything works automatically from here.
+
+### What You Get
+
+|  | Skill Only | Full Install |
+|--|:---:|:---:|
+| `/handoff` command | O | O |
+| Auto token monitoring | - | O |
+| Handoff reminder at threshold | - | O |
+| Auto snapshot before compaction | - | O |
+| Auto context restore on resume | - | O |
+
+Start with **Option 1**, upgrade to **Option 2** when you want automation.
 
 ---
 
@@ -278,28 +290,34 @@ Do not auto-execute anything below. Wait for user instructions.
 
 ---
 
-## Optional: Auto-Handoff Hook (v2.0)
+## Optional: Auto-Handoff Hooks (v2.4)
 
-**New in v2.0:** Dynamic thresholds based on task size!
+**New in v2.4:** Context preservation across compaction + unified token tracking!
 
-### Features
+### 4 Hooks Overview
 
-1. **Task Size Detection (PrePromptSubmit)**
-   - Analyzes your prompt for large task indicators
-   - Provides proactive warnings before starting large tasks
-   - Dynamically adjusts handoff thresholds
+| Hook | File | Purpose |
+|------|------|---------|
+| **PrePromptSubmit** | `task-size-estimator.mjs` | Detects task complexity from prompt keywords |
+| **PostToolUse** | `auto-handoff.mjs` | Monitors token usage, suggests `/handoff` at dynamic thresholds |
+| **PreCompact** | `pre-compact.mjs` | Saves metadata snapshot before context compaction |
+| **SessionStart** | `session-restore.mjs` | Restores best available context after compact/resume |
 
-2. **Smart Context Monitoring (PostToolUse)**
-   - Tracks context usage across tools
-   - Suggests `/handoff` at optimal times based on task complexity:
-     - **Small tasks**: 85% / 90% / 95%
-     - **Medium tasks**: 70% / 80% / 90%
-     - **Large tasks**: 50% / 60% / 70%
-     - **XLarge tasks**: 30% / 40% / 50%
+### Smart Context Monitoring
 
-3. **File Count Detection**
-   - Automatically upgrades task size when many files are involved
-   - 10+ files → Medium, 50+ files → Large, 200+ files → XLarge
+- Unified token tracking with call-level deduplication (no double-counting)
+- Dynamic thresholds based on task size:
+  - **Small tasks**: 85% / 90% / 95%
+  - **Medium tasks**: 70% / 80% / 90%
+  - **Large tasks**: 50% / 60% / 70%
+  - **XLarge tasks**: 30% / 40% / 50%
+
+### Context Preservation (v2.4)
+
+- **PreCompact** saves git state, modified files, and token count before compaction
+- **SessionStart** scores available sources by `score = base × freshness + relevance`
+- Selects the single best source (handoff .md > pre-compact snapshot)
+- Auto-cleans old snapshots (keeps last 3)
 
 ### Installation
 
@@ -307,18 +325,23 @@ Do not auto-execute anything below. Wait for user instructions.
 # Clone for hook files
 git clone https://github.com/quantsquirrel/claude-handoff-baton.git ~/.claude/skills/handoff
 
-# Install both hooks
+# Install all 4 hooks
 cd ~/.claude/skills/handoff && bash hooks/install.sh
 ```
 
-The installer will register:
-- **PrePromptSubmit hook**: Task size estimator
-- **PostToolUse hook**: Context monitor with dynamic thresholds
+The installer registers all 4 hooks automatically.
+
+### Debug Mode
+
+```bash
+AUTO_HANDOFF_DEBUG=1       # Context monitoring logs
+PRE_COMPACT_DEBUG=1        # Pre-compact snapshot logs
+SESSION_RESTORE_DEBUG=1    # Session restore scoring logs
+```
 
 ### Limitations
 
-- **Single-node only**: The file locking mechanism uses local filesystem
-  locks and is not designed for distributed deployments.
+- **Single-node only**: File locking uses local filesystem locks.
 
 ---
 
@@ -326,20 +349,26 @@ The installer will register:
 
 ```
 claude-handoff-baton/
-├── SKILL.md                    # The skill (copy to ~/.claude/commands/)
+├── SKILL.md                     # The skill (copy to ~/.claude/commands/)
 ├── README.md
 ├── hooks/
-│   ├── constants.mjs           # Shared constants, thresholds, security patterns
-│   ├── schema.mjs              # JSON schema for structured handoff output
-│   ├── task-size-estimator.mjs # PrePromptSubmit: Task size detection
-│   ├── auto-handoff.mjs        # PostToolUse: Context monitoring (v2.0)
-│   ├── install.sh              # Easy installation (registers both hooks)
-│   └── test-task-size.mjs      # Integration tests
+│   ├── utils.mjs                # Shared utilities (lock, state I/O, token tracking)
+│   ├── constants.mjs            # Shared constants, thresholds, security patterns
+│   ├── schema.mjs               # JSON schema for structured handoff output
+│   ├── task-size-estimator.mjs  # PrePromptSubmit: Task size detection
+│   ├── auto-handoff.mjs         # PostToolUse: Context monitoring
+│   ├── auto-checkpoint.mjs      # PostToolUse: Time/token-based checkpoint trigger
+│   ├── pre-compact.mjs          # PreCompact: Metadata snapshot before compaction
+│   ├── session-restore.mjs      # SessionStart: Context restoration after compact/resume
+│   ├── lockfile.mjs             # Lock file management for interrupted handoffs
+│   ├── recover.mjs              # Recovery script for interrupted handoffs
+│   ├── install.sh               # Easy installation (registers all 4 hooks)
+│   └── test-task-size.mjs       # Integration tests
 ├── plugins/
 │   └── handoff/
-│       ├── plugin.json         # Plugin manifest (v2.2)
+│       ├── plugin.json          # Plugin manifest (v2.2)
 │       └── skills/
-│           └── handoff.md      # Skill definition with smart auto-scaling
+│           └── handoff.md       # Skill definition with smart auto-scaling
 └── examples/
     └── example-handoff.md
 ```

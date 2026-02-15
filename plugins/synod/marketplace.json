@@ -1,6 +1,6 @@
 {
   "name": "synod",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "displayName": "Synod: Multi-Agent Debate System",
   "description": "Research-backed multi-agent deliberation with Claude, Gemini, and OpenAI - structured 3-round debates for superior decision-making",
   "longDescription": "Synod brings peer-reviewed multi-agent debate methodologies to Claude Code. Instead of relying on a single LLM prone to confirmation bias and hallucination, Synod orchestrates structured debates between Claude, Gemini, and OpenAI across three rounds: Solver, Critic, and Defense/Prosecution. Built on ReConcile (ACL 2024), AgentsCourt, ConfMAD, and A-HMAD research, it features confidence scoring (0-100), trust calculation using the CortexDebate formula, and anti-conformity mechanisms. Perfect for code review, architecture design, debugging, and brainstorming. Research shows 3-round debates capture >95% of quality improvements with token-efficient parallel execution.",
@@ -65,6 +65,10 @@
     "Parallel execution within rounds",
     "Automatic retry with graceful degradation"
   ],
+  "compatibility": {
+    "mcpRouting": "Synod uses CLI-only model execution. Built-in MCP guard directives prevent routing interception in environments with MCP plugins (e.g., OMC CODEX-ROUTING).",
+    "shell": "Compatible with bash and zsh"
+  },
   "requirements": {
     "claudeCode": ">=1.0.0",
     "python": ">=3.9"

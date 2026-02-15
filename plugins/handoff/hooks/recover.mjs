@@ -18,7 +18,7 @@ import { DRAFT_FILE_PREFIX } from './constants.mjs';
 /**
  * Find all draft files
  */
-function findDraftFiles() {
+export function findDraftFiles() {
   const handoffDir = path.join(process.cwd(), '.claude', 'handoffs');
   const globalHandoffDir = path.join(homedir(), '.claude', 'handoffs');
   const drafts = [];

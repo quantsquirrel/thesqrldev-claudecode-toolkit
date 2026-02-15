@@ -153,15 +153,23 @@ export OPENAI_API_KEY="your-openai-key"
 ```
 [Synod Setup] 초기 설정을 시작합니다...
 
-Step 1/3: CLI 도구 확인
+Step 0/4: Python 의존성 확인
+  ✓ google-genai 설치됨
+  ✓ openai 설치됨
+  ✓ httpx 설치됨
+
+Step 1/4: CLI 도구 확인
   ✓ gemini-3.py
   ✓ openai-cli.py
 
-Step 2/3: API 키 확인
+Step 2/4: API 키 확인
   ✓ GOOGLE_API_KEY (설정됨)
   ✓ OPENAI_API_KEY (설정됨)
 
-Step 3/3: 모델 응답 시간 측정 (타임아웃: 120초)
+Step 3/4: MCP 라우팅 호환성 확인
+  ✓ MCP 라우팅 미감지
+
+Step 4/4: 모델 응답 시간 측정 (타임아웃: 120초)
 
 Provider    Model              Latency    Status
 ───────────────────────────────────────────────
@@ -396,6 +404,46 @@ export OPENAI_API_KEY="your-openai-key"
 export SYNOD_SESSION_DIR="~/.synod/sessions"
 export SYNOD_RETENTION_DAYS=30
 ```
+
+</details>
+
+<br/>
+
+---
+
+<div align="center">
+
+## 🔒 COMPATIBILITY
+
+</div>
+
+<br/>
+
+<div align="center">
+
+| Environment | Status | Notes |
+|:-----------:|:------:|:------|
+| **bash** | ✅ | Fully supported |
+| **zsh** | ✅ | Fully supported (v3.0.1+) |
+| **MCP Plugins** | ✅ | Guard directives prevent routing interception |
+| **OMC (oh-my-claudecode)** | ✅ | CODEX-ROUTING opt-out built-in |
+
+</div>
+
+<br/>
+
+<details>
+<summary><b>🛡️ MCP Routing Protection</b></summary>
+
+<br/>
+
+Synod executes external models (Gemini, OpenAI) exclusively via **CLI tools** (`gemini-3`, `openai-cli`). If your environment includes MCP routing plugins that redirect model calls through `ask_codex` or `ask_gemini`, Synod's built-in defense-in-depth guards prevent interception:
+
+1. **`allowed-tools` frontmatter** — Schema-level restriction excludes MCP tools
+2. **Markdown directives** — Explicit prohibition in skill entry point and Phase 0/1
+3. **Automated tests** — CI validates guard presence against configuration drift
+
+No additional configuration needed — protection is automatic.
 
 </details>
 

@@ -27,7 +27,13 @@ Synod를 처음 사용하기 전에 실행하는 초기 설정 도구입니다. 
 - `GEMINI_API_KEY` 환경 변수 설정 여부 확인 (`GOOGLE_API_KEY`도 fallback으로 인식)
 - `OPENAI_API_KEY` 환경 변수 설정 여부 확인
 
-### Step 3: 모델 응답 시간 테스트
+### Step 3: MCP 라우팅 호환성 확인
+- 사용자의 `~/.claude/CLAUDE.md`에 `CODEX-ROUTING` 또는 `ask_codex`/`ask_gemini` MCP 라우팅 규칙이 포함되어 있는지 확인
+- 감지 시 안내 메시지 표시:
+  - "⚠ MCP 라우팅 감지: Synod는 CLI 실행만 사용합니다. MCP 라우팅이 활성화된 환경에서도 allowed-tools 및 내장 guard 지시문으로 보호됩니다."
+- 결과를 `setup-result.json`의 `mcp_routing_detected` 필드에 저장
+
+### Step 4: 모델 응답 시간 테스트
 간단한 테스트 프롬프트를 각 모델에 전송하여 응답 시간을 측정합니다.
 - 타임아웃: 120초
 - 테스트 프롬프트: "Explain the SOLID principles in 3 sentences."
@@ -68,22 +74,25 @@ $ /synod-setup
 
 [Synod Setup] 초기 설정을 시작합니다...
 
-Step 0/3: Python 의존성 확인
+Step 0/4: Python 의존성 확인
   ✓ google-genai 설치됨
   ✓ openai 설치됨
   ✓ httpx 설치됨
 
-Step 1/3: CLI 도구 설치 (~/.synod/bin/)
+Step 1/4: CLI 도구 설치 (~/.synod/bin/)
   ✓ gemini-3 설치됨
   ✓ openai-cli 설치됨
   ✓ synod-parser 설치됨
   ✓ synod-classifier 설치됨
 
-Step 2/3: API 키 확인
+Step 2/4: API 키 확인
   ✓ GEMINI_API_KEY (설정됨)
   ✓ OPENAI_API_KEY (설정됨)
 
-Step 3/3: 모델 응답 시간 측정 (타임아웃: 120초)
+Step 3/4: MCP 라우팅 호환성 확인
+  ✓ MCP 라우팅 미감지
+
+Step 4/4: 모델 응답 시간 측정 (타임아웃: 120초)
 
 Provider    Model              Latency    Status
 ───────────────────────────────────────────────────

@@ -1,5 +1,13 @@
 # Synod Module: Phase 1 - Solver Round
 
+> **⛔ MANDATORY EXTERNAL EXECUTION — DO NOT SKIP**
+>
+> This phase MUST execute actual Bash commands to call `$GEMINI_CLI` and `$OPENAI_CLI`.
+> You (Claude) MUST NOT generate responses on behalf of Gemini or OpenAI.
+> You MUST NOT simulate, summarize, or shortcut external model calls.
+> You MUST NOT use `ask_codex`, `ask_gemini`, or any MCP tool as a substitute for CLI execution.
+> If CLI execution fails, follow the error-handling module — do NOT substitute your own answer.
+
 **Inputs:**
 - `SESSION_DIR` - Session state directory
 - `PROBLEM` - User's problem statement
@@ -137,7 +145,7 @@ TEMP_DIR="${SESSION_DIR}/tmp"
 # Gemini execution with completion marker
 (
   synod_progress '{"event":"model_start","model":"gemini"}'
-  $GEMINI_CLI --model {GEMINI_MODEL} --thinking {GEMINI_THINKING} --timeout ${MODEL_TIMEOUT:-110} \
+  run_cli "$GEMINI_CLI" --model {GEMINI_MODEL} --thinking {GEMINI_THINKING} --timeout ${MODEL_TIMEOUT:-110} \
     < "${TEMP_DIR}/gemini-prompt.txt" \
     > "${TEMP_DIR}/gemini-response.txt" 2>&1
   echo $? > "${TEMP_DIR}/gemini-exit-code"
@@ -147,7 +155,7 @@ GEMINI_PID=$!
 # OpenAI execution with completion marker
 (
   synod_progress '{"event":"model_start","model":"openai"}'
-  $OPENAI_CLI --model {OPENAI_MODEL} {--reasoning REASONING if o3} --timeout ${MODEL_TIMEOUT:-110} \
+  run_cli "$OPENAI_CLI" --model {OPENAI_MODEL} {--reasoning REASONING if o3} --timeout ${MODEL_TIMEOUT:-110} \
     < "${TEMP_DIR}/openai-prompt.txt" \
     > "${TEMP_DIR}/openai-response.txt" 2>&1
   echo $? > "${TEMP_DIR}/openai-exit-code"
@@ -215,7 +223,7 @@ For each response, validate SID format:
 ```bash
 # Validate with fallback
 if [[ -n "$SYNOD_PARSER_CLI" ]]; then
-  $SYNOD_PARSER_CLI --validate "$(cat ${TEMP_DIR}/gemini-response.txt)"
+  run_cli "$SYNOD_PARSER_CLI" --validate "$(cat ${TEMP_DIR}/gemini-response.txt)"
   PARSER_EXIT=$?
 else
   echo "[Warning] synod-parser not found - using inline validation"
@@ -257,7 +265,7 @@ parse_response() {
   local output_file="$2"
 
   if [[ -n "$SYNOD_PARSER_CLI" ]]; then
-    $SYNOD_PARSER_CLI "$(cat "$input_file")" > "$output_file"
+    run_cli "$SYNOD_PARSER_CLI" "$(cat "$input_file")" > "$output_file"
   else
     # Minimal inline parser
     local content
@@ -311,5 +319,35 @@ If ALL models have `can_exit: true` AND confidence scores are all >= 90:
 # Emit phase end
 synod_progress '{"event":"phase_end","phase":1}'
 ```
+
+## Step 1.7: Verify External Model Responses (MANDATORY)
+
+> **⛔ HALT CHECK — Do NOT proceed without passing this verification.**
+
+Before moving to Phase 2 or early exit, verify that external models were actually called:
+
+```bash
+# MANDATORY verification — responses must exist as real files
+VERIFY_PASS=true
+
+for MODEL_NAME in gemini openai; do
+  RESP_FILE="${SESSION_DIR}/round-1-solver/${MODEL_NAME}-response.md"
+  if [[ ! -f "$RESP_FILE" ]] || [[ ! -s "$RESP_FILE" ]]; then
+    echo "[FATAL] ${MODEL_NAME}-response.md is missing or empty." >&2
+    echo "[FATAL] External CLI was NOT executed. This is a Synod protocol violation." >&2
+    VERIFY_PASS=false
+  fi
+done
+
+if [[ "$VERIFY_PASS" != "true" ]]; then
+  echo "[HALT] Phase 1 verification FAILED. External models were not called." >&2
+  echo "[HALT] Re-execute Step 1.2 with actual Bash CLI commands." >&2
+  # Update status to reflect failure
+  # DO NOT proceed to Phase 2 or early exit
+  exit 1
+fi
+```
+
+**If this check fails, you MUST go back to Step 1.2 and execute the actual Bash commands.** Do not proceed to Phase 2 or Phase 4 without real external model responses saved as files.
 
 **Next Phase:** Proceed to Phase 2 (see `synod-phase2-critic.md`)

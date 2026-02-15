@@ -16,6 +16,31 @@
 
 ---
 
+## Pre-condition: Verify Phase 1 Outputs Exist
+
+> **⛔ MANDATORY CHECK — Synthesis MUST NOT run without real external model responses.**
+
+```bash
+# Verify Phase 1 produced actual external model responses
+PHASE1_DIR="${SESSION_DIR}/round-1-solver"
+MISSING_RESPONSES=""
+
+for MODEL_NAME in gemini openai claude; do
+  if [[ ! -f "${PHASE1_DIR}/${MODEL_NAME}-response.md" ]] || \
+     [[ ! -s "${PHASE1_DIR}/${MODEL_NAME}-response.md" ]]; then
+    MISSING_RESPONSES="${MISSING_RESPONSES} ${MODEL_NAME}"
+  fi
+done
+
+if [[ -n "$MISSING_RESPONSES" ]]; then
+  echo "[FATAL] Phase 4 cannot proceed — Phase 1 responses missing:${MISSING_RESPONSES}" >&2
+  echo "[FATAL] Go back to Phase 1 and execute actual CLI commands." >&2
+  exit 1
+fi
+```
+
+**If this check fails:** Return to Phase 1 (Step 1.2) and run the actual Bash commands. Do NOT generate synthesis from Claude-only analysis.
+
 ```bash
 # Emit phase start (v2.1)
 synod_progress '{"event":"phase_start","phase":4,"name":"Synthesis"}'
