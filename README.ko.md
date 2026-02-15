@@ -14,10 +14,17 @@
 ## 설치
 
 ```bash
-claude plugin install gh:quantsquirrel/thesqrldev-claudecode-toolkit
+# 1. 마켓플레이스 등록
+claude plugin marketplace add quantsquirrel/thesqrldev-claudecode-toolkit
+
+# 2. 플러그인 설치
+claude plugin install handoff@thesqrldev-claudecode-toolkit
+claude plugin install synod@thesqrldev-claudecode-toolkit
+claude plugin install blueprint@thesqrldev-claudecode-toolkit
+claude plugin install forge@thesqrldev-claudecode-toolkit
 ```
 
-4개 플러그인 + 관리 스킬이 한 번에 설치됩니다.
+4개 플러그인 + 관리 스킬이 설치됩니다.
 
 ## 관리 스킬
 

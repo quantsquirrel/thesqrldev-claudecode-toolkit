@@ -14,10 +14,17 @@ A curated Claude Code plugin toolkit by [quantsquirrel](https://github.com/quant
 ## Install
 
 ```bash
-claude plugin install gh:quantsquirrel/thesqrldev-claudecode-toolkit
+# 1. Register as marketplace
+claude plugin marketplace add quantsquirrel/thesqrldev-claudecode-toolkit
+
+# 2. Install plugins
+claude plugin install handoff@thesqrldev-claudecode-toolkit
+claude plugin install synod@thesqrldev-claudecode-toolkit
+claude plugin install blueprint@thesqrldev-claudecode-toolkit
+claude plugin install forge@thesqrldev-claudecode-toolkit
 ```
 
-All four plugins + management skills are installed at once.
+All four plugins + management skills are available after installation.
 
 ## Management Skills
 
