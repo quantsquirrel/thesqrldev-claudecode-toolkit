@@ -4,5 +4,6 @@
   "description": "PDCA cycle, Gap Analysis, and Dev Pipeline plugin for Claude Code",
   "author": {
     "name": "quantsquirrel"
-  }
+  },
+  "skills": "./skills/"
 }

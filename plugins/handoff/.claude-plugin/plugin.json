@@ -1,0 +1,9 @@
+{
+  "name": "handoff",
+  "version": "2.3.0",
+  "description": "Session context handoff with smart auto-scaling output",
+  "author": {
+    "name": "quantsquirrel"
+  },
+  "skills": "./plugins/handoff/skills/"
+}

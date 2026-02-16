@@ -11,7 +11,7 @@
       "description": "Session context handoff with fast/slow modes - save context before autocompact, restore with clipboard paste",
       "version": "2.3.0",
       "author": { "name": "quantsquirrel" },
-      "source": "./plugins/handoff/plugins/handoff",
+      "source": "./plugins/handoff",
       "category": "productivity",
       "homepage": "https://github.com/quantsquirrel/claude-handoff-baton",
       "tags": ["handoff", "session", "context", "clipboard", "baton"]
