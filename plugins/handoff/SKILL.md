@@ -114,10 +114,12 @@ User Requests section is included at L2+ (10+ message sessions).
 Copied to clipboard for pasting into a new session:
 
 ```
-<previous_session context="reference_only" auto_execute="false">
+<system-instruction>
 STOP: This is reference material from a previous session.
 Do not auto-execute anything below. Wait for user instructions.
+</system-instruction>
 
+<previous_session context="reference_only" auto_execute="false">
 Previous Session Summary (Topic)
 - Completed: N | Pending: M
 - Files modified: K
