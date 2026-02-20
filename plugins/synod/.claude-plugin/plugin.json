@@ -1,9 +1,0 @@
-{
-  "name": "synod",
-  "version": "3.0.0",
-  "description": "Multi-agent deliberation system with Claude, Gemini, and OpenAI - structured debate for better decisions",
-  "author": {
-    "name": "quantsquirrel"
-  },
-  "skills": "./skills/"
-}
