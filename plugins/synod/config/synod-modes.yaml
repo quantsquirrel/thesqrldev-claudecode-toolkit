@@ -150,6 +150,35 @@ keywords:
     - '방법'
     - '대안'
 
+# Difficulty-based model tiers (v3.1)
+# Tier selects models, mode selects focus/rounds
+tiers:
+  fast:
+    description: "Simple queries - cost-efficient models"
+    gemini:
+      model: "flash"
+      thinking: "medium"
+    openai:
+      model: "gpt4o"
+      reasoning: null
+  standard:
+    description: "Medium queries - balanced models (mode defaults)"
+    # No model overrides - uses mode-specific config as-is
+  deep:
+    description: "Complex queries - strongest models"
+    gemini:
+      model: "pro"
+      thinking: "high"
+    openai:
+      model: "o3"
+      reasoning: "high"
+
+# Complexity-to-tier mapping
+tier_mapping:
+  simple: "fast"
+  medium: "standard"
+  complex: "deep"
+
 # Operational thresholds
 thresholds:
   low_confidence: 50

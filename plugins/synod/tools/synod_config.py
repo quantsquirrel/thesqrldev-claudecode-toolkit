@@ -106,6 +106,68 @@ def get_threshold(name: str, default: float = 0) -> float:
     return config.get("thresholds", {}).get(name, default)
 
 
+def get_tier(complexity: str) -> str:
+    """Map complexity level to model tier.
+
+    Args:
+        complexity: Complexity level (simple, medium, complex)
+
+    Returns:
+        Tier name (fast, standard, deep). Defaults to 'standard'.
+    """
+    config = load_config()
+    mapping = config.get("tier_mapping", {})
+    return mapping.get(complexity, "standard")
+
+
+def get_tier_config(tier: str) -> dict:
+    """Get configuration for a specific tier.
+
+    Args:
+        tier: Tier name (fast, standard, deep)
+
+    Returns:
+        Tier config dict, or empty dict if tier not found.
+    """
+    config = load_config()
+    tiers = config.get("tiers", {})
+    return tiers.get(tier, {})
+
+
+def get_tiered_model_config(mode: str, provider: str, tier: Optional[str] = None) -> dict:
+    """Get model config with tier override applied.
+
+    When tier is None or 'standard', returns the original mode config.
+    For other tiers, merges tier config over mode config.
+
+    Args:
+        mode: Synod mode (review, design, debug, idea, general)
+        provider: Model provider (gemini, openai)
+        tier: Optional tier name (fast, standard, deep)
+
+    Returns:
+        Model config dict with tier overrides applied.
+    """
+    base = get_model_config(mode, provider)
+    if tier is None or tier == "standard":
+        return base
+
+    tier_cfg = get_tier_config(tier)
+    provider_override = tier_cfg.get(provider, {})
+    if not provider_override:
+        return base
+
+    merged = dict(base)
+    merged.update(provider_override)
+    return merged
+
+
+def list_tiers() -> list[str]:
+    """List all available tier names."""
+    config = load_config()
+    return list(config.get("tiers", {}).keys())
+
+
 def get_template(mode: str) -> str:
     """Get output template for a mode from synod-templates.yaml.
 

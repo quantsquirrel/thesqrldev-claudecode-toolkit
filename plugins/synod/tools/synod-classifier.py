@@ -202,12 +202,20 @@ def main():
     problem_type = classify_problem_type(prompt)
     complexity_level, rounds = determine_complexity(prompt)
 
+    # Determine tier from complexity (v3.1)
+    try:
+        from synod_config import get_tier
+        tier = get_tier(complexity_level)
+    except (ImportError, Exception):
+        tier = "standard"
+
     result = {
         "mode": mode,
         "confidence": round(confidence, 2),
         "problem_type": problem_type,
         "complexity": complexity_level,
-        "rounds": rounds
+        "rounds": rounds,
+        "tier": tier
     }
 
     # Output JSON

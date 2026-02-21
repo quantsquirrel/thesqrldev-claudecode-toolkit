@@ -119,6 +119,62 @@ OPENAI_REASONING="${OPENAI_REASONING:-}"
 BASE_ROUNDS="${BASE_ROUNDS:-3}"
 ```
 
+**v3.1:** Apply tier-based model override using classifier's tier output:
+
+```bash
+# Load tier from classifier result (v3.1)
+if [[ -n "$CLASSIFY_RESULT" ]]; then
+    TIER=$(echo "$CLASSIFY_RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tier','standard'))")
+else
+    TIER="standard"
+fi
+
+# Apply tier-based model override (v3.1)
+# Tier overrides mode defaults: fast uses cheaper models, deep uses strongest
+if [[ "$TIER" != "standard" ]]; then
+    TIERED_GEMINI_MODEL=$(python3 -c "
+import sys; sys.path.insert(0,'${TOOLS_DIR}')
+from synod_config import get_tiered_model_config
+c = get_tiered_model_config('$MODE', 'gemini', '$TIER')
+print(c.get('model',''))
+" 2>/dev/null)
+    TIERED_GEMINI_THINKING=$(python3 -c "
+import sys; sys.path.insert(0,'${TOOLS_DIR}')
+from synod_config import get_tiered_model_config
+c = get_tiered_model_config('$MODE', 'gemini', '$TIER')
+print(c.get('thinking',''))
+" 2>/dev/null)
+    TIERED_OPENAI_MODEL=$(python3 -c "
+import sys; sys.path.insert(0,'${TOOLS_DIR}')
+from synod_config import get_tiered_model_config
+c = get_tiered_model_config('$MODE', 'openai', '$TIER')
+print(c.get('model',''))
+" 2>/dev/null)
+    TIERED_OPENAI_REASONING=$(python3 -c "
+import sys; sys.path.insert(0,'${TOOLS_DIR}')
+from synod_config import get_tiered_model_config
+c = get_tiered_model_config('$MODE', 'openai', '$TIER')
+print(c.get('reasoning',''))
+" 2>/dev/null)
+
+    # Apply overrides if non-empty
+    if [[ -n "$TIERED_GEMINI_MODEL" ]]; then
+        echo "[Tier] Gemini: ${GEMINI_MODEL} → ${TIERED_GEMINI_MODEL} (tier: ${TIER})" >&2
+        GEMINI_MODEL="$TIERED_GEMINI_MODEL"
+    fi
+    if [[ -n "$TIERED_GEMINI_THINKING" ]]; then
+        GEMINI_THINKING="$TIERED_GEMINI_THINKING"
+    fi
+    if [[ -n "$TIERED_OPENAI_MODEL" ]]; then
+        echo "[Tier] OpenAI: ${OPENAI_MODEL} → ${TIERED_OPENAI_MODEL} (tier: ${TIER})" >&2
+        OPENAI_MODEL="$TIERED_OPENAI_MODEL"
+    fi
+    if [[ -n "$TIERED_OPENAI_REASONING" && "$TIERED_OPENAI_REASONING" != "None" ]]; then
+        OPENAI_REASONING="$TIERED_OPENAI_REASONING"
+    fi
+fi
+```
+
 Select configurations (overridden by setup results when available, **fallback reference** when config unavailable):
 
 | Mode | Gemini Model | Gemini Thinking | OpenAI Model | OpenAI Reasoning | Base Rounds | Dynamic |
@@ -301,8 +357,8 @@ Write initial `${SESSION_DIR}/status.json`:
 
 **Announce to user:**
 ```
-[Synod v2.0] 세션: {SESSION_ID}
-모드: {MODE} (auto-classified, confidence: {CLASSIFY_CONFIDENCE}) | 유형: {problem_type} | 복잡도: {complexity}
+[Synod v3.1] 세션: {SESSION_ID}
+모드: {MODE} (auto-classified, confidence: {CLASSIFY_CONFIDENCE}) | 티어: {TIER} | 복잡도: {complexity}
 모델: Gemini {model} ({thinking}) + OpenAI {model} ({reasoning})
 라운드: {total_rounds} {dynamic: true/false}
 Setup: {SETUP_OVERRIDE ? "적용됨 (setup-result.json)" : "미설정 - /synod-setup 권장"}
