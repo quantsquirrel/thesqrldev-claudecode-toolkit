@@ -17,6 +17,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.0] - 2026-02-21
+
+### Added
+- **Debate quality metrics**: `parse_response()` now emits per-response metrics (response_length, format_compliance, confidence_score, semantic_focus_count, has_evidence, has_logic, has_code)
+- **Round metrics aggregation**: `collect_round_metrics()` aggregates metrics across model responses
+- **Metrics display**: `format_metrics_summary()` produces one-line summary, displayed in Phase 4 synthesis output
+- **Confidence-to-tier linkage**: `get_tier()` accepts optional confidence parameter; promotes queries one tier when classifier confidence is low
+- **Problem type activation**: `problem_type` from classifier now influences Phase 0 model selection (coding->high thinking, math->o3, creative->pro)
+
+### Changed
+- **AGENTS.md overhauled**: Slimmed from 1,438 LOC to ~224 LOC; updated to v3.2.0 with accurate paths and directory structure
+- **Extended providers relocated**: deepseek, groq, grok, mistral, openrouter moved to `tools/providers/extended/`
+- **Feature flags simplified**: Removed `SYNOD_V2_CANARY` (archived); 3 core flags + 2 provider guards remain
+- **Adaptive timeout simplified**: Inline cold-start defaults replace `model_stats.py` dependency
+
+### Removed
+- **Canary system archived**: `canary.py`, `synod-canary.py`, `model_stats.py` moved to `tools/archived/`; corresponding tests to `tests/archived/`
+- **SYNOD_V2_CANARY flag**: Completely removed from all active code and documentation
+
+---
+
 ## [1.0.0] - 2026-01-31
 
 ### Added

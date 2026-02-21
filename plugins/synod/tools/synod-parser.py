@@ -214,6 +214,49 @@ def apply_defaults(text: str) -> dict[str, Any]:
     }
 
 
+def _compute_metrics(text: str, parsed: dict) -> dict:
+    """Compute debate quality metrics from a parsed response."""
+    conf = parsed.get("confidence") or {}
+    return {
+        "response_length": len(text),
+        "format_compliance": parsed.get("validation", {}).get("is_valid", False),
+        "confidence_score": conf.get("score", 0),
+        "semantic_focus_count": len(parsed.get("semantic_focus", [])),
+        "has_evidence": conf.get("evidence") is not None,
+        "has_logic": conf.get("logic") is not None,
+        "has_code": parsed.get("has_code", False),
+    }
+
+
+def collect_round_metrics(parsed_results: list) -> dict:
+    """Aggregate metrics from multiple parse results for a debate round."""
+    if not parsed_results:
+        return {
+            "avg_confidence": 0, "compliance_rate": 0,
+            "total_responses": 0, "avg_response_length": 0,
+            "total_semantic_focuses": 0,
+        }
+
+    n = len(parsed_results)
+    metrics_list = [r["metrics"] for r in parsed_results]
+    return {
+        "avg_confidence": round(sum(m["confidence_score"] for m in metrics_list) / n),
+        "compliance_rate": sum(1 for m in metrics_list if m["format_compliance"]),
+        "total_responses": n,
+        "avg_response_length": round(sum(m["response_length"] for m in metrics_list) / n),
+        "total_semantic_focuses": sum(m["semantic_focus_count"] for m in metrics_list),
+    }
+
+
+def format_metrics_summary(metrics: dict) -> str:
+    """Return a human-readable one-line summary of round metrics."""
+    return (
+        f"토론 품질: confidence 평균 {metrics['avg_confidence']}%, "
+        f"format 준수율 {metrics['compliance_rate']}/{metrics['total_responses']}, "
+        f"semantic focus 총 {metrics['total_semantic_focuses']}개"
+    )
+
+
 def parse_response(text: str) -> dict[str, Any]:
     """Parse full response and extract all SID signals."""
     validation = validate_format(text)
@@ -221,6 +264,7 @@ def parse_response(text: str) -> dict[str, Any]:
     if not validation["is_valid"]:
         result = apply_defaults(text)
         result["validation"] = validation
+        result["metrics"] = _compute_metrics(text, result)
         return result
 
     result = {
@@ -236,6 +280,7 @@ def parse_response(text: str) -> dict[str, Any]:
         result["can_exit_early"] = result["confidence"].get("can_exit", False)
         result["high_confidence"] = result["confidence"]["score"] >= 85
 
+    result["metrics"] = _compute_metrics(text, result)
     return result
 
 

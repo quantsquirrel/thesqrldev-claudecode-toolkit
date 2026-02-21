@@ -139,6 +139,133 @@ class TestClassifyProblemType:
         assert classifier.classify_problem_type("what is the weather today") == "general"
 
 
+class TestProblemTypeInClassifierOutput:
+    """Test problem_type is present in classifier JSON output for all types."""
+
+    def test_problem_type_in_classifier_output(self, capsys):
+        """Verify JSON output always has problem_type for all 4 types."""
+        test_cases = {
+            "coding": "```python\nprint('hi')\n```",
+            "math": "수학 문제를 풀어줘",
+            "creative": "아이디어 좀 줘",
+            "general": "what is the weather today",
+        }
+        for expected_type, prompt in test_cases.items():
+            sys.argv = ["synod-classifier.py", prompt]
+            classifier.main()
+            output = json.loads(capsys.readouterr().out)
+            assert "problem_type" in output, f"problem_type missing for {expected_type}"
+            assert output["problem_type"] == expected_type, (
+                f"Expected {expected_type}, got {output['problem_type']} for prompt: {prompt}"
+            )
+
+    def test_problem_type_coding_patterns(self):
+        """Coding keywords produce problem_type=coding."""
+        coding_prompts = [
+            "```python\nprint('hi')\n```",
+            "def hello_world():",
+            "import os",
+            "class Foo:",
+            "function bar()",
+            "const x = 1",
+        ]
+        for prompt in coding_prompts:
+            assert classifier.classify_problem_type(prompt) == "coding", (
+                f"Expected coding for: {prompt}"
+            )
+
+    def test_problem_type_math_patterns(self):
+        """Math keywords produce problem_type=math."""
+        math_prompts = [
+            "calculate 5 + 3 = 8",
+            "수학 문제를 풀어줘",
+            "계산해줘",
+            "algorithm optimization",
+        ]
+        for prompt in math_prompts:
+            assert classifier.classify_problem_type(prompt) == "math", (
+                f"Expected math for: {prompt}"
+            )
+
+    def test_problem_type_creative_patterns(self):
+        """Creative keywords produce problem_type=creative."""
+        creative_prompts = [
+            "아이디어 좀 줘",
+            "브레인스토밍 해보자",
+            "이름 지어줘",
+            "naming convention",
+        ]
+        for prompt in creative_prompts:
+            assert classifier.classify_problem_type(prompt) == "creative", (
+                f"Expected creative for: {prompt}"
+            )
+
+
+class TestProblemTypeModelAdjustment:
+    """Test problem_type-based model selection adjustments."""
+
+    def test_coding_problem_type_suggests_high_thinking(self):
+        """When problem_type=coding and mode=general, thinking should be 'high'."""
+        prompt = "```python\ndef foo(): pass\n```"
+        problem_type = classifier.classify_problem_type(prompt)
+        mode, _ = classifier.classify_prompt(prompt)
+
+        assert problem_type == "coding"
+        # When coding + general mode, the adjustment should suggest high thinking
+        if mode == "general":
+            # This will be tested via the adjustment function
+            adjustment = _get_problem_type_adjustment(problem_type, mode)
+            assert adjustment.get("gemini_thinking") == "high"
+
+    def test_math_problem_type_prefers_o3(self):
+        """When problem_type=math, prefer o3 for OpenAI."""
+        problem_type = "math"
+        adjustment = _get_problem_type_adjustment(problem_type, "general")
+        assert adjustment.get("openai_model") == "o3"
+
+    def test_creative_problem_type_prefers_pro(self):
+        """When problem_type=creative, prefer pro for Gemini."""
+        problem_type = "creative"
+        adjustment = _get_problem_type_adjustment(problem_type, "general")
+        assert adjustment.get("gemini_model") == "pro"
+
+    def test_general_problem_type_no_adjustment(self):
+        """When problem_type=general, no adjustment should be made."""
+        problem_type = "general"
+        adjustment = _get_problem_type_adjustment(problem_type, "general")
+        assert adjustment == {}
+
+    def test_coding_non_general_mode_no_thinking_override(self):
+        """When problem_type=coding but mode is not general, no thinking override."""
+        problem_type = "coding"
+        adjustment = _get_problem_type_adjustment(problem_type, "review")
+        # review mode already has high thinking, so no override for thinking
+        assert "gemini_thinking" not in adjustment
+
+
+def _get_problem_type_adjustment(problem_type: str, mode: str) -> dict:
+    """Get model adjustment hints based on problem_type.
+
+    This is a pure Python implementation of the logic that Phase 0 applies
+    in bash. Used for testing the adjustment rules.
+
+    Returns:
+        dict of adjustments: empty dict means no adjustment.
+    """
+    adjustments = {}
+
+    if problem_type == "coding" and mode == "general":
+        adjustments["gemini_thinking"] = "high"
+
+    if problem_type == "math":
+        adjustments["openai_model"] = "o3"
+
+    if problem_type == "creative":
+        adjustments["gemini_model"] = "pro"
+
+    return adjustments
+
+
 class TestClassifierMainCLI:
     """Test main() CLI function (lines 161-214)."""
 

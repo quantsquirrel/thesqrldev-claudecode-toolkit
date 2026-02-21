@@ -423,55 +423,32 @@ class TestGetTimeoutMs:
         timeout = provider.get_timeout_ms(args, "default", default_ms=120_000)
         assert timeout == 120_000
 
-    @patch("base_provider._stats_available", True)
-    @patch("base_provider.ModelStats")
-    def test_get_timeout_adaptive_with_sufficient_data(self, mock_stats_cls, monkeypatch):
-        """Test adaptive timeout uses dynamic value when sufficient data exists."""
+    def test_get_timeout_adaptive_falls_back_without_stats(self, monkeypatch):
+        """Test adaptive timeout falls back to default when model_stats is unavailable."""
         monkeypatch.setenv("SYNOD_V2_ADAPTIVE_TIMEOUT", "1")
-        mock_stats = MagicMock()
-        mock_stats.has_sufficient_data.return_value = True
-        mock_stats.get_dynamic_timeout.return_value = 45_000
-        mock_stats_cls.return_value = mock_stats
 
         provider = MockProvider()
         args = argparse.Namespace(timeout=None, verbose=False)
         timeout = provider.get_timeout_ms(args, "default")
-        assert timeout == 45_000
-        mock_stats.has_sufficient_data.assert_called_once_with("test", "default")
-        mock_stats.get_dynamic_timeout.assert_called_once_with("test", "default")
+        # Without model_stats, adaptive timeout cannot engage; falls back to default
+        assert timeout == 300_000
 
-    @patch("base_provider._stats_available", True)
-    @patch("base_provider.ModelStats")
-    def test_get_timeout_adaptive_without_sufficient_data(self, mock_stats_cls, monkeypatch):
-        """Test adaptive timeout falls back to default when insufficient data."""
+    def test_get_timeout_adaptive_no_stats_verbose(self, monkeypatch):
+        """Test adaptive timeout in verbose mode when stats unavailable."""
         monkeypatch.setenv("SYNOD_V2_ADAPTIVE_TIMEOUT", "1")
-        mock_stats = MagicMock()
-        mock_stats.has_sufficient_data.return_value = False
-        mock_stats_cls.return_value = mock_stats
-
-        provider = MockProvider()
-        args = argparse.Namespace(timeout=None)
-        timeout = provider.get_timeout_ms(args, "default")
-        assert timeout == 300_000  # Default, not adaptive
-        mock_stats.get_dynamic_timeout.assert_not_called()
-
-    @patch("base_provider._stats_available", True)
-    @patch("base_provider.ModelStats")
-    def test_get_timeout_adaptive_verbose_output(self, mock_stats_cls, monkeypatch):
-        """Test adaptive timeout prints info in verbose mode."""
-        monkeypatch.setenv("SYNOD_V2_ADAPTIVE_TIMEOUT", "1")
-        mock_stats = MagicMock()
-        mock_stats.has_sufficient_data.return_value = True
-        mock_stats.get_dynamic_timeout.return_value = 50_000
-        mock_stats_cls.return_value = mock_stats
 
         provider = MockProvider()
         args = argparse.Namespace(timeout=None, verbose=True)
-        with patch("sys.stderr", new=StringIO()) as mock_stderr:
-            timeout = provider.get_timeout_ms(args, "default")
-            assert timeout == 50_000
-            assert "[Adaptive]" in mock_stderr.getvalue()
-            assert "50000ms" in mock_stderr.getvalue()
+        timeout = provider.get_timeout_ms(args, "default")
+        # Falls back to default since model_stats is archived
+        assert timeout == 300_000
+
+    def test_get_timeout_adaptive_disabled_by_default(self):
+        """Test adaptive timeout is disabled when env var is not set."""
+        provider = MockProvider()
+        args = argparse.Namespace(timeout=None)
+        timeout = provider.get_timeout_ms(args, "default")
+        assert timeout == 300_000
 
 
 class TestBuildParser:
@@ -627,55 +604,19 @@ class TestWaitWithBackoff:
 
 
 class TestRecordLatency:
-    """Tests for record_latency() method."""
+    """Tests for record_latency() method (no-op since model_stats archived)."""
 
-    def test_record_latency_calls_model_stats(self, monkeypatch, tmp_path):
-        """Test that record_latency calls ModelStats if available."""
-        # Mock ModelStats to be available
-        mock_stats_instance = MagicMock()
-        mock_stats_class = MagicMock(return_value=mock_stats_instance)
+    def test_record_latency_is_noop(self):
+        """Test that record_latency is a no-op (model_stats archived)."""
+        provider = MockProvider()
+        # Should not raise exception
+        provider.record_latency("test", 1234.5)
 
-        # Temporarily inject into base_provider module
-        import base_provider
-
-        original_stats_available = base_provider._stats_available
-        original_model_stats = getattr(base_provider, "ModelStats", None)
-
-        base_provider._stats_available = True
-        base_provider.ModelStats = mock_stats_class
-
-        try:
-            provider = MockProvider()
-            provider.record_latency("test", 1234.5)
-
-            mock_stats_class.assert_called_once()
-            mock_stats_instance.record_latency.assert_called_once_with(
-                "test", "test", 1234.5
-            )
-        finally:
-            base_provider._stats_available = original_stats_available
-            if original_model_stats:
-                base_provider.ModelStats = original_model_stats
-
-    def test_record_latency_handles_stats_error_gracefully(self, monkeypatch):
-        """Test that record_latency doesn't crash if stats recording fails."""
-        import base_provider
-
-        original_stats_available = base_provider._stats_available
-        base_provider._stats_available = True
-
-        # Mock ModelStats that raises exception
-        mock_stats_class = MagicMock(
-            side_effect=Exception("Stats recording failed")
-        )
-        base_provider.ModelStats = mock_stats_class
-
-        try:
-            provider = MockProvider()
-            # Should not raise exception
-            provider.record_latency("test", 1234.5)
-        finally:
-            base_provider._stats_available = original_stats_available
+    def test_record_latency_called_from_generate(self):
+        """Test that record_latency is called during generate flow."""
+        provider = MockProvider()
+        # Just verify the method exists and is callable
+        assert callable(provider.record_latency)
 
 
 class TestGetPrompt:

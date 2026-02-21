@@ -201,6 +201,35 @@ Add a collapsible section showing deliberation process:
 </details>
 ```
 
+## Step 4.4b: Append Debate Quality Metrics (v3.2)
+
+After the decision rationale, append a quality metrics summary line to the final output:
+
+```bash
+# Collect metrics from all Phase 1 parsed responses
+METRICS_SUMMARY=$(python3 -c "
+import sys, json; sys.path.insert(0,'${TOOLS_DIR}')
+from importlib.util import spec_from_file_location, module_from_spec
+spec = spec_from_file_location('synod_parser', '${TOOLS_DIR}/synod-parser.py')
+sp = module_from_spec(spec); spec.loader.exec_module(sp)
+results = []
+for f in ['gemini','openai','claude']:
+    path = '${SESSION_DIR}/round-1-solver/' + f + '-parsed.json'
+    try:
+        with open(path) as fh: results.append(json.load(fh))
+    except: pass
+if results:
+    agg = sp.collect_round_metrics(results)
+    print(sp.format_metrics_summary(agg))
+" 2>/dev/null)
+
+# Append to synthesis output if metrics available
+if [[ -n "$METRICS_SUMMARY" ]]; then
+    echo "" >> "${SESSION_DIR}/round-4-synthesis.md"
+    echo "$METRICS_SUMMARY" >> "${SESSION_DIR}/round-4-synthesis.md"
+fi
+```
+
 ## Step 4.5: Save Final State
 
 Save `${SESSION_DIR}/round-4-synthesis.md` with full output.

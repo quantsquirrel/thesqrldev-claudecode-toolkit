@@ -106,18 +106,31 @@ def get_threshold(name: str, default: float = 0) -> float:
     return config.get("thresholds", {}).get(name, default)
 
 
-def get_tier(complexity: str) -> str:
-    """Map complexity level to model tier.
+def get_tier(complexity: str, confidence: Optional[float] = None) -> str:
+    """Map complexity level to model tier, with optional confidence-based promotion.
+
+    When confidence is below the low_confidence threshold, the tier is promoted
+    one level (fast->standard, standard->deep) to compensate for uncertainty.
 
     Args:
         complexity: Complexity level (simple, medium, complex)
+        confidence: Optional classifier confidence (0.0-1.0). When below
+            threshold, tier is promoted one level.
 
     Returns:
         Tier name (fast, standard, deep). Defaults to 'standard'.
     """
     config = load_config()
     mapping = config.get("tier_mapping", {})
-    return mapping.get(complexity, "standard")
+    base_tier = mapping.get(complexity, "standard")
+
+    if confidence is not None:
+        threshold = get_threshold("low_confidence", 50) / 100
+        if confidence < threshold:
+            promotion = {"fast": "standard", "standard": "deep"}
+            base_tier = promotion.get(base_tier, base_tier)
+
+    return base_tier
 
 
 def get_tier_config(tier: str) -> dict:

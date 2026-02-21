@@ -27,14 +27,13 @@ SYNOD_BIN = SYNOD_DIR / "bin"
 CLI_TOOLS = {
     "gemini-3": "gemini-3.py",
     "openai-cli": "openai-cli.py",
-    "deepseek-cli": "deepseek-cli.py",
-    "groq-cli": "groq-cli.py",
-    "grok-cli": "grok-cli.py",
-    "mistral-cli": "mistral-cli.py",
-    "openrouter-cli": "openrouter-cli.py",
+    "deepseek-cli": "providers/extended/deepseek-cli.py",
+    "groq-cli": "providers/extended/groq-cli.py",
+    "grok-cli": "providers/extended/grok-cli.py",
+    "mistral-cli": "providers/extended/mistral-cli.py",
+    "openrouter-cli": "providers/extended/openrouter-cli.py",
     "synod-parser": "synod-parser.py",
     "synod-classifier": "synod-classifier.py",
-    "synod-canary": "synod-canary.py",
 }
 
 # Required Python packages: pip_name -> import_name

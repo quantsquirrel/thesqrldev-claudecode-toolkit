@@ -137,6 +137,44 @@ class TestTierConfig:
         assert config["model"] == "pro"
         assert config["thinking"] == "high"
 
+    # --- Confidence-to-Tier Linkage (v3.2) ---
+
+    def test_get_tier_with_confidence_high(self):
+        """High confidence does not promote tier: simple stays fast."""
+        from tools.synod_config import get_tier
+        assert get_tier("simple", confidence=0.8) == "fast"
+
+    def test_get_tier_with_confidence_low(self):
+        """Low confidence promotes tier: simple -> standard."""
+        from tools.synod_config import get_tier
+        assert get_tier("simple", confidence=0.3) == "standard"
+
+    def test_get_tier_with_confidence_medium_low(self):
+        """Low confidence promotes tier: medium -> deep."""
+        from tools.synod_config import get_tier
+        assert get_tier("medium", confidence=0.3) == "deep"
+
+    def test_get_tier_complex_no_promotion(self):
+        """Complex is already max tier, low confidence doesn't change it."""
+        from tools.synod_config import get_tier
+        assert get_tier("complex", confidence=0.3) == "deep"
+
+    def test_get_tier_no_confidence_backward_compat(self):
+        """Without confidence param, behavior is unchanged (backward compat)."""
+        from tools.synod_config import get_tier
+        assert get_tier("simple") == "fast"
+        assert get_tier("medium") == "standard"
+        assert get_tier("complex") == "deep"
+
+    def test_get_tier_confidence_threshold_from_config(self):
+        """Promotion threshold comes from YAML thresholds.low_confidence."""
+        from tools.synod_config import get_tier, get_threshold
+        threshold = get_threshold("low_confidence", 50) / 100  # 0.5
+        # Confidence just above threshold: no promotion
+        assert get_tier("simple", confidence=threshold + 0.01) == "fast"
+        # Confidence just below threshold: promoted
+        assert get_tier("simple", confidence=threshold - 0.01) == "standard"
+
 
 # --- TestClassifierTierOutput: synod-classifier.py tier output ---
 

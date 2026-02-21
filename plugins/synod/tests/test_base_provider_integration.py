@@ -34,9 +34,15 @@ def load_provider(filename):
         os.environ["SYNOD_ENABLE_GROK"] = "1"
 
     try:
+        filepath = os.path.join(os.path.dirname(__file__), "..", "tools", filename)
+
+        # Check providers/extended/ if not found in tools/
+        if not os.path.exists(filepath):
+            filepath = os.path.join(os.path.dirname(__file__), "..", "tools", "providers", "extended", filename)
+
         spec = importlib.util.spec_from_file_location(
             filename.replace("-", "_").replace(".py", ""),
-            os.path.join(os.path.dirname(__file__), "..", "tools", filename)
+            filepath
         )
         module = importlib.util.module_from_spec(spec)
 

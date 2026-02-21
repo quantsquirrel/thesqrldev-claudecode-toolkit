@@ -355,3 +355,134 @@ class TestParserCLI:
         with pytest.raises(SystemExit) as exc_info:
             synod_parser.main()
         assert exc_info.value.code == 1
+
+
+class TestComputeMetrics:
+    """Tests for _compute_metrics() and debate quality metric integration."""
+
+    def test_parse_response_includes_metrics(self, sample_valid_response):
+        """Test that valid SID input produces result with metrics key."""
+        result = synod_parser.parse_response(sample_valid_response)
+        assert "metrics" in result
+
+    def test_parse_response_metrics_fields(self, sample_valid_response):
+        """Test that metrics dict has all required fields."""
+        result = synod_parser.parse_response(sample_valid_response)
+        metrics = result["metrics"]
+        assert "response_length" in metrics
+        assert "format_compliance" in metrics
+        assert "confidence_score" in metrics
+        assert "semantic_focus_count" in metrics
+        assert "has_evidence" in metrics
+        assert "has_logic" in metrics
+        assert "has_code" in metrics
+
+    def test_parse_response_metrics_values_valid(self, sample_valid_response):
+        """Test metric values for a valid SID response."""
+        result = synod_parser.parse_response(sample_valid_response)
+        metrics = result["metrics"]
+        assert metrics["response_length"] == len(sample_valid_response)
+        assert metrics["format_compliance"] is True
+        assert metrics["confidence_score"] == 85
+        assert metrics["semantic_focus_count"] == 3
+        assert metrics["has_evidence"] is True
+        assert metrics["has_logic"] is True
+        assert metrics["has_code"] is False
+
+    def test_parse_response_metrics_defaults(self, sample_invalid_response):
+        """Test that malformed input still produces metrics with degraded values."""
+        result = synod_parser.parse_response(sample_invalid_response)
+        assert "metrics" in result
+        metrics = result["metrics"]
+        assert metrics["format_compliance"] is False
+        assert metrics["confidence_score"] == 50  # default score
+        assert metrics["has_evidence"] is False
+        assert metrics["has_logic"] is False
+
+    def test_compute_metrics_with_code(self):
+        """Test metrics detection of code blocks."""
+        text = """
+        <confidence score="80"></confidence>
+        <semantic_focus>Code example</semantic_focus>
+        ```python
+        def hello():
+            print("world")
+        ```
+        """
+        result = synod_parser.parse_response(text)
+        assert result["metrics"]["has_code"] is True
+
+
+class TestCollectRoundMetrics:
+    """Tests for collect_round_metrics() aggregation function."""
+
+    def test_collect_round_metrics(self):
+        """Test aggregation of metrics from multiple parse results."""
+        parsed_results = [
+            {"metrics": {"confidence_score": 80, "format_compliance": True,
+                         "response_length": 500, "semantic_focus_count": 3,
+                         "has_evidence": True, "has_logic": True, "has_code": False}},
+            {"metrics": {"confidence_score": 70, "format_compliance": True,
+                         "response_length": 400, "semantic_focus_count": 2,
+                         "has_evidence": True, "has_logic": False, "has_code": True}},
+            {"metrics": {"confidence_score": 90, "format_compliance": False,
+                         "response_length": 600, "semantic_focus_count": 4,
+                         "has_evidence": False, "has_logic": True, "has_code": False}},
+        ]
+        result = synod_parser.collect_round_metrics(parsed_results)
+        assert result["avg_confidence"] == 80  # (80+70+90)/3
+        assert result["compliance_rate"] == 2  # 2 out of 3
+        assert result["total_responses"] == 3
+        assert result["avg_response_length"] == 500  # (500+400+600)/3
+        assert result["total_semantic_focuses"] == 9  # 3+2+4
+
+    def test_collect_round_metrics_single(self):
+        """Test aggregation with single result."""
+        parsed_results = [
+            {"metrics": {"confidence_score": 85, "format_compliance": True,
+                         "response_length": 300, "semantic_focus_count": 2,
+                         "has_evidence": True, "has_logic": True, "has_code": False}},
+        ]
+        result = synod_parser.collect_round_metrics(parsed_results)
+        assert result["avg_confidence"] == 85
+        assert result["compliance_rate"] == 1
+        assert result["total_responses"] == 1
+
+    def test_collect_round_metrics_empty(self):
+        """Test aggregation with empty list."""
+        result = synod_parser.collect_round_metrics([])
+        assert result["avg_confidence"] == 0
+        assert result["compliance_rate"] == 0
+        assert result["total_responses"] == 0
+
+
+class TestFormatMetricsSummary:
+    """Tests for format_metrics_summary() display function."""
+
+    def test_format_metrics_summary(self):
+        """Test human-readable one-line summary generation."""
+        metrics = {
+            "avg_confidence": 78,
+            "compliance_rate": 3,
+            "total_responses": 3,
+            "avg_response_length": 500,
+            "total_semantic_focuses": 9,
+        }
+        result = synod_parser.format_metrics_summary(metrics)
+        assert isinstance(result, str)
+        assert "78%" in result
+        assert "3/3" in result
+
+    def test_format_metrics_summary_low_compliance(self):
+        """Test summary with low compliance rate."""
+        metrics = {
+            "avg_confidence": 45,
+            "compliance_rate": 1,
+            "total_responses": 3,
+            "avg_response_length": 200,
+            "total_semantic_focuses": 2,
+        }
+        result = synod_parser.format_metrics_summary(metrics)
+        assert isinstance(result, str)
+        assert "45%" in result
+        assert "1/3" in result

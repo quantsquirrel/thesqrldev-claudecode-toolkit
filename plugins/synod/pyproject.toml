@@ -1,6 +1,6 @@
 [project]
 name = "synod"
-version = "3.0.1"
+version = "3.2.0"
 description = "Multi-agent deliberation system for Claude Code"
 readme = "README.md"
 license = {text = "MIT"}
@@ -98,13 +98,14 @@ disable_error_code = ["union-attr", "call-overload", "return-value", "assignment
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+norecursedirs = ["archived"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --cov=tools --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["tools", "benchmark"]
-omit = ["*/tests/*", "*/__pycache__/*", "tools/test_security.py", "tools/synod-setup.py"]
+omit = ["*/tests/*", "*/__pycache__/*", "tools/test_security.py", "tools/synod-setup.py", "tools/archived/*", "tools/providers/extended/*"]
 
 [tool.coverage.report]
 exclude_lines = [

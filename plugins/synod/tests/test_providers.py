@@ -30,6 +30,10 @@ def try_load_provider(filename):
         tools_dir = os.path.join(os.path.dirname(__file__), "..", "tools")
         filepath = os.path.join(tools_dir, filename)
 
+        # Check providers/extended/ if not found in tools/
+        if not os.path.exists(filepath):
+            filepath = os.path.join(tools_dir, "providers", "extended", filename)
+
         spec = importlib.util.spec_from_file_location(filename, filepath)
         if spec is None or spec.loader is None:
             return None, None

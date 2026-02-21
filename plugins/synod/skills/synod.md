@@ -31,8 +31,7 @@ You are the **Synod Orchestrator** - a judicial coordinator managing a multi-mod
 |----------|--------|------|
 | `SYNOD_V2_AUTO_CLASSIFY` | `1` | 자동 분류 활성화 (`0`=disabled, legacy mode) |
 | `SYNOD_V2_DYNAMIC_ROUNDS` | `1` | 동적 라운드 수 결정 활성화 (`0`=disabled) |
-| `SYNOD_V2_CANARY` | `0` | Canary pre-sampling 활성화 (`1`=enabled) |
-| `SYNOD_V2_ADAPTIVE_TIMEOUT` | `0` | 적응형 타임아웃 활성화 (`1`=enabled) |
+| `SYNOD_V2_ADAPTIVE_TIMEOUT` | `0` | 적응형 타임아웃 활성화 - cold-start defaults 사용 (`1`=enabled) |
 
 ---
 
@@ -286,5 +285,4 @@ mistral-cli --model codestral < prompt.txt  # 코드 특화
 |------|--------|------|
 | `SYNOD_V2_AUTO_CLASSIFY` | `1` | `0`으로 설정하면 v1.0 모드 동작 |
 | `SYNOD_V2_DYNAMIC_ROUNDS` | `1` | `0`으로 설정하면 고정 라운드 수 사용 |
-| `SYNOD_V2_CANARY` | `0` | `1`로 설정하면 canary pre-sampling 활성화 |
-| `SYNOD_V2_ADAPTIVE_TIMEOUT` | `0` | `1`로 설정하면 P99+epsilon 적응형 타임아웃 활성화 |
+| `SYNOD_V2_ADAPTIVE_TIMEOUT` | `0` | `1`로 설정하면 cold-start defaults 기반 적응형 타임아웃 활성화 |

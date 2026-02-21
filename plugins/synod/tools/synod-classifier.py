@@ -205,7 +205,7 @@ def main():
     # Determine tier from complexity (v3.1)
     try:
         from synod_config import get_tier
-        tier = get_tier(complexity_level)
+        tier = get_tier(complexity_level, confidence)
     except (ImportError, Exception):
         tier = "standard"
 

@@ -6,7 +6,7 @@ Extracts common patterns from all provider CLIs:
 - API key validation
 - Model override via environment variables
 - Retry logic with exponential backoff
-- ModelStats integration (latency tracking, adaptive timeout)
+- Adaptive timeout with cold-start defaults
 - Argument parsing
 - Input handling (stdin/args/positional)
 - Security: input sanitization, key validation, error sanitization
@@ -20,14 +20,16 @@ import sys
 import time
 from abc import ABC, abstractmethod
 
-# Import model stats for latency tracking
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-try:
-    from model_stats import ModelStats
-
-    _stats_available = True
-except ImportError:
-    _stats_available = False
+# Inline cold-start timeout defaults (formerly from model_stats.py, now archived)
+COLD_START_DEFAULTS = {
+    "gemini:flash": 60_000, "gemini:pro": 120_000,
+    "openai:gpt4o": 60_000, "openai:o3": 180_000, "openai:o4mini": 60_000,
+    "deepseek:chat": 60_000, "deepseek:reasoner": 300_000,
+    "groq:8b": 30_000, "groq:70b": 45_000, "groq:mixtral": 60_000,
+    "grok:fast": 60_000, "grok:grok4": 120_000,
+    "mistral:large": 120_000, "mistral:small": 60_000,
+    "openrouter:claude": 120_000, "openrouter:llama": 60_000,
+}
 
 
 class BaseProvider(ABC):
@@ -231,13 +233,13 @@ class BaseProvider(ABC):
         else:
             timeout_ms = default_ms
 
-        # Apply adaptive timeout if enabled
-        if _stats_available and os.environ.get("SYNOD_V2_ADAPTIVE_TIMEOUT", "0") == "1":
-            stats = ModelStats()
-            if stats.has_sufficient_data(self.PROVIDER, model_key):
-                timeout_ms = int(stats.get_dynamic_timeout(self.PROVIDER, model_key))
+        # Apply adaptive timeout from cold-start defaults if enabled
+        if os.environ.get("SYNOD_V2_ADAPTIVE_TIMEOUT", "0") == "1":
+            key = f"{self.PROVIDER}:{model_key}"
+            if key in COLD_START_DEFAULTS:
+                timeout_ms = COLD_START_DEFAULTS[key]
                 if hasattr(args, "verbose") and args.verbose:
-                    print(f"[Adaptive] Timeout: {timeout_ms}ms (P99+epsilon)", file=sys.stderr)
+                    print(f"[Adaptive] Timeout: {timeout_ms}ms (cold-start default)", file=sys.stderr)
 
         # Apply bounds with warnings
         original_timeout = timeout_ms
@@ -257,17 +259,13 @@ class BaseProvider(ABC):
         return timeout_ms
 
     def record_latency(self, model_key: str, latency_ms: float):
-        """Record latency to model stats.
+        """Record latency (no-op since model_stats archived).
 
         Args:
             model_key: Model key for stats recording
             latency_ms: Latency in milliseconds
         """
-        if _stats_available:
-            try:
-                ModelStats().record_latency(self.PROVIDER, model_key, latency_ms)
-            except Exception:
-                pass  # Don't fail on stats recording errors
+        pass  # model_stats archived; latency recording disabled
 
     def sanitize_error(self, error: str) -> str:
         """Sanitize error messages to prevent API key leakage.

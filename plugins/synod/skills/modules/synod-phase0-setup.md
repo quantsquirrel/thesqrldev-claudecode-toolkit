@@ -50,6 +50,9 @@ MEDIUM_MAX=$(python3 "${TOOLS_DIR}/synod_config.py" complexity medium max_score 
 if [[ "${SYNOD_V2_DYNAMIC_ROUNDS:-1}" == "1" && -n "$CLASSIFY_RESULT" ]]; then
     COMPLEXITY=$(echo "$CLASSIFY_RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['complexity'])")
     AUTO_ROUNDS=$(echo "$CLASSIFY_RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['rounds'])")
+    PROBLEM_TYPE=$(echo "$CLASSIFY_RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('problem_type','general'))")
+
+    echo "[ProblemType] ${PROBLEM_TYPE}" >&2
 
     # design/idea modes get minimum 3 rounds
     if [[ "$MODE" == "design" || "$MODE" == "idea" ]]; then
@@ -175,6 +178,38 @@ print(c.get('reasoning',''))
 fi
 ```
 
+**v3.2:** Apply problem_type-aware model adjustments. These are soft hints that refine model selection based on the nature of the problem (coding, math, creative). Existing fallbacks remain intact.
+
+```bash
+# Apply problem_type-aware adjustments (v3.2)
+# PROBLEM_TYPE is extracted in Step 0.3 from CLASSIFY_RESULT
+if [[ -n "$PROBLEM_TYPE" && "$PROBLEM_TYPE" != "general" ]]; then
+    case "$PROBLEM_TYPE" in
+        coding)
+            # Coding problems benefit from higher thinking in general mode
+            if [[ "$MODE" == "general" ]]; then
+                echo "[ProblemType] coding + general → thinking: high" >&2
+                GEMINI_THINKING="high"
+            fi
+            ;;
+        math)
+            # Math problems benefit from reasoning models (o3 over gpt4o)
+            if [[ "$OPENAI_MODEL" == "gpt4o" ]]; then
+                echo "[ProblemType] math → OpenAI: gpt4o → o3" >&2
+                OPENAI_MODEL="o3"
+            fi
+            ;;
+        creative)
+            # Creative problems benefit from pro model (pro over flash)
+            if [[ "$GEMINI_MODEL" == "flash" ]]; then
+                echo "[ProblemType] creative → Gemini: flash → pro" >&2
+                GEMINI_MODEL="pro"
+            fi
+            ;;
+    esac
+fi
+```
+
 Select configurations (overridden by setup results when available, **fallback reference** when config unavailable):
 
 | Mode | Gemini Model | Gemini Thinking | OpenAI Model | OpenAI Reasoning | Base Rounds | Dynamic |
@@ -215,45 +250,6 @@ fi
 **Note:** When `SYNOD_V2_DYNAMIC_ROUNDS=1`, round count is determined by complexity analysis from Step 0.3. The "Base Rounds" column is the fallback when dynamic rounds is disabled.
 
 **Note:** Run `/synod-setup` to generate `~/.synod/setup-result.json`. Without it, the static table above is used as-is.
-
-## Step 0.4a: Canary Pre-Sampling (v2.0)
-
-**When enabled** (`SYNOD_V2_CANARY=1`), probe model health before full requests:
-
-```bash
-if [[ "${SYNOD_V2_CANARY:-0}" == "1" ]]; then
-    echo "[Canary] Pre-sampling model health..." >&2
-
-    # Probe Gemini
-    if [[ -n "$GEMINI_MODEL" ]]; then
-        CANARY_GEMINI=$(python3 "${TOOLS_DIR}/synod-canary.py" --provider gemini --model "$GEMINI_MODEL" --quiet 2>/dev/null)
-        if echo "$CANARY_GEMINI" | python3 -c "import sys,json; sys.exit(0 if not json.load(sys.stdin).get('fallback_recommended') else 1)" 2>/dev/null; then
-            : # Gemini healthy
-        else
-            echo "[Canary] Gemini ${GEMINI_MODEL} unhealthy, falling back to flash" >&2
-            GEMINI_MODEL="flash"
-        fi
-    fi
-
-    # Probe OpenAI
-    if [[ -n "$OPENAI_MODEL" ]]; then
-        CANARY_OPENAI=$(python3 "${TOOLS_DIR}/synod-canary.py" --provider openai --model "$OPENAI_MODEL" --quiet 2>/dev/null)
-        if echo "$CANARY_OPENAI" | python3 -c "import sys,json; sys.exit(0 if not json.load(sys.stdin).get('fallback_recommended') else 1)" 2>/dev/null; then
-            : # OpenAI healthy
-        else
-            echo "[Canary] OpenAI ${OPENAI_MODEL} unhealthy, falling back to gpt4o" >&2
-            OPENAI_MODEL="gpt4o"
-        fi
-    fi
-fi
-```
-
-**Short-circuit conditions:**
-- Canary latency > P95 → fallback to lighter model
-- Canary fails (error/timeout) → fallback to lighter model
-- Canary succeeds → use originally selected model
-
-**Note:** Canary results are cached for 5 minutes. First probe may add ~2s overhead. Use `--no-cache` flag to force fresh probe.
 
 ## Step 0.4b: Extended Model Options (Optional)
 

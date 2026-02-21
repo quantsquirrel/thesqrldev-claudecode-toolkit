@@ -33,6 +33,11 @@ except ImportError:
 def load_cli_module(cli_filename: str):
     """Load a CLI module dynamically."""
     cli_path = os.path.join(os.path.dirname(__file__), "..", "tools", cli_filename)
+
+    # Check providers/extended/ if not found in tools/
+    if not os.path.exists(cli_path):
+        cli_path = os.path.join(os.path.dirname(__file__), "..", "tools", "providers", "extended", cli_filename)
+
     spec = importlib.util.spec_from_file_location(cli_filename.replace("-", "_").replace(".py", ""), cli_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
