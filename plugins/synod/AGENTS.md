@@ -42,7 +42,7 @@ Synod orchestrates Claude, Gemini, and OpenAI in a structured judicial debate (S
 | Gemini | flash/pro | Architect | Patterns, structure | Defense counsel |
 | OpenAI | gpt-4o/o3 | Explorer | Edge cases, alternatives | Prosecution |
 
-Phase flow details: `skills/modules/synod-phase{0-4}-*.md`
+Phase flow details: `skills/synod/modules/synod-phase{0-4}-*.md`
 
 ---
 
@@ -54,8 +54,8 @@ Phase flow details: `skills/modules/synod-phase{0-4}-*.md`
 4. **Phase 3 - Defense** (`synod-phase3-defense.md`): Adversarial court model. Gemini defends strongest solution; OpenAI prosecutes. Claude judges.
 5. **Phase 4 - Synthesis** (`synod-phase4-synthesis.md`): Weighted confidence calculation, mode-specific output, debate quality metrics summary.
 
-Error handling and fallbacks: `skills/modules/synod-error-handling.md`
-Session resume protocol: `skills/modules/synod-resume.md`
+Error handling and fallbacks: `skills/synod/modules/synod-error-handling.md`
+Session resume protocol: `skills/synod/modules/synod-resume.md`
 
 ---
 
@@ -124,10 +124,14 @@ claude-synod-debate/
 │   ├── synod-modes.yaml             # 5 modes + keywords + thresholds
 │   └── synod-templates.yaml         # Mode output templates
 ├── skills/
-│   ├── synod.md                     # Main /synod orchestrator
-│   ├── synod-setup.md               # /synod-setup installer
-│   ├── cancel-synod.md              # /cancel-synod command
-│   └── modules/                     # Modularized phase instructions
+│   ├── synod/                       # Main /synod orchestrator
+│   │   ├── SKILL.md
+│   │   ├── AGENTS.md
+│   │   └── modules/                 # Modularized phase instructions
+│   ├── setup/                       # /synod:setup installer
+│   │   └── SKILL.md
+│   └── cancel/                      # /synod:cancel command
+│       └── SKILL.md
 │       ├── synod-phase0-setup.md
 │       ├── synod-phase1-solver.md
 │       ├── synod-phase2-critic.md

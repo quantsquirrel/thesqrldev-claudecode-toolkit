@@ -12,9 +12,9 @@ from pathlib import Path
 import pytest
 
 SKILLS_DIR = Path(__file__).parent.parent / "skills"
-SYNOD_MD = SKILLS_DIR / "synod.md"
-PHASE0_MD = SKILLS_DIR / "modules" / "synod-phase0-setup.md"
-PHASE1_MD = SKILLS_DIR / "modules" / "synod-phase1-solver.md"
+SYNOD_MD = SKILLS_DIR / "synod" / "SKILL.md"
+PHASE0_MD = SKILLS_DIR / "synod" / "modules" / "synod-phase0-setup.md"
+PHASE1_MD = SKILLS_DIR / "synod" / "modules" / "synod-phase1-solver.md"
 
 
 def _parse_frontmatter(filepath: Path) -> dict:

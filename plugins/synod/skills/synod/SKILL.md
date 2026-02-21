@@ -1,7 +1,9 @@
 ---
-description: Multi-agent debate system supporting 6 AI providers (Gemini, OpenAI, DeepSeek, Groq, Grok, Mistral)
-argument-hint: <prompt> - auto-classifies mode (or explicit: review|design|debug|idea|resume)
-allowed-tools: [Read, Write, Bash, Glob, Grep, Task]
+name: synod
+description: "Multi-agent debate system supporting 6 AI providers (Gemini, OpenAI, DeepSeek, Groq, Grok, Mistral)"
+argument-hint: "<prompt> - auto-classifies mode (or explicit: review|design|debug|idea|resume)"
+allowed-tools: Read, Write, Bash, Glob, Grep, Task
+user-invocable: true
 ---
 
 > **⛔ MCP TOOL PROHIBITION — EXTERNAL MODELS MUST USE CLI ONLY**

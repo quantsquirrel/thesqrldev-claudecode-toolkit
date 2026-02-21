@@ -1,6 +1,8 @@
 ---
-description: Cancel active Synod deliberation session
-allowed-tools: [Read, Write, Bash, Glob]
+name: cancel
+description: "Cancel active Synod deliberation session"
+allowed-tools: Read, Write, Bash, Glob
+user-invocable: true
 ---
 
 # Cancel Synod Session
