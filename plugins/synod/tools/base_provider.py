@@ -14,11 +14,95 @@ Extracts common patterns from all provider CLIs:
 
 import argparse
 import os
+import platform
 import random
 import re
+import subprocess
 import sys
 import time
 from abc import ABC, abstractmethod
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Shared API key resolution: env var → ~/.synod/.env → macOS Keychain
+# ---------------------------------------------------------------------------
+
+SYNOD_ENV_FILE = Path("~/.synod/.env").expanduser()
+
+
+def load_synod_env():
+    """Load API keys from ~/.synod/.env into os.environ (skip already-set vars)."""
+    if not SYNOD_ENV_FILE.exists():
+        return
+    try:
+        for line in SYNOD_ENV_FILE.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key, value = key.strip(), value.strip().strip("\"'")
+            if key and value and not os.environ.get(key):
+                os.environ[key] = value
+    except OSError:
+        pass
+
+
+def check_macos_keychain(key_name: str) -> str | None:
+    """Try to read an API key from macOS Keychain. Returns None on non-Mac or failure."""
+    if platform.system() != "Darwin":
+        return None
+    try:
+        result = subprocess.run(
+            ["security", "find-generic-password", "-a", os.environ.get("USER", ""), "-s", key_name, "-w"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        pass
+    return None
+
+
+def resolve_api_key(env_key: str) -> str | None:
+    """Resolve API key from env var → ~/.synod/.env → macOS Keychain."""
+    # 1. Environment variable (already loaded or from .env)
+    key = os.environ.get(env_key)
+    if key:
+        return key.strip()
+
+    # 2. macOS Keychain
+    key = check_macos_keychain(env_key)
+    if key:
+        os.environ[env_key] = key  # cache for child processes
+        return key
+
+    return None
+
+
+def save_to_synod_env(key_name: str, key_value: str):
+    """Append or update a key in ~/.synod/.env."""
+    SYNOD_ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    existing_lines = []
+    if SYNOD_ENV_FILE.exists():
+        existing_lines = SYNOD_ENV_FILE.read_text().splitlines()
+
+    # Update existing or append
+    updated = False
+    for i, line in enumerate(existing_lines):
+        if line.strip().startswith(f"{key_name}="):
+            existing_lines[i] = f'{key_name}="{key_value}"'
+            updated = True
+            break
+
+    if not updated:
+        existing_lines.append(f'{key_name}="{key_value}"')
+
+    SYNOD_ENV_FILE.write_text("\n".join(existing_lines) + "\n")
+
+
+# Auto-load on import
+load_synod_env()
 
 # Inline cold-start timeout defaults (formerly from model_stats.py, now archived)
 COLD_START_DEFAULTS = {
@@ -99,11 +183,7 @@ class BaseProvider(ABC):
     def validate_api_key(self) -> str:
         """Validate and return API key from environment.
 
-        Enhanced validation:
-        - Checks key is not empty/whitespace
-        - Strips whitespace from key
-        - Checks minimum length (10 chars)
-        - Warns on suspicious characters (spaces, newlines)
+        Resolution order: env var → ~/.synod/.env → macOS Keychain.
 
         Returns:
             API key string (stripped of whitespace)
@@ -111,9 +191,11 @@ class BaseProvider(ABC):
         Raises:
             SystemExit: If API key is invalid
         """
-        api_key = os.environ.get(self.API_KEY_ENV)
+        api_key = resolve_api_key(self.API_KEY_ENV)
         if not api_key:
-            print(f"Error: {self.API_KEY_ENV} environment variable not set", file=sys.stderr)
+            print(f"Error: {self.API_KEY_ENV} not found.", file=sys.stderr)
+            print(f"  Set via:  export {self.API_KEY_ENV}='your-key'", file=sys.stderr)
+            print(f"  Or save:  echo '{self.API_KEY_ENV}=\"your-key\"' >> ~/.synod/.env", file=sys.stderr)
             sys.exit(1)
 
         # Strip whitespace

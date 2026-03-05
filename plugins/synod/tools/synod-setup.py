@@ -18,6 +18,10 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+# Import shared key resolution from base_provider
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from base_provider import load_synod_env, resolve_api_key, save_to_synod_env
+
 # Paths
 TOOLS_DIR = Path(__file__).parent
 SYNOD_DIR = Path("~/.synod").expanduser()
@@ -200,19 +204,25 @@ def install_cli_wrappers() -> dict[str, str]:
 
 
 def check_api_key(provider: str) -> tuple[bool, str]:
-    """API key check with backward compatibility for Gemini."""
+    """API key check: env var → ~/.synod/.env → macOS Keychain → compat key."""
     config = MODELS_TO_TEST[provider]
     env_key = config["env_key"]
-    has_key = os.environ.get(env_key) is not None
+
+    # Multi-source resolution (env → .env file → Keychain)
+    resolved = resolve_api_key(env_key)
+    if resolved:
+        return True, env_key
 
     # Backward compat: check alternate key name for Gemini
-    if not has_key and "env_key_compat" in config:
+    if "env_key_compat" in config:
         compat_key = config["env_key_compat"]
-        if os.environ.get(compat_key):
-            has_key = True
-            env_key = f"{compat_key} (호환 - {config['env_key']} 권장)"
+        resolved = resolve_api_key(compat_key)
+        if resolved:
+            # Also set the primary key so downstream tools find it
+            os.environ[env_key] = resolved
+            return True, f"{compat_key} (호환 - {config['env_key']} 권장)"
 
-    return has_key, env_key
+    return False, env_key
 
 
 def check_all_api_keys() -> list[str]:
@@ -399,12 +409,42 @@ def main():
     ]
 
     if not targets:
-        print("\n[오류] 테스트 가능한 모델이 없습니다. API 키를 확인하세요.")
-        print("  export GEMINI_API_KEY='your-key'")
-        print("  export OPENAI_API_KEY='your-key'")
-        # Still save partial results (path info is useful even without model tests)
-        save_results([], {})
-        sys.exit(1)
+        print("\n[키 없음] 대화형 입력으로 API 키를 설정합니다.")
+        print("  (입력한 키는 ~/.synod/.env에 저장되어 다음부터 자동 로드됩니다)\n")
+
+        changed = False
+        for provider, config in MODELS_TO_TEST.items():
+            # Only prompt for providers in TEST_TARGETS
+            if not any(p == provider for p, _ in TEST_TARGETS):
+                continue
+            env_key = config["env_key"]
+            if os.environ.get(env_key):
+                continue
+            try:
+                val = input(f"  {env_key} (Enter로 건너뛰기): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                val = ""
+            if val:
+                os.environ[env_key] = val
+                save_to_synod_env(env_key, val)
+                providers_with_keys.append(provider)
+                changed = True
+                print(f"    → ~/.synod/.env에 저장됨")
+
+        if not changed:
+            print("\n[오류] 테스트 가능한 모델이 없습니다.")
+            save_results([], {})
+            sys.exit(1)
+
+        # Rebuild targets after interactive input
+        targets = [
+            (provider, model)
+            for provider, model in TEST_TARGETS
+            if provider in providers_with_keys
+        ]
+        if not targets:
+            save_results([], {})
+            sys.exit(1)
 
     results = []
     for provider, model in targets:
@@ -423,6 +463,21 @@ def main():
             print(f"  export SYNOD_GEMINI_MODEL={recommendations['gemini']}")
         if "openai" in recommendations:
             print(f"  export SYNOD_OPENAI_MODEL={recommendations['openai']}")
+
+    # Auto-save working keys to ~/.synod/.env if not already there
+    env_file = Path("~/.synod/.env").expanduser()
+    existing_env = env_file.read_text() if env_file.exists() else ""
+    saved_keys = set()
+    for r in results:
+        if not r.success:
+            continue
+        config = MODELS_TO_TEST.get(r.provider, {})
+        env_key = config.get("env_key", "")
+        if env_key and env_key not in existing_env and env_key not in saved_keys and os.environ.get(env_key):
+            save_to_synod_env(env_key, os.environ[env_key])
+            saved_keys.add(env_key)
+    if saved_keys:
+        print(f"\n[자동 저장] ~/.synod/.env에 저장됨: {', '.join(saved_keys)}")
 
     save_results(results, recommendations)
 
