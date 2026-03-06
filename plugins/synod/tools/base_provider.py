@@ -107,6 +107,7 @@ load_synod_env()
 # Inline cold-start timeout defaults (formerly from model_stats.py, now archived)
 COLD_START_DEFAULTS = {
     "gemini:flash": 60_000, "gemini:pro": 120_000,
+    "gemini:3.1-flash-lite": 60_000, "gemini:3.1-pro": 120_000,
     "openai:gpt4o": 60_000, "openai:o3": 180_000, "openai:o4mini": 60_000,
     "deepseek:chat": 60_000, "deepseek:reasoner": 300_000,
     "groq:8b": 30_000, "groq:70b": 45_000, "groq:mixtral": 60_000,

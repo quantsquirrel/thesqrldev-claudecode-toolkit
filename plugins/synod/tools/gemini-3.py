@@ -40,6 +40,8 @@ class GeminiProvider(BaseProvider):
     MODEL_MAP = {
         "flash": "gemini-3-flash-preview",
         "pro": "gemini-3-pro-preview",
+        "3.1-flash-lite": "gemini-3.1-flash-lite-preview",
+        "3.1-pro": "gemini-3.1-pro-preview",
         "2.5-flash": "gemini-2.5-flash",
         "2.5-pro": "gemini-2.5-pro",
     }
@@ -102,7 +104,7 @@ class GeminiProvider(BaseProvider):
         parser.add_argument(
             "-m",
             "--model",
-            choices=["flash", "pro", "2.5-flash", "2.5-pro"],
+            choices=["flash", "pro", "3.1-flash-lite", "3.1-pro", "2.5-flash", "2.5-pro"],
             default="flash",
             help="Model to use (default: flash)",
         )

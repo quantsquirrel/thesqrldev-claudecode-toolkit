@@ -82,6 +82,8 @@ class TestGeminiProvider:
         """Test MODEL_MAP contains expected models."""
         assert "flash" in provider_class.MODEL_MAP
         assert "pro" in provider_class.MODEL_MAP
+        assert "3.1-flash-lite" in provider_class.MODEL_MAP
+        assert "3.1-pro" in provider_class.MODEL_MAP
         assert "2.5-flash" in provider_class.MODEL_MAP
         assert "2.5-pro" in provider_class.MODEL_MAP
 

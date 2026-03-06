@@ -28,6 +28,8 @@ class TestModelMapping:
         """Test that MODEL_MAP has all expected models."""
         assert "flash" in gemini_cli.GeminiProvider.MODEL_MAP
         assert "pro" in gemini_cli.GeminiProvider.MODEL_MAP
+        assert "3.1-flash-lite" in gemini_cli.GeminiProvider.MODEL_MAP
+        assert "3.1-pro" in gemini_cli.GeminiProvider.MODEL_MAP
         assert "2.5-flash" in gemini_cli.GeminiProvider.MODEL_MAP
         assert "2.5-pro" in gemini_cli.GeminiProvider.MODEL_MAP
 
@@ -35,6 +37,8 @@ class TestModelMapping:
         """Test that model names are correctly mapped."""
         assert gemini_cli.GeminiProvider.MODEL_MAP["flash"] == "gemini-3-flash-preview"
         assert gemini_cli.GeminiProvider.MODEL_MAP["pro"] == "gemini-3-pro-preview"
+        assert gemini_cli.GeminiProvider.MODEL_MAP["3.1-flash-lite"] == "gemini-3.1-flash-lite-preview"
+        assert gemini_cli.GeminiProvider.MODEL_MAP["3.1-pro"] == "gemini-3.1-pro-preview"
         assert gemini_cli.GeminiProvider.MODEL_MAP["2.5-flash"] == "gemini-2.5-flash"
         assert gemini_cli.GeminiProvider.MODEL_MAP["2.5-pro"] == "gemini-2.5-pro"
 
