@@ -109,10 +109,13 @@ COLD_START_DEFAULTS = {
     "gemini:flash": 60_000, "gemini:pro": 120_000,
     "gemini:3.1-flash-lite": 60_000, "gemini:3.1-pro": 120_000,
     "openai:gpt4o": 60_000, "openai:o3": 180_000, "openai:o4mini": 60_000,
+    "openai:gpt54": 120_000, "openai:gpt5mini": 60_000,
     "deepseek:chat": 60_000, "deepseek:reasoner": 300_000,
-    "groq:8b": 30_000, "groq:70b": 45_000, "groq:mixtral": 60_000,
+    "groq:8b": 30_000, "groq:70b": 45_000, "groq:scout": 45_000,
     "grok:fast": 60_000, "grok:grok4": 120_000,
+    "grok:reasoning": 90_000, "grok:heavy": 180_000,
     "mistral:large": 120_000, "mistral:small": 60_000,
+    "mistral:magistral": 120_000, "mistral:magistral-small": 60_000,
     "openrouter:claude": 120_000, "openrouter:llama": 60_000,
 }
 

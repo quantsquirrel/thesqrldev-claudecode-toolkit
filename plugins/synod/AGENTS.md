@@ -1,7 +1,7 @@
-# Synod v3.2 - Agent Architecture
+# Synod v3.3 - Agent Architecture
 
 **Project:** Multi-agent deliberation system for Claude Code
-**Version:** 3.2.0
+**Version:** 3.3.0
 **Repository:** https://github.com/quantsquirrel/claude-synod-debate
 **License:** MIT
 
@@ -40,7 +40,7 @@ Synod orchestrates Claude, Gemini, and OpenAI in a structured judicial debate (S
 |-------|-------|------|-------------|-------------|
 | Claude | Sonnet | Orchestrator + Judge | Correctness validation | Neutral arbiter |
 | Gemini | flash/pro | Architect | Patterns, structure | Defense counsel |
-| OpenAI | gpt-4o/o3 | Explorer | Edge cases, alternatives | Prosecution |
+| OpenAI | gpt-4o/o3/gpt-5.4/gpt-5-mini | Explorer | Edge cases, alternatives | Prosecution |
 
 Phase flow details: `skills/synod/modules/synod-phase{0-4}-*.md`
 
@@ -176,7 +176,7 @@ claude-synod-debate/
 | `synod_progress.py` | Rich terminal progress display | JSON event protocol via FIFO pipe |
 | `base_provider.py` | Abstract base for CLI providers | `BaseProvider` with timeout, retry, validation |
 | `gemini-3.py` | Gemini API (flash/pro, thinking, temperature) | `GeminiProvider` |
-| `openai-cli.py` | OpenAI API (gpt-4o/o3, reasoning levels) | `OpenAIProvider` |
+| `openai-cli.py` | OpenAI API (gpt-4o/o3/gpt-5.4/gpt-5-mini, reasoning levels) | `OpenAIProvider` |
 
 ---
 
@@ -189,8 +189,8 @@ Defined in `config/synod-modes.yaml`. Output templates in `config/synod-template
 | review | flash | o3 (medium) | 3 | Code quality, best practices |
 | design | pro | o3 (high) | 4 | Architecture, trade-offs |
 | debug | flash | o3 (high) | 3 | Root cause analysis |
-| idea | pro | gpt-4o | 4 | Brainstorming, feasibility |
-| general | flash | gpt-4o | 3 | Balanced comprehensive answer |
+| idea | pro | gpt-5.4 | 4 | Brainstorming, feasibility |
+| general | flash | gpt-5.4 | 3 | Balanced comprehensive answer |
 
 ---
 
@@ -224,5 +224,5 @@ export OPENAI_API_KEY="..."   # Required
 
 ---
 
-**Last Updated:** 2026-02-21
-**Status:** Complete (v3.2.0)
+**Last Updated:** 2026-03-08
+**Status:** Complete (v3.3.0)

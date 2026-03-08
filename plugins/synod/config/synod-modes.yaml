@@ -60,7 +60,7 @@ modes:
         model: "pro"
         thinking: "high"
       openai:
-        model: "gpt4o"
+        model: "gpt54"
         reasoning: null
     rounds:
       base: 4
@@ -77,7 +77,7 @@ modes:
         model: "flash"
         thinking: "medium"
       openai:
-        model: "gpt4o"
+        model: "gpt54"
         reasoning: null
     rounds:
       base: 3
@@ -159,7 +159,7 @@ tiers:
       model: "flash"
       thinking: "medium"
     openai:
-      model: "gpt4o"
+      model: "gpt5mini"
       reasoning: null
   standard:
     description: "Medium queries - balanced models (mode defaults)"

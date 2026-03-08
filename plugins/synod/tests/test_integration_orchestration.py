@@ -278,9 +278,9 @@ class TestProblemTypeIntegration:
         assert problem_type == "math"
 
         # Math problems should prefer o3 for reasoning
-        # Check that general mode default is gpt4o (which would be overridden)
+        # Check that general mode default is gpt54 (which would be overridden)
         general_config = get_mode_config("general")
-        assert general_config["models"]["openai"]["model"] == "gpt4o"
+        assert general_config["models"]["openai"]["model"] == "gpt54"
         # Adjustment: math -> o3
 
     def test_problem_type_to_model_adjustment_creative(self):

@@ -81,11 +81,11 @@ class TestTierConfig:
         assert get_tier("") == "standard"
 
     def test_get_tier_config_fast(self):
-        """fast tier config has gemini flash and openai gpt4o."""
+        """fast tier config has gemini flash and openai gpt5mini."""
         from tools.synod_config import get_tier_config
         config = get_tier_config("fast")
         assert config["gemini"]["model"] == "flash"
-        assert config["openai"]["model"] == "gpt4o"
+        assert config["openai"]["model"] == "gpt5mini"
 
     def test_get_tier_config_deep(self):
         """deep tier config has gemini pro and openai o3."""
@@ -108,11 +108,11 @@ class TestTierConfig:
         assert get_tier_config("nonexistent") == {}
 
     def test_get_tiered_model_config_overrides_mode(self):
-        """Tier 'fast' overrides review mode's openai from o3 to gpt4o."""
+        """Tier 'fast' overrides review mode's openai from o3 to gpt5mini."""
         from tools.synod_config import get_tiered_model_config
         # review mode default: openai o3, reasoning medium
         config = get_tiered_model_config("review", "openai", "fast")
-        assert config["model"] == "gpt4o"
+        assert config["model"] == "gpt5mini"
 
     def test_get_tiered_model_config_none_tier_preserves_mode(self):
         """tier=None preserves the original mode config."""

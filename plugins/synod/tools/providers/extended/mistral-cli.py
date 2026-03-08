@@ -9,10 +9,12 @@ Usage:
 
 Models:
   - large: mistral-large-latest (최고 추론, 120s timeout)
-  - medium: mistral-medium-3 (균형, 코딩 강점, 90s timeout)
+  - medium: mistral-medium-latest (균형, 코딩 강점, 90s timeout)
   - small: mistral-small-latest (비용 효율, 60s timeout)
   - codestral: codestral-latest (코드 특화, 90s timeout)
-  - devstral: devstral-2 (소프트웨어 엔지니어링, 90s timeout)
+  - devstral: devstral-latest (소프트웨어 엔지니어링, 90s timeout)
+  - magistral: magistral-medium-latest (추론 특화, 120s timeout)
+  - magistral-small: magistral-small-latest (경량 추론, 60s timeout)
 """
 
 import argparse
@@ -52,10 +54,12 @@ class MistralProvider(BaseProvider):
     API_KEY_ENV = "MISTRAL_API_KEY"
     MODEL_MAP = {
         "large": "mistral-large-latest",
-        "medium": "mistral-medium-3",
+        "medium": "mistral-medium-latest",
         "small": "mistral-small-latest",
         "codestral": "codestral-latest",
-        "devstral": "devstral-2",
+        "devstral": "devstral-latest",
+        "magistral": "magistral-medium-latest",
+        "magistral-small": "magistral-small-latest",
     }
     DEFAULT_MODEL = "medium"
 
@@ -66,6 +70,8 @@ class MistralProvider(BaseProvider):
         "small": 60,
         "codestral": 90,
         "devstral": 90,
+        "magistral": 120,
+        "magistral-small": 60,
     }
 
     def create_client(self, timeout_ms: int):
@@ -107,7 +113,7 @@ class MistralProvider(BaseProvider):
         parser.add_argument(
             "-m",
             "--model",
-            choices=["large", "medium", "small", "codestral", "devstral"],
+            choices=["large", "medium", "small", "codestral", "devstral", "magistral", "magistral-small"],
             default="medium",
             help="Model to use (default: medium)",
         )

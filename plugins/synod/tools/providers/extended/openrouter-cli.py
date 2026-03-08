@@ -40,12 +40,12 @@ class OpenRouterProvider(BaseProvider):
     API_KEY_ENV = "OPENROUTER_API_KEY"
     MODEL_MAP = {
         "claude": "anthropic/claude-sonnet-4",
-        "gemini": "google/gemini-2.5-flash-preview-05-20",
+        "gemini": "google/gemini-3-flash-preview",
         "llama": "meta-llama/llama-3.3-70b-instruct",
         "mistral": "mistralai/mistral-large-2411",
         "qwen": "qwen/qwen-2.5-72b-instruct",
         "deepseek": "deepseek/deepseek-chat-v3-0324",
-        "grok": "x-ai/grok-2-1212",
+        "grok": "x-ai/grok-4-fast",
     }
     DEFAULT_MODEL = "claude"
 

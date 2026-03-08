@@ -7,7 +7,7 @@ Usage:
   grok-cli "prompt" [--model MODEL]
   grok-cli --prompt "prompt" [--model MODEL]
 
-Models: fast (default), grok4, mini, vision
+Models: fast (default), grok4, mini, vision, reasoning, heavy
 Timeout: auto-selected based on model
 
 Examples:
@@ -53,6 +53,8 @@ class GrokProvider(BaseProvider):
         "grok4": "grok-4",
         "mini": "grok-3-mini",
         "vision": "grok-2-vision-1212",
+        "reasoning": "grok-4-1-fast-reasoning",
+        "heavy": "grok-4-heavy",
     }
     DEFAULT_MODEL = "fast"
 
@@ -62,6 +64,8 @@ class GrokProvider(BaseProvider):
         "mini": 60,
         "grok4": 120,
         "vision": 90,
+        "reasoning": 90,
+        "heavy": 180,
     }
 
     def create_client(self, timeout_ms: int):
@@ -96,7 +100,7 @@ class GrokProvider(BaseProvider):
         parser.add_argument(
             "--model",
             "-m",
-            choices=["fast", "grok4", "mini", "vision"],
+            choices=["fast", "grok4", "mini", "vision", "reasoning", "heavy"],
             default="fast",
             help="사용할 모델 (기본값: fast)",
         )

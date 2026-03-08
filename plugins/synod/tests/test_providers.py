@@ -129,16 +129,19 @@ class TestOpenAIProvider:
         assert "gpt4o" in provider_class.MODEL_MAP
         assert "o3" in provider_class.MODEL_MAP
         assert "o4mini" in provider_class.MODEL_MAP
+        assert "gpt54" in provider_class.MODEL_MAP
+        assert "gpt5mini" in provider_class.MODEL_MAP
 
     def test_default_model(self, provider_class):
         """Test DEFAULT_MODEL is set."""
         assert provider_class.DEFAULT_MODEL == "gpt4o"
 
     def test_o_series_models_list(self, provider_class):
-        """Test O_SERIES_MODELS attribute exists."""
-        assert hasattr(provider_class, "O_SERIES_MODELS")
-        assert "o3" in provider_class.O_SERIES_MODELS
-        assert "o4mini" in provider_class.O_SERIES_MODELS
+        """Test REASONING_MODELS attribute exists."""
+        assert hasattr(provider_class, "REASONING_MODELS")
+        assert "o3" in provider_class.REASONING_MODELS
+        assert "o4mini" in provider_class.REASONING_MODELS
+        assert "gpt54" in provider_class.REASONING_MODELS
 
     def test_timeout_config_exists(self, provider_class):
         """Test TIMEOUT_CONFIG attribute exists."""
@@ -218,7 +221,7 @@ class TestGroqProvider:
         """Test MODEL_MAP contains expected models."""
         assert "8b" in provider_class.MODEL_MAP
         assert "70b" in provider_class.MODEL_MAP
-        assert "mixtral" in provider_class.MODEL_MAP
+        assert "scout" in provider_class.MODEL_MAP
 
     def test_default_model(self, provider_class):
         """Test DEFAULT_MODEL is set."""
@@ -229,10 +232,10 @@ class TestGroqProvider:
         assert hasattr(provider_class, "TIMEOUT_CONFIG")
         assert isinstance(provider_class.TIMEOUT_CONFIG, dict)
 
-    def test_model_map_values_are_llama_or_mixtral(self, provider_class):
-        """Test that model values point to llama or mixtral models."""
+    def test_model_map_values_are_llama_or_scout(self, provider_class):
+        """Test that model values point to llama or scout models."""
         for model_name in provider_class.MODEL_MAP.values():
-            assert "llama" in model_name.lower() or "mixtral" in model_name.lower()
+            assert "llama" in model_name.lower() or "scout" in model_name.lower()
 
 
 class TestGrokProvider:
@@ -274,6 +277,8 @@ class TestGrokProvider:
         assert "grok4" in provider_class.MODEL_MAP
         assert "mini" in provider_class.MODEL_MAP
         assert "vision" in provider_class.MODEL_MAP
+        assert "reasoning" in provider_class.MODEL_MAP
+        assert "heavy" in provider_class.MODEL_MAP
 
     def test_default_model(self, provider_class):
         """Test DEFAULT_MODEL is set."""
@@ -343,6 +348,7 @@ class TestMistralProvider:
         assert "medium" in provider_class.MODEL_MAP
         assert "small" in provider_class.MODEL_MAP
         assert "codestral" in provider_class.MODEL_MAP
+        assert "magistral" in provider_class.MODEL_MAP
 
     def test_default_model(self, provider_class):
         """Test DEFAULT_MODEL is set."""
@@ -356,7 +362,12 @@ class TestMistralProvider:
     def test_model_map_values_are_mistral_models(self, provider_class):
         """Test that model values point to mistral models."""
         for model_name in provider_class.MODEL_MAP.values():
-            assert "mistral" in model_name.lower() or "codestral" in model_name.lower() or "devstral" in model_name.lower()
+            assert (
+                "mistral" in model_name.lower()
+                or "codestral" in model_name.lower()
+                or "devstral" in model_name.lower()
+                or "magistral" in model_name.lower()
+            )
 
     def test_enable_gate_blocks_without_env(self):
         """Test that module exits if SYNOD_ENABLE_MISTRAL is not set."""

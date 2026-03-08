@@ -7,7 +7,7 @@ Usage:
   openai-cli "prompt" [--model MODEL] [--reasoning LEVEL]
   openai-cli --prompt "prompt" [--model MODEL] [--reasoning LEVEL]
 
-Models: gpt4o (default), o3, o4mini
+Models: gpt4o (default), o3, o4mini, gpt54, gpt5mini
 Reasoning: low, medium (default), high (o-series only)
 
 Examples:
@@ -41,11 +41,11 @@ class OpenAIProvider(BaseProvider):
 
     PROVIDER = "openai"
     API_KEY_ENV = "OPENAI_API_KEY"
-    MODEL_MAP = {"gpt4o": "gpt-4o", "o3": "o3", "o4mini": "o4-mini"}
+    MODEL_MAP = {"gpt4o": "gpt-4o", "o3": "o3", "o4mini": "o4-mini", "gpt54": "gpt-5.4", "gpt5mini": "gpt-5-mini"}
     DEFAULT_MODEL = "gpt4o"
 
-    # O-series models support reasoning_effort
-    O_SERIES_MODELS = ["o3", "o4mini"]
+    # Reasoning models support reasoning_effort
+    REASONING_MODELS = ["o3", "o4mini", "gpt54"]
 
     # Timeout configuration (seconds)
     TIMEOUT_CONFIG = {
@@ -58,6 +58,12 @@ class OpenAIProvider(BaseProvider):
         ("o4mini", "low"): 60,
         ("o4mini", "medium"): 90,
         ("o4mini", "high"): 120,
+        ("gpt54", "low"): 90,
+        ("gpt54", "medium"): 120,
+        ("gpt54", "high"): 180,
+        ("gpt5mini", "low"): 45,
+        ("gpt5mini", "medium"): 60,
+        ("gpt5mini", "high"): 90,
     }
 
     # Reasoning levels for downgrade
@@ -80,15 +86,15 @@ class OpenAIProvider(BaseProvider):
             "messages": [{"role": "user", "content": prompt}],
         }
 
-        # Extract model key for O_SERIES_MODELS check
+        # Extract model key for REASONING_MODELS check
         model_key = None
         for key, value in self.MODEL_MAP.items():
             if value == model:
                 model_key = key
                 break
 
-        # Add reasoning_effort for o-series models
-        if model_key in self.O_SERIES_MODELS:
+        # Add reasoning_effort for reasoning models
+        if model_key in self.REASONING_MODELS:
             request_params["reasoning_effort"] = reasoning
 
         # Generate response
@@ -104,7 +110,7 @@ class OpenAIProvider(BaseProvider):
         parser.add_argument(
             "--model",
             "-m",
-            choices=["gpt4o", "o3", "o4mini"],
+            choices=["gpt4o", "o3", "o4mini", "gpt54", "gpt5mini"],
             default="gpt4o",
             help="사용할 모델 (기본값: gpt4o)",
         )
@@ -156,11 +162,11 @@ class OpenAIProvider(BaseProvider):
                 is_retryable, error_category = self.is_retryable_error(error_str)
 
                 if is_retryable and attempt < max_retries - 1:
-                    # Try adaptive downgrade for o-series on timeout/overload
+                    # Try adaptive downgrade for reasoning models on timeout/overload
                     if (
                         adaptive
                         and error_category == "timeout_or_overload"
-                        and model_key in self.O_SERIES_MODELS
+                        and model_key in self.REASONING_MODELS
                         and current_idx < len(self.REASONING_LEVELS) - 1
                     ):
                         current_idx += 1

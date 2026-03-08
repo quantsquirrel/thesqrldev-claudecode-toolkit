@@ -7,12 +7,12 @@ Usage:
   groq-cli "prompt" [--model MODEL]
   groq-cli --prompt "prompt" [--model MODEL]
 
-Models: 8b (default), 70b, mixtral
-Timeout: 자동 설정 (8b: 30s, 70b: 45s, mixtral: 60s)
+Models: 8b (default), 70b, scout
+Timeout: 자동 설정 (8b: 30s, 70b: 45s, scout: 45s)
 
 Examples:
   echo "2+2는?" | groq-cli
-  echo "긴 문서 요약" | groq-cli --model mixtral
+  echo "긴 문서 요약" | groq-cli --model scout
   groq-cli "간단한 질문" --model 8b
   groq-cli --prompt "간단한 질문" --model 70b
 """
@@ -41,8 +41,8 @@ class GroqProvider(BaseProvider):
     API_KEY_ENV = "GROQ_API_KEY"
     MODEL_MAP = {
         "8b": "llama-3.1-8b-instant",
-        "70b": "llama-3.1-70b-versatile",
-        "mixtral": "mixtral-8x7b-32768",
+        "70b": "llama-3.3-70b-versatile",
+        "scout": "meta-llama/llama-4-scout-17b-16e-instruct",
     }
     DEFAULT_MODEL = "8b"
 
@@ -50,7 +50,7 @@ class GroqProvider(BaseProvider):
     TIMEOUT_CONFIG = {
         "8b": 30,
         "70b": 45,
-        "mixtral": 60,
+        "scout": 45,
     }
 
     def create_client(self, timeout_ms: int):
@@ -94,7 +94,7 @@ class GroqProvider(BaseProvider):
         parser.add_argument(
             "--model",
             "-m",
-            choices=["8b", "70b", "mixtral"],
+            choices=["8b", "70b", "scout"],
             default="8b",
             help="사용할 모델 (기본값: 8b)",
         )

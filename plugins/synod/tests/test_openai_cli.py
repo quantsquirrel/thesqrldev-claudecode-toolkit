@@ -26,22 +26,28 @@ class TestModelMapping:
         assert "gpt4o" in openai_cli.OpenAIProvider.MODEL_MAP
         assert "o3" in openai_cli.OpenAIProvider.MODEL_MAP
         assert "o4mini" in openai_cli.OpenAIProvider.MODEL_MAP
+        assert "gpt54" in openai_cli.OpenAIProvider.MODEL_MAP
+        assert "gpt5mini" in openai_cli.OpenAIProvider.MODEL_MAP
 
     def test_model_names_correct(self):
         """Test that model names are correctly mapped."""
         assert openai_cli.OpenAIProvider.MODEL_MAP["gpt4o"] == "gpt-4o"
         assert openai_cli.OpenAIProvider.MODEL_MAP["o3"] == "o3"
         assert openai_cli.OpenAIProvider.MODEL_MAP["o4mini"] == "o4-mini"
+        assert openai_cli.OpenAIProvider.MODEL_MAP["gpt54"] == "gpt-5.4"
+        assert openai_cli.OpenAIProvider.MODEL_MAP["gpt5mini"] == "gpt-5-mini"
 
 
-class TestOSeriesModels:
-    """Tests for O_SERIES_MODELS configuration."""
+class TestReasoningModels:
+    """Tests for REASONING_MODELS configuration."""
 
-    def test_o_series_models_list(self):
-        """Test that o-series models are correctly identified."""
-        assert "o3" in openai_cli.OpenAIProvider.O_SERIES_MODELS
-        assert "o4mini" in openai_cli.OpenAIProvider.O_SERIES_MODELS
-        assert "gpt4o" not in openai_cli.OpenAIProvider.O_SERIES_MODELS
+    def test_reasoning_models_list(self):
+        """Test that reasoning models are correctly identified."""
+        assert "o3" in openai_cli.OpenAIProvider.REASONING_MODELS
+        assert "o4mini" in openai_cli.OpenAIProvider.REASONING_MODELS
+        assert "gpt4o" not in openai_cli.OpenAIProvider.REASONING_MODELS
+        assert "gpt54" in openai_cli.OpenAIProvider.REASONING_MODELS
+        assert "gpt5mini" not in openai_cli.OpenAIProvider.REASONING_MODELS
 
 
 class TestTimeoutConfig:
@@ -49,7 +55,7 @@ class TestTimeoutConfig:
 
     def test_timeout_config_has_all_combinations(self):
         """Test that timeout config covers all model+reasoning combinations."""
-        models = ["gpt4o", "o3", "o4mini"]
+        models = ["gpt4o", "o3", "o4mini", "gpt54", "gpt5mini"]
         levels = ["low", "medium", "high"]
 
         for model in models:
@@ -106,12 +112,12 @@ class TestGenerateWithRetry:
     def test_o_series_includes_reasoning_effort(self):
         """Test that o-series models should use reasoning_effort."""
         # This is a configuration test
-        for model in openai_cli.OpenAIProvider.O_SERIES_MODELS:
-            assert model in ["o3", "o4mini"]
+        for model in openai_cli.OpenAIProvider.REASONING_MODELS:
+            assert model in ["o3", "o4mini", "gpt54"]
 
     def test_gpt4o_excludes_reasoning_effort(self):
         """Test that gpt4o should not use reasoning_effort."""
-        assert "gpt4o" not in openai_cli.OpenAIProvider.O_SERIES_MODELS
+        assert "gpt4o" not in openai_cli.OpenAIProvider.REASONING_MODELS
 
 
 class TestIntegration:
@@ -159,7 +165,7 @@ class TestTimeoutStrategy:
 
     def test_timeout_increases_with_reasoning_level(self):
         """Test that timeouts increase with reasoning complexity."""
-        for model in ["gpt4o", "o3", "o4mini"]:
+        for model in ["gpt4o", "o3", "o4mini", "gpt54", "gpt5mini"]:
             low = openai_cli.OpenAIProvider.TIMEOUT_CONFIG[(model, "low")]
             medium = openai_cli.OpenAIProvider.TIMEOUT_CONFIG[(model, "medium")]
             high = openai_cli.OpenAIProvider.TIMEOUT_CONFIG[(model, "high")]
