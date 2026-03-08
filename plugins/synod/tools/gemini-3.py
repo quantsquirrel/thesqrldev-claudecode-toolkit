@@ -39,7 +39,7 @@ class GeminiProvider(BaseProvider):
     API_KEY_ENV = "GEMINI_API_KEY"
     MODEL_MAP = {
         "flash": "gemini-3-flash-preview",
-        "pro": "gemini-3-pro-preview",
+        "pro": "gemini-3.1-pro-preview",
         "3.1-flash-lite": "gemini-3.1-flash-lite-preview",
         "3.1-pro": "gemini-3.1-pro-preview",
         "2.5-flash": "gemini-2.5-flash",

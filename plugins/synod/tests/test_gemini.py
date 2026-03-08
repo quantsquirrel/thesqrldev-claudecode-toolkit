@@ -36,7 +36,7 @@ class TestModelMapping:
     def test_model_names_correct(self):
         """Test that model names are correctly mapped."""
         assert gemini_cli.GeminiProvider.MODEL_MAP["flash"] == "gemini-3-flash-preview"
-        assert gemini_cli.GeminiProvider.MODEL_MAP["pro"] == "gemini-3-pro-preview"
+        assert gemini_cli.GeminiProvider.MODEL_MAP["pro"] == "gemini-3.1-pro-preview"
         assert gemini_cli.GeminiProvider.MODEL_MAP["3.1-flash-lite"] == "gemini-3.1-flash-lite-preview"
         assert gemini_cli.GeminiProvider.MODEL_MAP["3.1-pro"] == "gemini-3.1-pro-preview"
         assert gemini_cli.GeminiProvider.MODEL_MAP["2.5-flash"] == "gemini-2.5-flash"
