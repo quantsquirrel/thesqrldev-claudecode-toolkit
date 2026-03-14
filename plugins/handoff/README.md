@@ -19,40 +19,24 @@
 
 ## Quick Start
 
-### Option 1: Skill Only (Simplest)
-
 ```bash
 curl -o ~/.claude/commands/handoff.md \
   https://raw.githubusercontent.com/quantsquirrel/claude-handoff-baton/main/SKILL.md
 ```
 
-**Done.** Now you can use `/handoff` to save and resume context manually.
+**Done.** Now you can use `/handoff` to save and resume context.
 
-### Option 2: Full Install with Hooks (Recommended)
-
-Get automatic context monitoring, compaction protection, and session restoration:
+<details>
+<summary>Optional: Power User Hooks (auto-monitoring, compaction snapshot, session restore)</summary>
 
 ```bash
-# Clone the repository
 git clone https://github.com/quantsquirrel/claude-handoff-baton.git ~/.claude/skills/handoff
-
-# Register all 4 hooks
 cd ~/.claude/skills/handoff && bash hooks/install.sh
 ```
 
-**Done.** Everything works automatically from here.
+Adds automatic context monitoring, pre-compaction snapshots, and session restore. The `/handoff` command works perfectly without these — hooks are a convenience layer for users who want automation.
 
-### What You Get
-
-|  | Skill Only | Full Install |
-|--|:---:|:---:|
-| `/handoff` command | O | O |
-| Auto token monitoring | - | O |
-| Handoff reminder at threshold | - | O |
-| Auto snapshot before compaction | - | O |
-| Auto context restore on resume | - | O |
-
-Start with **Option 1**, upgrade to **Option 2** when you want automation.
+</details>
 
 ---
 
