@@ -119,6 +119,46 @@ describe('maskSensitiveData', () => {
     assert.ok(result.includes(shortB64), 'Short base64 should NOT be masked');
   });
 
+  // -- GCP service account key --
+
+  it('masks a GCP service account JSON key', () => {
+    const input = '{"type": "service_account", "project_id": "my-project"}';
+    const result = maskSensitiveData(input);
+    assert.ok(!result.includes('"service_account"'), 'GCP service account type should be masked');
+  });
+
+  // -- PEM private key --
+
+  it('masks a PEM private key header', () => {
+    const input = '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBg...';
+    const result = maskSensitiveData(input);
+    assert.ok(!result.includes('-----BEGIN PRIVATE KEY-----'), 'PEM header should be masked');
+  });
+
+  it('masks an RSA PEM private key header', () => {
+    const input = '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQ...';
+    const result = maskSensitiveData(input);
+    assert.ok(!result.includes('-----BEGIN RSA PRIVATE KEY-----'), 'RSA PEM header should be masked');
+  });
+
+  // -- Stripe secret key --
+
+  it('masks a Stripe secret key', () => {
+    const prefix = 'sk_live_';
+    const suffix = 'FAKE00TEST00KEY00ONLY0000';
+    const input = 'key: ' + prefix + suffix;
+    const result = maskSensitiveData(input);
+    assert.ok(!result.includes(prefix + suffix), 'Stripe sk_live_ key should be masked');
+  });
+
+  // -- GitHub fine-grained PAT --
+
+  it('masks a GitHub fine-grained PAT', () => {
+    const input = 'token=github_pat_11ABCDEF0_abcdefghijklmnopqrstuvwxyz';
+    const result = maskSensitiveData(input);
+    assert.ok(!result.includes('github_pat_11ABCDEF0_abcdefghijklmnopqrstuvwxyz'), 'GitHub PAT should be masked');
+  });
+
   // -- Multiple sensitive values in one string --
 
   it('masks multiple sensitive values in a single string', () => {

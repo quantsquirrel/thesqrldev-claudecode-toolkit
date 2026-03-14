@@ -72,7 +72,8 @@ All handoff output follows these perspective rules:
 1. **검증**: Phase 0 체크
 2. **수집**: 현재 작업 1줄 + 다음 액션 1줄
 3. **저장**: `.claude/handoffs/l1-YYYYMMDD-HHMMSS.md`
-4. **복사**: 초간결 요약
+4. **후처리**: Post-Handoff Actions 실행 (압축률 표시, CLAUDE.md 주입, diff 비교)
+5. **복사**: 초간결 요약
 
 **출력 템플릿:**
 
@@ -94,8 +95,10 @@ All handoff output follows these perspective rules:
 
 1. **검증**: Phase 0 체크
 2. **수집**: 사용자 요청 원문, 현재 작업, 주요 결정, 실패 시도 요약, 수정 파일 (최대 5개)
+   - Filter modified files through `.handoffignore` patterns (if file exists). Use `hooks/handoffignore.mjs` for gitignore-compatible path exclusion.
 3. **저장**: `.claude/handoffs/l2-YYYYMMDD-HHMMSS.md`
-4. **복사**: 상세 요약
+4. **후처리**: Post-Handoff Actions 실행 (압축률 표시, CLAUDE.md 주입, diff 비교)
+5. **복사**: 상세 요약
 
 **출력 템플릿:**
 
@@ -132,8 +135,10 @@ All handoff output follows these perspective rules:
 
 1. **검증**: Phase 0 체크
 2. **수집**: 사용자 요청 원문, 완료/미완료 작업, 주요 결정, 실패한 시도, 수정 파일, 제약사항
+   - Filter modified files through `.handoffignore` patterns (if file exists). Use `hooks/handoffignore.mjs` for gitignore-compatible path exclusion.
 3. **저장**: `.claude/handoffs/l3-YYYYMMDD-HHMMSS.md`
-4. **복사**: 클립보드에 요약본 복사
+4. **후처리**: Post-Handoff Actions 실행 (압축률 표시, CLAUDE.md 주입, diff 비교)
+5. **복사**: 클립보드에 요약본 복사
 
 **출력 템플릿:**
 
@@ -186,6 +191,40 @@ All handoff output follows these perspective rules:
 - `/handoff fast` = `/handoff l1` (핵심)
 - `/handoff slow` = `/handoff l3` (전체)
 - `/handoff` = `/handoff l2` (상세, 기본값)
+
+## Post-Handoff Actions
+
+After saving the handoff file, automatically perform these actions:
+
+### 1. Compression Stats
+Display the compression ratio:
+```
+Compression: 142,000 -> 450 tokens (315x, 99.7% saved)
+```
+Use `hooks/compression-stats.mjs` to calculate session tokens vs handoff tokens.
+
+### 2. CLAUDE.md Injection
+Inject a compact summary into the project's CLAUDE.md using marker-based sections:
+```
+<!-- HANDOFF:START -->
+## Last Session Context
+**Topic:** [topic]
+**Status:** N completed, M pending
+**Next:** [next step]
+**Full handoff:** .claude/handoffs/[filename]
+<!-- HANDOFF:END -->
+```
+Use `hooks/claude-md-injector.mjs`. Skip if no CLAUDE.md exists.
+
+### 3. Diff Display (when previous handoff exists)
+Show changes since the last handoff:
+```
+## Changes since last handoff
++ [Completed] New item
+- [Pending] Removed item
+~ [Next Step] Updated
+```
+Use `hooks/handoff-diff.mjs`.
 
 ## Clipboard Format
 

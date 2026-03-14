@@ -209,6 +209,14 @@ export const SECURITY_PATTERNS = [
   /AKIA[0-9A-Z]{16}/g,
   // Generic API keys
   /[a-zA-Z0-9_-]*(?:api[_-]?key|apikey|secret|token|password|credential)[a-zA-Z0-9_-]*\s*[:=]\s*['"]?[^\s'"]+/gi,
+  // GCP service account key
+  /"type":\s*"service_account"/g,
+  // PEM private key
+  /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----/g,
+  // Stripe secret key
+  /sk_live_[0-9a-zA-Z]{24,}/g,
+  // GitHub fine-grained PAT
+  /github_pat_[0-9a-zA-Z_]{22,}/g,
 ];
 
 /**
