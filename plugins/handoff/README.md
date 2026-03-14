@@ -92,27 +92,6 @@ Re-run the curl command from Quick Start to download the latest version.
 
 ---
 
-## Why Not Just `--continue`?
-
-`claude --continue` is great for short breaks. But it has limits:
-
-- **Token bloat**: Restores *everything* — tool outputs, file contents, dead ends. Your 200K context fills fast.
-- **No knowledge extraction**: Raw history doesn't highlight what matters. Failed approaches hide in noise.
-- **Single-tool lock-in**: Only works within Claude Code. Can't share context with Claude.ai, teammates, or other AIs.
-- **Reliability**: [Session resume bugs](https://github.com/anthropics/claude-code/issues/22107) can lose context silently.
-
-**Handoff complements `--continue`:**
-
-| Situation | Best Tool |
-|-----------|-----------|
-| Short break (< 30 min) | `claude --continue` |
-| Long break (2+ hours) | `/handoff` → Cmd+V |
-| Switching devices | `/handoff` → Cmd+V |
-| Sharing context with team | `/handoff` |
-| Context at 70%+ | `/handoff` |
-
----
-
 ## Why Handoff Survives the 1M-Token Era
 
 "With 1M-token context windows, why bother distilling anything?"
@@ -145,6 +124,27 @@ Information buried in a 1M-token conversation is unsearchable, untrackable, and 
 ### The Checkpoint Effect
 
 The act of creating a handoff forces you to answer: *"What did I actually accomplish? What failed? What's next?"* This is not overhead — it is the same discipline that makes senior engineers effective. **The best developers don't just remember. They record.**
+
+---
+
+## Why Not Just `--continue`?
+
+`claude --continue` is great for short breaks. But it has limits:
+
+- **Token bloat**: Restores *everything* — tool outputs, file contents, dead ends. Your 200K context fills fast.
+- **No knowledge extraction**: Raw history doesn't highlight what matters. Failed approaches hide in noise.
+- **Single-tool lock-in**: Only works within Claude Code. Can't share context with Claude.ai, teammates, or other AIs.
+- **Reliability**: [Session resume bugs](https://github.com/anthropics/claude-code/issues/22107) can lose context silently.
+
+**Handoff complements `--continue`:**
+
+| Situation | Best Tool |
+|-----------|-----------|
+| Short break (< 30 min) | `claude --continue` |
+| Long break (2+ hours) | `/handoff` → Cmd+V |
+| Switching devices | `/handoff` → Cmd+V |
+| Sharing context with team | `/handoff` |
+| Context at 70%+ | `/handoff` |
 
 ---
 
