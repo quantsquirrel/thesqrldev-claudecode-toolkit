@@ -1,0 +1,60 @@
+# .handoffignore — exclude files from handoff "Files Modified" section
+# Uses gitignore-compatible syntax
+
+# Secrets and credentials
+.env
+.env.*
+.env.local
+**/credentials/**
+**/secrets/**
+**/*.pem
+**/*.key
+
+# Build artifacts
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large binary files
+*.sqlite
+*.db
+*.sqlite3
+*.wasm
+*.node
+
+# Lock files (usually not relevant for handoffs)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Generated files
+*.min.js
+*.min.css
+*.map
+*.d.ts
+
+# Log files
+*.log
+npm-debug.log*
+
+# Temporary and cache
+.cache/
+.tmp/
+tmp/
+*.tmp
