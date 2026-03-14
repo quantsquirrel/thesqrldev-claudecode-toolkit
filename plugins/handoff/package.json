@@ -1,5 +1,7 @@
 {
   "name": "claude-handoff-baton",
+  "version": "2.5.0",
+  "description": "Session context handoff for Claude Code — don't pass raw history, pass a baton",
   "private": true,
   "type": "module",
   "scripts": {
