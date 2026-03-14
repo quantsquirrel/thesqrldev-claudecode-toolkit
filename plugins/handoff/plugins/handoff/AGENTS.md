@@ -11,7 +11,7 @@ Core handoff plugin for Claude Code. Provides the `/handoff` skill with 3-level 
 
 | File | Description |
 |------|-------------|
-| `plugin.json` | Plugin manifest: name, version (2.2.0), author, skills path (`./skills/`) |
+| `plugin.json` | Plugin manifest: name, version (2.5.0), author, skills path (`./skills/`) |
 
 ## Subdirectories
 
@@ -32,7 +32,7 @@ Core handoff plugin for Claude Code. Provides the `/handoff` skill with 3-level 
 ```json
 {
   "name": "handoff",
-  "version": "2.3.0",
+  "version": "2.5.0",
   "description": "Session context handoff with smart auto-scaling output",
   "author": { "name": "quantsquirrel" },
   "repository": "https://github.com/quantsquirrel/claude-handoff-baton",

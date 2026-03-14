@@ -1,7 +1,7 @@
 {
   "name": "handoff",
   "description": "Pass the baton between sessions. Save context before autocompact, restore with clipboard paste.",
-  "version": "2.3.0",
+  "version": "2.5.0",
   "owner": {
     "name": "quantsquirrel",
     "email": "ajunh7@gmail.com"
@@ -11,7 +11,7 @@
       "name": "handoff",
       "description": "Session context handoff with fast/slow modes",
       "source": "./plugins/handoff",
-      "version": "2.3.0",
+      "version": "2.5.0",
       "author": {
         "name": "quantsquirrel"
       }

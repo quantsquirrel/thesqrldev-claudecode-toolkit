@@ -6,7 +6,7 @@
 
 Session handoff tool for Claude Code that preserves context across sessions. When long-running work spans multiple sessions or autocompact triggers, `/handoff` captures what was accomplished, what's pending, what failed, and how to resume. Output scales automatically based on session complexity (L1/L2/L3 levels).
 
-**Version:** 2.3.0
+**Version:** 2.5.0
 **License:** MIT
 
 ## Key Files
