@@ -1,9 +1,31 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 /**
  * Auto-Handoff Hook Constants
  *
  * Thresholds and messages for context usage monitoring.
  * Triggers handoff suggestion when context reaches 70%.
  */
+
+// Load external config with fallback to defaults
+const __dirname = dirname(fileURLToPath(import.meta.url));
+let _config = {};
+try {
+  _config = JSON.parse(readFileSync(join(__dirname, 'config.json'), 'utf-8'));
+} catch {
+  // config.json missing or invalid — use hardcoded defaults
+}
+
+/**
+ * Token budgets per handoff level (loaded from config.json)
+ */
+export const TOKEN_BUDGETS = {
+  l1: _config.tokenBudgets?.l1 ?? 150,
+  l2: _config.tokenBudgets?.l2 ?? 400,
+  l3: _config.tokenBudgets?.l3 ?? 700,
+};
 
 /**
  * Threshold ratio to trigger handoff suggestion (70%)
@@ -31,13 +53,13 @@ export const HANDOFF_COOLDOWN_MS = 180_000;
 export const MAX_SUGGESTIONS = 2;
 
 /**
- * Default context limit for Claude models
+ * Default context limit for Claude models (loaded from config.json)
  */
 export const CLAUDE_CONTEXT_LIMIT =
   process.env.ANTHROPIC_1M_CONTEXT === 'true' ||
   process.env.VERTEX_ANTHROPIC_1M_CONTEXT === 'true'
-    ? 1_000_000
-    : 200_000;
+    ? (_config.contextLimit?.extended ?? 1_000_000)
+    : (_config.contextLimit?.default ?? 200_000);
 
 /**
  * Average characters per token estimate

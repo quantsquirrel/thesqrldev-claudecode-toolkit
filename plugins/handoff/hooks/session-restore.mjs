@@ -61,7 +61,8 @@ function findHandoffFiles() {
       const files = fs.readdirSync(dir);
 
       for (const file of files) {
-        if (file.startsWith('handoff-') && file.endsWith('.md')) {
+        // Match handoff-*.md and l1-/l2-/l3-*.md filename patterns
+        if (/^(handoff|l[123])-.*\.md$/.test(file)) {
           const filePath = path.join(dir, file);
           const stat = fs.statSync(filePath);
           sources.push({

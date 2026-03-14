@@ -113,6 +113,41 @@ Re-run the curl command from Quick Start to download the latest version.
 
 ---
 
+## Why Handoff Survives the 1M-Token Era
+
+"With 1M-token context windows, why bother distilling anything?"
+
+Because **bigger context makes handoff more valuable, not less.**
+
+### The Cost Math
+
+| Approach | Tokens Sent | Cost per Resume | 100 Resumes |
+|----------|-------------|-----------------|-------------|
+| Dump full history into 1M context | ~100K tokens | **~$10** | **~$1,000** |
+| Handoff baton | ~500 tokens | **~$0.01** | **~$1** |
+
+That is a **1,000x cost difference.** Every resume without handoff burns budget on tool outputs, dead ends, and file contents the model already forgot how to use.
+
+### Bigger Context, Worse Recall
+
+Stanford's ["Lost in the Middle"](https://arxiv.org/abs/2307.03172) research found that LLM accuracy **drops 15-47%** as context grows beyond 10K tokens. Information buried in the middle of a long conversation is functionally invisible.
+
+**A well-structured 500-token handoff outperforms a 100K-token raw dump** because every token carries signal, not noise.
+
+### Speed
+
+Long context = slow inference. A 100K-token prompt takes meaningfully longer to process than a 500-token handoff. Your next session starts **instantly** instead of waiting for the model to wade through yesterday's debug logs.
+
+### Auditability
+
+Information buried in a 1M-token conversation is unsearchable, untrackable, and invisible to your team. Handoff files are **Git-native artifacts** — diffable, reviewable, and part of your project history.
+
+### The Checkpoint Effect
+
+The act of creating a handoff forces you to answer: *"What did I actually accomplish? What failed? What's next?"* This is not overhead — it is the same discipline that makes senior engineers effective. **The best developers don't just remember. They record.**
+
+---
+
 ## Usage
 
 ### Workflow

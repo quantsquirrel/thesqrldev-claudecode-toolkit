@@ -84,7 +84,8 @@ function checkRecentCheckpoint() {
       const cooldown = CONFIG.cooldownMinutes * 60 * 1000;
 
       for (const file of files) {
-        if (file.startsWith('checkpoint-') && file.endsWith('.md')) {
+        // Match handoff-*.md, l1-/l2-/l3-*.md, and checkpoint-*.md patterns
+        if (/^(handoff|l[123]|checkpoint)-.*\.md$/.test(file)) {
           const stat = fs.statSync(path.join(checkpointDir, file));
           if (now - stat.mtimeMs < cooldown) {
             return true;

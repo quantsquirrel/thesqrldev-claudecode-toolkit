@@ -63,6 +63,12 @@
  */
 
 /**
+ * Current schema version for handoff documents.
+ * Increment when the handoff file format changes to ensure backward compatibility.
+ */
+export const SCHEMA_VERSION = 'v2.5';
+
+/**
  * Standard handoff schema for session context transfer
  *
  * Use this schema as a template when generating handoff documents.
@@ -76,6 +82,7 @@
  * @type {HandoffSchema}
  */
 export const HANDOFF_SCHEMA = {
+  schema_version: SCHEMA_VERSION,
   summary: {
     natural_language: "",  // 200-500 token narrative summary
     structured_data: {

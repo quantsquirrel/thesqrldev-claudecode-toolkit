@@ -7,6 +7,7 @@
  * Provides: file locking, JSON state I/O, token estimation, debug logging.
  */
 
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import { CHARS_PER_TOKEN, SHARED_TOKEN_STATE_FILE } from './constants.mjs';
 import * as path from 'path';
@@ -159,7 +160,7 @@ export function getSharedTokenCount(sessionId) {
  *
  * Multiple hooks may fire for the same tool call (e.g. Read triggers both
  * auto-handoff and auto-checkpoint). This function uses a callId fingerprint
- * (toolName:responseLength) to ensure each call's tokens are counted only once.
+ * (toolName:contentHash) to ensure each call's tokens are counted only once.
  *
  * @param {string} sessionId - Session identifier
  * @param {string} toolName - Name of the tool that produced the response
@@ -169,7 +170,8 @@ export function getSharedTokenCount(sessionId) {
 export function trackTokenUsage(sessionId, toolName, toolResponse) {
   const lockFile = SHARED_TOKEN_STATE_PATH + '.lock';
   const responseTokens = estimateTokens(toolResponse);
-  const callId = `${toolName}:${toolResponse.length}`;
+  const contentHash = crypto.createHash('sha1').update(toolResponse).digest('hex').slice(0, 8);
+  const callId = `${toolName}:${contentHash}`;
 
   if (!acquireLock(lockFile)) {
     // Can't lock - return best-effort estimate from file

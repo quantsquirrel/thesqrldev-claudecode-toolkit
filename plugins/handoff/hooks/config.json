@@ -1,0 +1,11 @@
+{
+  "tokenBudgets": {
+    "l1": 150,
+    "l2": 400,
+    "l3": 700
+  },
+  "contextLimit": {
+    "default": 200000,
+    "extended": 1000000
+  }
+}

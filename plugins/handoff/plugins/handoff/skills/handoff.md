@@ -8,7 +8,7 @@
 
 ```bash
 /handoff [level] [topic]
-  level: l1 (핵심 ~100토큰) | l2 (상세 ~300토큰) | l3 (전체 ~500토큰)
+  level: l1 (핵심 ~150토큰) | l2 (상세 ~400토큰) | l3 (전체 ~700토큰)
   기본값: l2
 
 # Aliases (backward compatibility)
@@ -65,7 +65,7 @@ All handoff output follows these perspective rules:
 
 ## Behavior
 
-### Level 1 (L1) - 핵심 (~100 tokens)
+### Level 1 (L1) - 핵심 (~150 tokens)
 
 **용도**: 빠른 컨텍스트 체크포인트, 짧은 휴식
 
@@ -80,6 +80,7 @@ All handoff output follows these perspective rules:
 # L1 Handoff - 핵심
 
 **Time:** YYYY-MM-DD HH:MM
+**Schema:** v2.5
 **Topic:** [topic or auto-detected]
 
 **Current Task:** [현재 작업 1문장 - 1인칭]
@@ -87,7 +88,7 @@ All handoff output follows these perspective rules:
 **Next Step:** [다음 액션 1문장]
 ```
 
-### Level 2 (L2) - 상세 (~300 tokens, 기본값)
+### Level 2 (L2) - 상세 (~400 tokens, 기본값)
 
 **용도**: 작업 체크포인트, 세션 전환
 
@@ -102,6 +103,7 @@ All handoff output follows these perspective rules:
 # L2 Handoff - 상세
 
 **Time:** YYYY-MM-DD HH:MM
+**Schema:** v2.5
 **Topic:** [topic or auto-detected]
 
 ## User Requests
@@ -124,7 +126,7 @@ All handoff output follows these perspective rules:
 [다음 액션 1-2문장]
 ```
 
-### Level 3 (L3) - 전체 (~500 tokens)
+### Level 3 (L3) - 전체 (~700 tokens)
 
 **용도**: 세션 종료, 긴 휴식, 완전한 문서화
 
@@ -139,6 +141,7 @@ All handoff output follows these perspective rules:
 # L3 Handoff - 전체
 
 **Generated:** YYYY-MM-DD HH:MM:SS
+**Schema:** v2.5
 **Topic:** [topic or auto-detected]
 **Working Directory:** [cwd]
 

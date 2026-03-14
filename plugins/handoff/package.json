@@ -1,0 +1,11 @@
+{
+  "name": "claude-handoff-baton",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test hooks/tests/*.test.mjs",
+    "test:utils": "node --test hooks/tests/utils.test.mjs",
+    "test:security": "node --test hooks/tests/security.test.mjs",
+    "test:patterns": "node --test hooks/tests/patterns.test.mjs"
+  }
+}
