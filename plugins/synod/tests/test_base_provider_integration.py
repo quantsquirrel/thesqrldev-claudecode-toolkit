@@ -364,16 +364,11 @@ class TestAPIKeyValidation:
 
     def test_all_providers_exit_on_missing_key(self, monkeypatch):
         """For each provider, verify SystemExit on missing API key."""
+        # Mock resolve_api_key to return None (simulates no key in env, .env, or Keychain)
+        monkeypatch.setattr("base_provider.resolve_api_key", lambda key: None)
+
         for filename, provider_class in PROVIDERS.items():
             provider = provider_class()
-            api_key_env = provider.API_KEY_ENV
-
-            # Remove API key from environment
-            monkeypatch.delenv(api_key_env, raising=False)
-
-            # Special case: Gemini also checks GOOGLE_API_KEY
-            if api_key_env == "GEMINI_API_KEY":
-                monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
 
             # Should raise SystemExit
             with pytest.raises(SystemExit):

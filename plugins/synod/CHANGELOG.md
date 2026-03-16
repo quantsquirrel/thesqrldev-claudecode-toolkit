@@ -17,6 +17,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.3.0] - 2026-03-16
+
+### Added
+- **Model lineup v3.3**: GPT-5.4, Llama 4, Magistral, Grok 4.1 support
+- **Gemini 3.1 models**: 3.1-flash-lite, 3.1-pro added with COLD_START_DEFAULTS
+- **Multi-source API key resolution**: env var → `~/.synod/.env` → macOS Keychain fallback chain
+
+### Fixed
+- **Gemini pro migration**: Urgent migration to 3.1-pro-preview (3.0 EOL 2026-03-09)
+
+### Changed
+- **Skills restructured**: Directory-based `SKILL.md` format (e.g., `skills/synod/SKILL.md`)
+- **Korean README improved**: Natural language rewrite with missing sections added
+
+---
+
 ## [3.2.0] - 2026-02-21
 
 ### Added
@@ -204,5 +220,7 @@ export SYNOD_SESSION_DIR="~/.synod/sessions"  # Optional, defaults shown
 
 ---
 
-[Unreleased]: https://github.com/quantsquirrel/claude-synod-debate/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/quantsquirrel/claude-synod-debate/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/quantsquirrel/claude-synod-debate/compare/v3.2.0...v3.3.0
+[3.2.0]: https://github.com/quantsquirrel/claude-synod-debate/compare/v1.0.0...v3.2.0
 [1.0.0]: https://github.com/quantsquirrel/claude-synod-debate/releases/tag/v1.0.0
