@@ -24,6 +24,11 @@
 ```bash
 # Emit phase start (v2.1)
 synod_progress '{"event":"phase_start","phase":3,"name":"Defense Round"}'
+
+# Load timeouts (v3.3 tier-aware)
+MODEL_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts model 2>/dev/null || echo "180")
+BASH_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts bash 2>/dev/null || echo "300")
+BASH_TIMEOUT_MS=$((BASH_TIMEOUT * 1000))
 ```
 
 ## Step 3.1: Assign Court Roles
@@ -37,6 +42,8 @@ synod_progress '{"event":"phase_start","phase":3,"name":"Defense Round"}'
 Select the solution with highest Trust Score as the "defendant."
 
 ## Step 3.3: Gemini Defense Execution
+
+**Bash tool timeout: `${BASH_TIMEOUT_MS:-300000}` ms for all CLI executions in this phase.**
 
 ```bash
 synod_progress '{"event":"model_start","model":"gemini"}'

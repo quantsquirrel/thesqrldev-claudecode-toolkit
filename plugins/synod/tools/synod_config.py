@@ -88,10 +88,31 @@ def list_modes() -> list[str]:
     return list(config.get("modes", {}).keys())
 
 
-def get_timeouts() -> dict:
-    """Get timeout configuration."""
+def get_timeouts(tier: Optional[str] = None) -> dict:
+    """Get timeout configuration, optionally with tier overrides.
+
+    Args:
+        tier: Optional tier name (fast, standard, deep).
+            When provided and not 'standard', tier-specific timeouts
+            override defaults.
+
+    Returns:
+        Dict with 'model', 'outer', and 'bash' timeout values in seconds.
+    """
     config = load_config()
-    return config.get("timeouts", {"model": 110, "outer": 120})
+    defaults = config.get("timeouts", {"model": 180, "outer": 240, "bash": 300})
+
+    if tier is None or tier == "standard":
+        return defaults
+
+    tier_cfg = config.get("tiers", {}).get(tier, {})
+    tier_timeouts = tier_cfg.get("timeouts", {})
+    if tier_timeouts:
+        merged = dict(defaults)
+        merged.update(tier_timeouts)
+        return merged
+
+    return defaults
 
 
 def get_all_keywords() -> dict[str, list[str]]:

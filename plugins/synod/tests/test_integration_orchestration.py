@@ -419,8 +419,9 @@ class TestConfigProgressIntegration:
         """Test config timeouts match YAML values."""
         timeouts = get_timeouts()
 
-        assert timeouts["model"] == 110
-        assert timeouts["outer"] == 120
+        assert timeouts["model"] == 180
+        assert timeouts["outer"] == 240
+        assert timeouts["bash"] == 300
 
     def test_config_thresholds_accessible_for_trust_calculation(self):
         """Test config thresholds accessible for trust scoring."""

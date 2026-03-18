@@ -125,18 +125,25 @@ Generate your solution with the same XML format requirements.
 
 ## Step 1.2: Execute External Models in Parallel
 
+> **⚠️ BASH TIMEOUT:** When executing the Bash command for this step, you MUST set
+> `timeout: ${BASH_TIMEOUT_MS}` (milliseconds) on the Bash tool call.
+> Default Bash tool timeout (120s) is shorter than model execution time and will kill the process.
+
 **v2.1:** Load timeouts from config and emit progress events:
 
 ```bash
-# Load timeouts from config (v2.1)
-MODEL_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts model 2>/dev/null || echo "110")
-OUTER_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts outer 2>/dev/null || echo "120")
+# Load timeouts from config (v2.1, v3.3 tier-aware)
+MODEL_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts model 2>/dev/null || echo "180")
+OUTER_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts outer 2>/dev/null || echo "240")
+BASH_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts bash 2>/dev/null || echo "300")
+BASH_TIMEOUT_MS=$((BASH_TIMEOUT * 1000))
 
 # Emit phase start
 synod_progress '{"event":"phase_start","phase":1,"name":"Solver Round"}'
 ```
 
-Run these commands in parallel using background execution:
+Run these commands in parallel using background execution.
+**Bash tool timeout MUST be set to `${BASH_TIMEOUT_MS:-300000}` ms for this command block.**
 
 ```bash
 # Create marker files for completion tracking
@@ -145,7 +152,7 @@ TEMP_DIR="${SESSION_DIR}/tmp"
 # Gemini execution with completion marker
 (
   synod_progress '{"event":"model_start","model":"gemini"}'
-  run_cli "$GEMINI_CLI" --model {GEMINI_MODEL} --thinking {GEMINI_THINKING} --timeout ${MODEL_TIMEOUT:-110} \
+  run_cli "$GEMINI_CLI" --model {GEMINI_MODEL} --thinking {GEMINI_THINKING} --timeout ${MODEL_TIMEOUT:-180} \
     < "${TEMP_DIR}/gemini-prompt.txt" \
     > "${TEMP_DIR}/gemini-response.txt" 2>&1
   echo $? > "${TEMP_DIR}/gemini-exit-code"
@@ -155,16 +162,16 @@ GEMINI_PID=$!
 # OpenAI execution with completion marker
 (
   synod_progress '{"event":"model_start","model":"openai"}'
-  run_cli "$OPENAI_CLI" --model {OPENAI_MODEL} {--reasoning REASONING if o3} --timeout ${MODEL_TIMEOUT:-110} \
+  run_cli "$OPENAI_CLI" --model {OPENAI_MODEL} {--reasoning REASONING if o3} --timeout ${MODEL_TIMEOUT:-180} \
     < "${TEMP_DIR}/openai-prompt.txt" \
     > "${TEMP_DIR}/openai-response.txt" 2>&1
   echo $? > "${TEMP_DIR}/openai-exit-code"
 ) &
 OPENAI_PID=$!
 
-# Wait with outer timeout (slightly longer than inner)
-# This prevents Claude's bash from timing out before subprocesses complete
-WAIT_TIMEOUT=${OUTER_TIMEOUT:-120}
+# Wait with outer timeout (must be < bash tool timeout)
+# bash > outer > model timeout hierarchy prevents premature kills
+WAIT_TIMEOUT=${OUTER_TIMEOUT:-240}
 WAIT_START=$(date +%s)
 
 while true; do

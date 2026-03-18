@@ -204,8 +204,9 @@ def test_get_timeouts_returns_dict():
     assert isinstance(timeouts, dict)
     assert "model" in timeouts
     assert "outer" in timeouts
-    assert timeouts["model"] == 110
-    assert timeouts["outer"] == 120
+    assert timeouts["model"] == 180
+    assert timeouts["outer"] == 240
+    assert timeouts["bash"] == 300
 
 
 def test_get_all_keywords_returns_four_modes():
@@ -249,7 +250,7 @@ def test_config_cli_main(capsys):
     sys.argv = ["synod_config.py", "timeouts", "model"]
     main()
     captured = capsys.readouterr()
-    assert captured.out.strip() == "110"
+    assert captured.out.strip() == "180"
 
 
 def test_config_cli_nested_path(capsys):
@@ -273,8 +274,9 @@ def test_config_cli_json_output(capsys):
     main()
     captured = capsys.readouterr()
     result = json.loads(captured.out.strip())
-    assert result["model"] == 110
-    assert result["outer"] == 120
+    assert result["model"] == 180
+    assert result["outer"] == 240
+    assert result["bash"] == 300
 
 
 def test_config_cli_missing_path_exits():

@@ -18,12 +18,12 @@
 
 ## Timeout Fallback Chain
 
-### If Gemini times out (120s):
+### If Gemini times out (MODEL_TIMEOUT, default 180s):
 1. Retry: `$GEMINI_CLI --model flash --thinking medium` (downgrade)
 2. Retry: `$GEMINI_CLI --model flash --thinking low`
 3. Final: Continue without Gemini, note in synthesis: "[Gemini 사용 불가 - 시간 초과]"
 
-### If OpenAI times out (120s):
+### If OpenAI times out (MODEL_TIMEOUT, default 180s):
 1. Retry: `$OPENAI_CLI --model o3 --reasoning medium` (downgrade)
 2. Retry: `$OPENAI_CLI --model gpt4o`
 3. Final: Continue without OpenAI, note in synthesis: "[OpenAI 사용 불가 - 시간 초과]"

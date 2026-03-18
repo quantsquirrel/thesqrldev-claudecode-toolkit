@@ -24,6 +24,11 @@
 ```bash
 # Emit phase start (v2.1)
 synod_progress '{"event":"phase_start","phase":2,"name":"Critic Round"}'
+
+# Load timeouts (v3.3 tier-aware)
+MODEL_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts model 2>/dev/null || echo "180")
+BASH_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts bash 2>/dev/null || echo "300")
+BASH_TIMEOUT_MS=$((BASH_TIMEOUT * 1000))
 ```
 
 ## Step 2.1: Claude Aggregation
@@ -126,11 +131,11 @@ Validate claims from the Solver round. Focus on:
 </semantic_focus>
 ```
 
-Execute:
+Execute (**Bash tool timeout: `${BASH_TIMEOUT_MS:-300000}` ms**):
 ```bash
 # Gemini Critic execution (medium thinking for analytical evaluation)
 synod_progress '{"event":"model_start","model":"gemini"}'
-$GEMINI_CLI --model {GEMINI_MODEL} --thinking {GEMINI_THINKING} --timeout ${MODEL_TIMEOUT:-110} < "${TEMP_DIR}/gemini-critic-prompt.txt" > "${TEMP_DIR}/gemini-critique.txt" 2>&1 &
+$GEMINI_CLI --model {GEMINI_MODEL} --thinking {GEMINI_THINKING} --timeout ${MODEL_TIMEOUT:-180} < "${TEMP_DIR}/gemini-critic-prompt.txt" > "${TEMP_DIR}/gemini-critique.txt" 2>&1 &
 ```
 
 ## Step 2.3: OpenAI Critic Execution

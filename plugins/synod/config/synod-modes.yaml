@@ -100,9 +100,14 @@ complexity:
     rounds: 4
 
 # Default timeouts (seconds)
+# IMPORTANT: bash > outer > model (with sufficient buffer at each layer)
+# - model: API call timeout per CLI invocation
+# - outer: Wait loop timeout in Phase 1 parallel execution
+# - bash: Claude Code Bash tool timeout (MUST exceed outer to prevent premature kill)
 timeouts:
-  model: 110
-  outer: 120
+  model: 180
+  outer: 240
+  bash: 300
 
 # Classifier keyword patterns (used by synod-classifier.py)
 keywords:
@@ -161,9 +166,13 @@ tiers:
     openai:
       model: "gpt5mini"
       reasoning: null
+    timeouts:
+      model: 60
+      outer: 90
+      bash: 120
   standard:
     description: "Medium queries - balanced models (mode defaults)"
-    # No model overrides - uses mode-specific config as-is
+    # No model/timeout overrides - uses defaults as-is
   deep:
     description: "Complex queries - strongest models"
     gemini:
@@ -172,6 +181,10 @@ tiers:
     openai:
       model: "o3"
       reasoning: "high"
+    timeouts:
+      model: 240
+      outer: 300
+      bash: 360
 
 # Complexity-to-tier mapping
 tier_mapping:
