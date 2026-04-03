@@ -1,5 +1,5 @@
 ---
-name: setup
+name: synod-setup
 description: "Synod Setup - 초기 설정 및 모델 가용성 테스트"
 allowed-tools: Read, Write, Bash, Glob, Grep
 user-invocable: true
