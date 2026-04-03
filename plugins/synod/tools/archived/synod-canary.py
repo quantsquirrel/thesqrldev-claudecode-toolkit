@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 synod-canary - CLI for Canary Pre-Sampling health checks.
 

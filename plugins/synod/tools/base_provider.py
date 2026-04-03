@@ -11,6 +11,7 @@ Extracts common patterns from all provider CLIs:
 - Input handling (stdin/args/positional)
 - Security: input sanitization, key validation, error sanitization
 """
+from __future__ import annotations
 
 import argparse
 import os
