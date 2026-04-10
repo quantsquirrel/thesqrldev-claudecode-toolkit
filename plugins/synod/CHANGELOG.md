@@ -17,13 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [3.3.3] - 2026-04-03
-
-### Fixed
-- **Python 3.9 compatibility**: Added `from __future__ import annotations` to 7 files that used `str | None` union syntax (requires Python 3.10+), fixing `TypeError` on Python 3.9 despite declared `requires-python = ">=3.9"`
-
----
-
 ## [3.3.0] - 2026-03-16
 
 ### Added

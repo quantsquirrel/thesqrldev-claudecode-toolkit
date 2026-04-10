@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import annotations
 """
 synod-setup - Synod 초기 설정 및 모델 가용성 테스트
 

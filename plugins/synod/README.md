@@ -90,8 +90,9 @@ flowchart TB
 </div>
 
 ```bash
-# 1️⃣ Install the plugin
-/plugin install quantsquirrel/claude-synod-debate
+# 1️⃣ Clone the repo
+git clone https://github.com/quantsquirrel/claude-synod-debate.git
+cd claude-synod-debate
 
 # 2️⃣ Set your API keys (one-time)
 export GEMINI_API_KEY="your-gemini-key"
@@ -353,28 +354,29 @@ Trust Score = ──────────────────────
 </div>
 
 <details>
-<summary><b>🚀 Plugin Installation (Recommended)</b></summary>
+<summary><b>🚀 Quick Installation (Recommended)</b></summary>
 
 <br/>
 
 ```bash
-# Install plugin
-/plugin install quantsquirrel/claude-synod-debate
+# Clone the repo
+git clone https://github.com/quantsquirrel/claude-synod-debate.git
+cd claude-synod-debate
 
 # Set API keys
 export GEMINI_API_KEY="your-gemini-key"
 export OPENAI_API_KEY="your-openai-key"
 
-# Run setup (auto-installs Python deps, creates CLI wrappers, tests models)
+# Run setup inside Claude Code (auto-installs Python deps, creates CLI wrappers, tests models)
 /synod-setup
 ```
 
-`/synod-setup` handles everything: Python dependencies (`google-genai`, `openai`, `httpx`), CLI tool wrappers in `~/.synod/bin/`, API key validation, and model connectivity testing.
+Skills auto-load from `plugin.json` when you open Claude Code inside this directory. `/synod-setup` handles the rest: Python dependencies (`google-genai`, `openai`, `httpx`), CLI tool wrappers in `~/.synod/bin/`, API key validation, and model connectivity testing.
 
 </details>
 
 <details>
-<summary><b>🔧 Manual Installation</b></summary>
+<summary><b>🔧 Manual Installation (without Claude Code)</b></summary>
 
 <br/>
 
@@ -382,9 +384,8 @@ export OPENAI_API_KEY="your-openai-key"
 git clone https://github.com/quantsquirrel/claude-synod-debate.git
 cd claude-synod-debate
 pip install google-genai openai httpx
-cp skills/*.md ~/.claude/commands/
 
-# Run setup to create CLI wrappers and test models
+# Create CLI wrappers and test models
 python3 tools/synod-setup.py
 ```
 

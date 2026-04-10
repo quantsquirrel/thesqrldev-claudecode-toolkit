@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import annotations
 """
 Synod Response Parser - Extract SID signals from model responses.
 

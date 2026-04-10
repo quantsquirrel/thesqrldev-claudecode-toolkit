@@ -3,7 +3,6 @@
 Loads mode definitions from config/synod-modes.yaml.
 Provides typed access to mode parameters.
 """
-from __future__ import annotations
 
 import os
 import yaml

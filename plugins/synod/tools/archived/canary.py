@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import annotations
 """
 Canary Pre-Sampling - lightweight probe to detect model health before full requests.
 
