@@ -8,12 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
+- Async dispatch for `deep`/`ultra` tiers (currently synchronous — `requires_async=true` only warns)
+- Migrate `SYNOD_EVIDENCE_FIRST` from opt-in flag to default-on once real-world coverage data supports it
+- Custom `model_matrix.json` location via `SYNOD_MODEL_MATRIX_PATH`
 - Extended debate modes (5+ round deliberation for complex architectural decisions)
 - Custom model configuration per session (not just global defaults)
 - Debate visualization dashboard showing confidence trajectories
 - Integration with Claude Code's native analysis capabilities
 - Batch processing for multiple problems in sequence
 - Export debates to markdown reports with embedded confidence metrics
+
+---
+
+## [3.4.0] - 2026-04-22
+
+### Added
+- **Phase 0.5 — Ground-Truth Probe + Prompt Lint + Tier Select** (opt-in, gated by `SYNOD_EVIDENCE_FIRST=1` or `--evidence-first`). Runs three mechanical checks before Phase 1 Solver:
+  - `tools/ground_truth_probe.py` — inspect target codebase (import, tests, version pins, file tree). Writes 5 artifact files, emits `status=ok|degraded|broken` summary.
+  - `tools/prompt_linter.py` — regex audit for unbacked orchestrator claims (`default X`, `providers/ 추상화`, `22/22 regression`). Exits 2 on high-severity findings to block Phase 1 unless `--skip-lint`.
+  - `tools/tier_matrix.py` + `config/model_matrix.json` — map reasoning tier (`simple|standard|deep|ultra`) to concrete model roster. Replaces latency-based "recommended" heuristic.
+- **Phase 4.5 — Evidence Coverage Gate**. Annotates final verdict with `file:line` citation ratio. Threshold 70% = `evidence-based`, 30–70% = `partial`, <30% = `narrative-based`.
+- **New skill modules**: `synod-phase0-5-ground-truth.md`, `synod-phase4-5-evidence-gate.md`.
+- **CLI**: `--evidence-first` flag and `--tier {auto|simple|standard|deep|ultra}` selection.
+
+### Changed
+- **Phase 0 / Phase 1**: Optional hooks added. When evidence-first mode is active, solvers receive an `ENRICHED_PROBLEM` with `## Primary Evidence` + `## Known Limitations` + `## Orchestrator Hypothesis` sections instead of the raw user prompt. Legacy mode is unchanged.
+
+### Rationale
+Prior versions scored solver output quality (CRIS rubric) but never audited the orchestrator's input. A stale or fabricated PROBLEM statement would propagate through the pipeline with no counter-pressure. 3.4.0 closes that gap with three cheap mechanical checks while preserving full backward compatibility — legacy behavior is unchanged when `SYNOD_EVIDENCE_FIRST` is unset.
 
 ---
 
