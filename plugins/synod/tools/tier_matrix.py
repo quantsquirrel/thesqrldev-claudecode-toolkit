@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Optional
 
 VALID_TIERS = {"simple", "standard", "deep", "ultra"}
 SCRIPT_DIR = Path(__file__).parent
@@ -26,7 +27,7 @@ def load_matrix(matrix_path: Path) -> dict:
         sys.exit(2)
 
 
-def resolve_tier(tier_arg: str, classifier_json: str | None) -> str:
+def resolve_tier(tier_arg: str, classifier_json: Optional[str]) -> str:
     if tier_arg != "auto":
         return tier_arg
 
