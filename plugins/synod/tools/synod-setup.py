@@ -20,7 +20,7 @@ from pathlib import Path
 
 # Import shared key resolution from base_provider
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from base_provider import load_synod_env, resolve_api_key, save_to_synod_env
+from base_provider import resolve_api_key, save_to_synod_env
 
 # Paths
 TOOLS_DIR = Path(__file__).parent
@@ -57,7 +57,7 @@ MODELS_TO_TEST = {
     },
     "openai": {
         "cli": "openai-cli.py",
-        "models": ["gpt4o", "o3"],
+        "models": ["gpt54mini", "o3"],
         "env_key": "OPENAI_API_KEY",
     },
     "deepseek": {
@@ -90,7 +90,7 @@ MODELS_TO_TEST = {
 TEST_TARGETS = [
     ("gemini", "flash"),
     ("gemini", "pro"),
-    ("openai", "gpt4o"),
+    ("openai", "gpt54mini"),
     ("openai", "o3"),
     ("openrouter", "claude"),
 ]
@@ -133,7 +133,7 @@ def check_and_install_dependencies(skip: bool = False) -> bool:
         return True
 
     if skip:
-        print(f"\n  [건너뜀] --skip-deps 플래그로 의존성 설치를 건너뜁니다.")
+        print("\n  [건너뜀] --skip-deps 플래그로 의존성 설치를 건너뜁니다.")
         print(f"  수동 설치: pip install {' '.join(missing)}")
         return False
 
@@ -183,7 +183,7 @@ def install_cli_wrappers() -> dict[str, str]:
             continue
 
         target = SYNOD_BIN / cmd_name
-        wrapper_content = f"#!/bin/sh\nexec python3 \"{source}\" \"$@\"\n"
+        wrapper_content = f'#!/bin/sh\nexec python3 "{source}" "$@"\n'
 
         # Write wrapper script
         target.write_text(wrapper_content)
@@ -391,10 +391,10 @@ def main():
     skip_deps = "--skip-deps" in sys.argv
 
     # Step 0: Dependencies
-    deps_ok = check_and_install_dependencies(skip=skip_deps)
+    check_and_install_dependencies(skip=skip_deps)
 
     # Step 1: CLI wrappers
-    cli_results = install_cli_wrappers()
+    install_cli_wrappers()
 
     # Step 2: API keys
     providers_with_keys = check_all_api_keys()
@@ -403,9 +403,7 @@ def main():
     print(f"\nStep 3/3: 모델 응답 시간 측정 (타임아웃: {TIMEOUT_THRESHOLD}초)")
 
     targets = [
-        (provider, model)
-        for provider, model in TEST_TARGETS
-        if provider in providers_with_keys
+        (provider, model) for provider, model in TEST_TARGETS if provider in providers_with_keys
     ]
 
     if not targets:
@@ -429,7 +427,7 @@ def main():
                 save_to_synod_env(env_key, val)
                 providers_with_keys.append(provider)
                 changed = True
-                print(f"    → ~/.synod/.env에 저장됨")
+                print("    → ~/.synod/.env에 저장됨")
 
         if not changed:
             print("\n[오류] 테스트 가능한 모델이 없습니다.")
@@ -438,9 +436,7 @@ def main():
 
         # Rebuild targets after interactive input
         targets = [
-            (provider, model)
-            for provider, model in TEST_TARGETS
-            if provider in providers_with_keys
+            (provider, model) for provider, model in TEST_TARGETS if provider in providers_with_keys
         ]
         if not targets:
             save_results([], {})
@@ -473,7 +469,12 @@ def main():
             continue
         config = MODELS_TO_TEST.get(r.provider, {})
         env_key = config.get("env_key", "")
-        if env_key and env_key not in existing_env and env_key not in saved_keys and os.environ.get(env_key):
+        if (
+            env_key
+            and env_key not in existing_env
+            and env_key not in saved_keys
+            and os.environ.get(env_key)
+        ):
             save_to_synod_env(env_key, os.environ[env_key])
             saved_keys.add(env_key)
     if saved_keys:

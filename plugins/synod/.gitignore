@@ -50,6 +50,7 @@ Thumbs.db
 
 # Claude Code session files
 .claude/handoffs/
+.claude/scheduled_tasks.lock
 
 # Synod sessions
 .synod/
@@ -63,5 +64,6 @@ Thumbs.db
 htmlcov/
 coverage.xml
 
-# OMC state files
+# OMC / OMX state files
 .omc/
+.omx/

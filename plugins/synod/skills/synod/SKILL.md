@@ -34,7 +34,6 @@ You are the **Synod Orchestrator** - a judicial coordinator managing a multi-mod
 | `SYNOD_V2_AUTO_CLASSIFY` | `1` | 자동 분류 활성화 (`0`=disabled, legacy mode) |
 | `SYNOD_V2_DYNAMIC_ROUNDS` | `1` | 동적 라운드 수 결정 활성화 (`0`=disabled) |
 | `SYNOD_V2_ADAPTIVE_TIMEOUT` | `0` | 적응형 타임아웃 활성화 - cold-start defaults 사용 (`1`=enabled) |
-| `SYNOD_EVIDENCE_FIRST` | `0` | v3.4.0: Phase 0.5 활성화 (Ground-Truth Probe + Prompt Lint + Tier Select). `1`이거나 `--evidence-first` 플래그 시 Phase 1 전에 입력 무결성을 기계적으로 검증하고 ENRICHED_PROBLEM으로 솔버에 전달. 기본 `0`은 v3.3 이하와 동일 동작. |
 
 ---
 
@@ -45,12 +44,10 @@ Synod execution is split into modular phases. Each phase is documented in a sepa
 | Phase | Module File | Description |
 |-------|-------------|-------------|
 | **Phase 0** | `modules/synod-phase0-setup.md` | Classification, model selection, session initialization |
-| **Phase 0.5** 🆕 v3.4.0 | `modules/synod-phase0-5-ground-truth.md` | Ground-Truth Probe + Prompt Lint + Tier Select (opt-in via `SYNOD_EVIDENCE_FIRST=1` or `--evidence-first`) |
 | **Phase 1** | `modules/synod-phase1-solver.md` | Parallel solver execution (Claude/Gemini/OpenAI) |
 | **Phase 2** | `modules/synod-phase2-critic.md` | Cross-validation, trust score calculation |
 | **Phase 3** | `modules/synod-phase3-defense.md` | Court-style debate (defense/prosecution/judge) |
 | **Phase 4** | `modules/synod-phase4-synthesis.md` | Final output generation with confidence weighting |
-| **Phase 4.5** 🆕 v3.4.0 | `modules/synod-phase4-5-evidence-gate.md` | Post-synthesis evidence coverage annotation (only when Phase 0.5 was active) |
 | **Error Handling** | `modules/synod-error-handling.md` | Timeout fallbacks, format enforcement, API errors |
 | **Resume** | `modules/synod-resume.md` | Session resumption and cleanup |
 

@@ -7,21 +7,19 @@ Usage:
   openai-cli "prompt" [--model MODEL] [--reasoning LEVEL]
   openai-cli --prompt "prompt" [--model MODEL] [--reasoning LEVEL]
 
-Models: gpt4o (default), o3, o4mini, gpt54, gpt5mini
-Reasoning: low, medium (default), high (o-series only)
+Models: gpt54mini (default), gpt4o, o3, o4mini, gpt54, gpt5mini, gpt55
+Reasoning: low, medium (default), high (o-series + GPT-5-family models)
 
 Examples:
   echo "2+2는?" | openai-cli
   echo "복잡한 수학" | openai-cli --model o3 --reasoning high
-  openai-cli "간단한 질문" --model gpt4o
-  openai-cli --prompt "간단한 질문" --model gpt4o
+  openai-cli "간단한 질문" --model gpt54mini
+  openai-cli --prompt "차세대 모델" --model gpt55 --reasoning high
 """
 
 import argparse
 import os
-import random
 import sys
-import time
 
 try:
     import httpx
@@ -33,7 +31,7 @@ except ImportError:
 
 # Import BaseProvider
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from base_provider import BaseProvider
+from base_provider import BaseProvider  # noqa: E402
 
 
 class OpenAIProvider(BaseProvider):
@@ -41,13 +39,22 @@ class OpenAIProvider(BaseProvider):
 
     PROVIDER = "openai"
     API_KEY_ENV = "OPENAI_API_KEY"
-    MODEL_MAP = {"gpt4o": "gpt-4o", "o3": "o3", "o4mini": "o4-mini", "gpt54": "gpt-5.4", "gpt5mini": "gpt-5-mini"}
-    DEFAULT_MODEL = "gpt4o"
+    MODEL_MAP = {
+        "gpt4o": "gpt-4o",
+        "o3": "o3",
+        "o4mini": "o4-mini",
+        "gpt54": "gpt-5.4",
+        "gpt5mini": "gpt-5-mini",
+        "gpt54mini": "gpt-5.4-mini",
+        "gpt55": "gpt-5.5",
+    }
+    DEFAULT_MODEL = "gpt54mini"
 
     # Reasoning models support reasoning_effort
-    REASONING_MODELS = ["o3", "o4mini", "gpt54"]
+    REASONING_MODELS = ["o3", "o4mini", "gpt54", "gpt5mini", "gpt54mini", "gpt55"]
 
-    # Timeout configuration (seconds)
+    # Timeout configuration (seconds). Values calibrated against measured p50/max latency
+    # across 5-problem GSM8K-style A/B (2026-05-07): values are P50 × 30 to absorb tail.
     TIMEOUT_CONFIG = {
         ("gpt4o", "low"): 60,
         ("gpt4o", "medium"): 60,
@@ -64,10 +71,24 @@ class OpenAIProvider(BaseProvider):
         ("gpt5mini", "low"): 45,
         ("gpt5mini", "medium"): 60,
         ("gpt5mini", "high"): 90,
+        ("gpt54mini", "low"): 60,
+        ("gpt54mini", "medium"): 90,
+        ("gpt54mini", "high"): 120,
+        ("gpt55", "low"): 90,
+        ("gpt55", "medium"): 120,
+        ("gpt55", "high"): 180,
     }
 
     # Reasoning levels for downgrade
     REASONING_LEVELS = ["high", "medium", "low"]
+
+    def get_timeout_ms(self, args, model_key: str, default_ms: int = 300_000) -> int:
+        """Use model/reasoning-specific timeout defaults when no timeout is supplied."""
+        reasoning = args.reasoning if hasattr(args, "reasoning") else "medium"
+        configured_timeout = self.TIMEOUT_CONFIG.get((model_key, reasoning))
+        if configured_timeout is not None:
+            default_ms = configured_timeout * 1000
+        return super().get_timeout_ms(args, model_key, default_ms=default_ms)
 
     def create_client(self, timeout_ms: int):
         """Create OpenAI client with timeout."""
@@ -110,16 +131,16 @@ class OpenAIProvider(BaseProvider):
         parser.add_argument(
             "--model",
             "-m",
-            choices=["gpt4o", "o3", "o4mini", "gpt54", "gpt5mini"],
-            default="gpt4o",
-            help="사용할 모델 (기본값: gpt4o)",
+            choices=["gpt4o", "o3", "o4mini", "gpt54", "gpt5mini", "gpt54mini", "gpt55"],
+            default="gpt54mini",
+            help="사용할 모델 (기본값: gpt54mini)",
         )
         parser.add_argument(
             "--reasoning",
             "-r",
             choices=["low", "medium", "high"],
             default="medium",
-            help="Reasoning 레벨 - o-series 모델 전용 (기본값: medium)",
+            help="Reasoning 레벨 - reasoning 지원 모델 전용 (기본값: medium)",
         )
         parser.add_argument(
             "--no-adaptive",

@@ -32,15 +32,26 @@ class TestModelMapping:
         assert "3.1-pro" in gemini_cli.GeminiProvider.MODEL_MAP
         assert "2.5-flash" in gemini_cli.GeminiProvider.MODEL_MAP
         assert "2.5-pro" in gemini_cli.GeminiProvider.MODEL_MAP
+        assert "flash-latest" in gemini_cli.GeminiProvider.MODEL_MAP
+        assert "pro-latest" in gemini_cli.GeminiProvider.MODEL_MAP
+        assert "flash-lite-latest" in gemini_cli.GeminiProvider.MODEL_MAP
+        assert "3-pro" not in gemini_cli.GeminiProvider.MODEL_MAP
 
     def test_model_names_correct(self):
         """Test that model names are correctly mapped."""
         assert gemini_cli.GeminiProvider.MODEL_MAP["flash"] == "gemini-3-flash-preview"
         assert gemini_cli.GeminiProvider.MODEL_MAP["pro"] == "gemini-3.1-pro-preview"
-        assert gemini_cli.GeminiProvider.MODEL_MAP["3.1-flash-lite"] == "gemini-3.1-flash-lite-preview"
+        assert (
+            gemini_cli.GeminiProvider.MODEL_MAP["3.1-flash-lite"] == "gemini-3.1-flash-lite-preview"
+        )
         assert gemini_cli.GeminiProvider.MODEL_MAP["3.1-pro"] == "gemini-3.1-pro-preview"
         assert gemini_cli.GeminiProvider.MODEL_MAP["2.5-flash"] == "gemini-2.5-flash"
         assert gemini_cli.GeminiProvider.MODEL_MAP["2.5-pro"] == "gemini-2.5-pro"
+        assert gemini_cli.GeminiProvider.MODEL_MAP["flash-latest"] == "gemini-flash-latest"
+        assert gemini_cli.GeminiProvider.MODEL_MAP["pro-latest"] == "gemini-pro-latest"
+        assert (
+            gemini_cli.GeminiProvider.MODEL_MAP["flash-lite-latest"] == "gemini-flash-lite-latest"
+        )
 
 
 class TestThinkingMapping:
@@ -56,10 +67,22 @@ class TestThinkingMapping:
 
     def test_thinking_budgets_increasing(self):
         """Test that thinking budgets increase appropriately."""
-        assert gemini_cli.GeminiProvider.THINKING_MAP["minimal"] < gemini_cli.GeminiProvider.THINKING_MAP["low"]
-        assert gemini_cli.GeminiProvider.THINKING_MAP["low"] < gemini_cli.GeminiProvider.THINKING_MAP["medium"]
-        assert gemini_cli.GeminiProvider.THINKING_MAP["medium"] < gemini_cli.GeminiProvider.THINKING_MAP["high"]
-        assert gemini_cli.GeminiProvider.THINKING_MAP["high"] < gemini_cli.GeminiProvider.THINKING_MAP["max"]
+        assert (
+            gemini_cli.GeminiProvider.THINKING_MAP["minimal"]
+            < gemini_cli.GeminiProvider.THINKING_MAP["low"]
+        )
+        assert (
+            gemini_cli.GeminiProvider.THINKING_MAP["low"]
+            < gemini_cli.GeminiProvider.THINKING_MAP["medium"]
+        )
+        assert (
+            gemini_cli.GeminiProvider.THINKING_MAP["medium"]
+            < gemini_cli.GeminiProvider.THINKING_MAP["high"]
+        )
+        assert (
+            gemini_cli.GeminiProvider.THINKING_MAP["high"]
+            < gemini_cli.GeminiProvider.THINKING_MAP["max"]
+        )
 
     def test_thinking_budget_values(self):
         """Test specific thinking budget values."""

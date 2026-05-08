@@ -81,10 +81,10 @@ class TestTierConfig:
         assert get_tier("") == "standard"
 
     def test_get_tier_config_fast(self):
-        """fast tier config has gemini flash and openai gpt5mini."""
+        """fast tier config has gemini flash-lite-latest and openai gpt5mini."""
         from tools.synod_config import get_tier_config
         config = get_tier_config("fast")
-        assert config["gemini"]["model"] == "flash"
+        assert config["gemini"]["model"] == "flash-lite-latest"
         assert config["openai"]["model"] == "gpt5mini"
 
     def test_get_tier_config_deep(self):

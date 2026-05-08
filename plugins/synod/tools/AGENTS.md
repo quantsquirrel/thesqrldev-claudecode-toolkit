@@ -109,7 +109,10 @@ tools/
 | Alias | Full Name | Capability |
 |-------|-----------|-----------|
 | `flash` | gemini-3-flash-preview | Fast, cost-effective |
-| `pro` | gemini-3-pro-preview | High quality reasoning |
+| `pro` | gemini-3.1-pro-preview | High quality reasoning |
+| `flash-latest` | gemini-flash-latest | Stable fast pointer |
+| `pro-latest` | gemini-pro-latest | Stable high-quality pointer |
+| `flash-lite-latest` | gemini-flash-lite-latest | Stable low-latency pointer |
 | `2.5-flash` | gemini-2.5-flash | Latest fast model |
 | `2.5-pro` | gemini-2.5-pro | Latest powerful model |
 
@@ -142,7 +145,7 @@ gemini-3 --no-stream --no-adaptive "prompt"
 
 **Options**:
 ```
--m, --model          Model to use (flash|pro|2.5-flash|2.5-pro, default: flash)
+-m, --model          Model to use (flash|pro|3.1-flash-lite|3.1-pro|2.5-flash|2.5-pro|flash-latest|pro-latest|flash-lite-latest, default: flash)
 -t, --thinking       Thinking level (minimal|low|medium|high|max, default: medium)
 --timeout            Timeout in seconds (default: 300)
 --no-stream          Disable streaming (not recommended for long responses)
@@ -197,13 +200,17 @@ Attempt 3: thinking=low, success → return response
 **Models**:
 | Alias | Full ID | Best For | Cost |
 |-------|---------|----------|------|
+| `gpt54mini` | gpt-5.4-mini | Default general tasks | Lower cost |
 | `gpt4o` | gpt-4o | General tasks, fast | $2.50-$10 per 1M |
 | `o3` | o3 | Math, logic, reasoning | $10-$40 per 1M |
 | `o4mini` | o4-mini | Economic reasoning | Lower cost |
+| `gpt54` | gpt-5.4 | Strong reasoning | Higher cost |
+| `gpt5mini` | gpt-5-mini | Fast GPT-5 reasoning | Lower cost |
+| `gpt55` | gpt-5.5 | Strongest GPT-5 reasoning | Higher cost |
 
-Default: `gpt4o`
+Default: `gpt54mini`
 
-**Reasoning Levels** (o-series models only):
+**Reasoning Levels** (o-series and GPT-5-family models):
 | Level | Use Case |
 |-------|----------|
 | `low` | Speed priority, economical |
@@ -231,7 +238,7 @@ openai-cli --prompt "prompt" --model o3
 ```
 prompt                 Prompt text (positional or --prompt)
 -p, --prompt          Prompt text (named option)
--m, --model           Model (gpt4o|o3|o4mini, default: gpt4o)
+-m, --model           Model (gpt54mini|gpt4o|o3|o4mini|gpt54|gpt5mini|gpt55, default: gpt54mini)
 -r, --reasoning       Reasoning level (low|medium|high, default: medium)
 --timeout             Timeout in seconds (defaults per model/level)
 --retries             Max retries (default: 3)
@@ -244,6 +251,10 @@ prompt                 Prompt text (positional or --prompt)
 gpt4o:   60s   (all reasoning levels)
 o3:      120s  (low) → 180s (medium) → 300s (high)
 o4mini:  60s   (low) → 90s  (medium) → 120s (high)
+gpt54:   90s   (low) → 120s (medium) → 180s (high)
+gpt5mini: 45s  (low) → 60s  (medium) → 90s  (high)
+gpt54mini: 60s (low) → 90s  (medium) → 120s (high)
+gpt55:   90s   (low) → 120s (medium) → 180s (high)
 ```
 
 **Prompt Input Priority**:
@@ -267,7 +278,7 @@ Attempt 2: reasoning=medium, timeout → downgrade
 Attempt 3: reasoning=low, success → return response
 ```
 
-Only o-series models support reasoning downgrade. gpt4o retries without downgrade.
+Only o-series and GPT-5-family models support reasoning downgrade. gpt4o retries without downgrade.
 
 **Exit Codes**:
 - 0: Success
@@ -289,7 +300,7 @@ Only o-series models support reasoning downgrade. gpt4o retries without downgrad
 | Parse response from Gemini | synod-parser | `gemini-3 "prompt" \| synod-parser` |
 | Query Gemini fast | gemini-3 -m flash | `gemini-3 -m flash "prompt"` |
 | Query Gemini with reasoning | gemini-3 -m pro -t high | `gemini-3 -m pro -t high "prompt"` |
-| Query OpenAI general | openai-cli -m gpt4o | `openai-cli -m gpt4o "prompt"` |
+| Query OpenAI general | openai-cli -m gpt54mini | `openai-cli -m gpt54mini "prompt"` |
 | Query OpenAI reasoning | openai-cli -m o3 -r high | `openai-cli -m o3 -r high "prompt"` |
 | Validate response format | synod-parser --validate | `synod-parser --validate "response"` |
 | Calculate Trust Score | synod-parser --trust | `synod-parser --trust 0.9 0.8 0.9 0.2` |
@@ -392,7 +403,7 @@ gemini-3 --model pro --temperature 0.3 "prompt" "additional context"
 ### OpenAI Examples
 
 ```bash
-# Basic query with gpt4o
+# Basic query with the default gpt54mini
 openai-cli "What is machine learning?"
 
 # Reasoning with o3
@@ -403,7 +414,7 @@ openai-cli --model o3 --reasoning high \
 openai-cli --model o4mini --reasoning medium "quick analysis"
 
 # From stdin
-echo "한국의 수도는?" | openai-cli --model gpt4o
+echo "한국의 수도는?" | openai-cli --model gpt54mini
 
 # Verbose output
 openai-cli -v --model o3 --reasoning high "prompt"

@@ -8,34 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Async dispatch for `deep`/`ultra` tiers (currently synchronous — `requires_async=true` only warns)
-- Migrate `SYNOD_EVIDENCE_FIRST` from opt-in flag to default-on once real-world coverage data supports it
-- Custom `model_matrix.json` location via `SYNOD_MODEL_MATRIX_PATH`
 - Extended debate modes (5+ round deliberation for complex architectural decisions)
 - Custom model configuration per session (not just global defaults)
 - Debate visualization dashboard showing confidence trajectories
 - Integration with Claude Code's native analysis capabilities
 - Batch processing for multiple problems in sequence
 - Export debates to markdown reports with embedded confidence metrics
+- Refresh `benchmark/config.yaml` (currently references stale models: gpt-4o, claude-sonnet-4-20250514, gemini-2.0-flash)
 
 ---
 
-## [3.4.0] - 2026-04-22
+## [3.4.0] - 2026-05-07
 
 ### Added
-- **Phase 0.5 — Ground-Truth Probe + Prompt Lint + Tier Select** (opt-in, gated by `SYNOD_EVIDENCE_FIRST=1` or `--evidence-first`). Runs three mechanical checks before Phase 1 Solver:
-  - `tools/ground_truth_probe.py` — inspect target codebase (import, tests, version pins, file tree). Writes 5 artifact files, emits `status=ok|degraded|broken` summary.
-  - `tools/prompt_linter.py` — regex audit for unbacked orchestrator claims (`default X`, `providers/ 추상화`, `22/22 regression`). Exits 2 on high-severity findings to block Phase 1 unless `--skip-lint`.
-  - `tools/tier_matrix.py` + `config/model_matrix.json` — map reasoning tier (`simple|standard|deep|ultra`) to concrete model roster. Replaces latency-based "recommended" heuristic.
-- **Phase 4.5 — Evidence Coverage Gate**. Annotates final verdict with `file:line` citation ratio. Threshold 70% = `evidence-based`, 30–70% = `partial`, <30% = `narrative-based`.
-- **New skill modules**: `synod-phase0-5-ground-truth.md`, `synod-phase4-5-evidence-gate.md`.
-- **CLI**: `--evidence-first` flag and `--tier {auto|simple|standard|deep|ultra}` selection.
+- **OpenAI lineup expanded**: `gpt55` (gpt-5.5, released 2026-04-23) and `gpt54mini` (gpt-5.4-mini) added to `MODEL_MAP`. Both registered as reasoning-capable in `REASONING_MODELS`.
+- **Gemini stable aliases**: `flash-latest`, `pro-latest`, `flash-lite-latest` added — these route to provider-side stable pointers, removing dependency on `*-preview` model IDs that have caused EOL migration incidents.
+- **TIMEOUT_CONFIG entries**: gpt55 (low/medium/high = 90/120/180s) and gpt54mini (60/90/120s) calibrated against measured p50/max latency on a 5-problem A/B run and applied as OpenAI provider defaults.
 
 ### Changed
-- **Phase 0 / Phase 1**: Optional hooks added. When evidence-first mode is active, solvers receive an `ENRICHED_PROBLEM` with `## Primary Evidence` + `## Known Limitations` + `## Orchestrator Hypothesis` sections instead of the raw user prompt. Legacy mode is unchanged.
+- **OpenAI `DEFAULT_MODEL`**: `gpt4o` → `gpt54mini`. Direct `openai-cli` invocations without `--model` now use the more recent and cheaper model. Synod-mode-specific defaults (review/design/debug/idea/general) are unchanged.
+- **Fast tier Gemini default**: `flash` (gemini-3-flash-preview) → `flash-lite-latest` (gemini-flash-lite-latest). Measured p50 latency dropped from 12.7s to 1.9s (≈6.7× faster) with no accuracy regression on 5-problem GSM8K-style A/B. Standard and deep tiers unchanged.
+- **OpenAI reasoning support**: `gpt5mini` now receives `reasoning_effort`, matching the rest of the GPT-5-family aliases.
 
-### Rationale
-Prior versions scored solver output quality (CRIS rubric) but never audited the orchestrator's input. A stale or fabricated PROBLEM statement would propagate through the pipeline with no counter-pressure. 3.4.0 closes that gap with three cheap mechanical checks while preserving full backward compatibility — legacy behavior is unchanged when `SYNOD_EVIDENCE_FIRST` is unset.
+### Verified
+- **Live API smoke test**: 11/11 currently-configured models reachable.
+- **SID format compliance**: 10/10 reachable candidates produce valid `<confidence>` and `<semantic_focus>` blocks.
+- **Reachability gotcha**: `gemini-3-pro-preview`, `gpt-5-pro`, `gpt-5.4-pro`, and `gpt-5.5-pro` are NOT exposed as aliases because they are unavailable or return 404 on chat completions. Will revisit when access is granted.
 
 ---
 

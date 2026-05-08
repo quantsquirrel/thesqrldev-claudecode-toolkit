@@ -46,15 +46,11 @@ def try_load_provider(filename):
         # Find the Provider class (subclass of BaseProvider, but not BaseProvider itself)
         for name in dir(module):
             obj = getattr(module, name)
-            if (
-                isinstance(obj, type)
-                and issubclass(obj, BaseProvider)
-                and obj is not BaseProvider
-            ):
+            if isinstance(obj, type) and issubclass(obj, BaseProvider) and obj is not BaseProvider:
                 return module, obj
 
         return module, None
-    except (ImportError, SystemExit) as e:
+    except (ImportError, SystemExit):
         # SystemExit can happen if enable gate fails (grok, mistral)
         return None, None
 
@@ -131,10 +127,12 @@ class TestOpenAIProvider:
         assert "o4mini" in provider_class.MODEL_MAP
         assert "gpt54" in provider_class.MODEL_MAP
         assert "gpt5mini" in provider_class.MODEL_MAP
+        assert "gpt54mini" in provider_class.MODEL_MAP
+        assert "gpt55" in provider_class.MODEL_MAP
 
     def test_default_model(self, provider_class):
         """Test DEFAULT_MODEL is set."""
-        assert provider_class.DEFAULT_MODEL == "gpt4o"
+        assert provider_class.DEFAULT_MODEL == "gpt54mini"
 
     def test_o_series_models_list(self, provider_class):
         """Test REASONING_MODELS attribute exists."""
@@ -142,6 +140,9 @@ class TestOpenAIProvider:
         assert "o3" in provider_class.REASONING_MODELS
         assert "o4mini" in provider_class.REASONING_MODELS
         assert "gpt54" in provider_class.REASONING_MODELS
+        assert "gpt5mini" in provider_class.REASONING_MODELS
+        assert "gpt54mini" in provider_class.REASONING_MODELS
+        assert "gpt55" in provider_class.REASONING_MODELS
 
     def test_timeout_config_exists(self, provider_class):
         """Test TIMEOUT_CONFIG attribute exists."""
@@ -485,9 +486,9 @@ class TestProviderAbstractMethods:
         assert hasattr(provider, "create_client")
         assert hasattr(provider, "generate")
         assert hasattr(provider, "add_provider_args")
-        assert callable(getattr(provider, "create_client"))
-        assert callable(getattr(provider, "generate"))
-        assert callable(getattr(provider, "add_provider_args"))
+        assert callable(provider.create_client)
+        assert callable(provider.generate)
+        assert callable(provider.add_provider_args)
 
     def test_openai_implements_abstract_methods(self):
         """Test OpenAI provider implements all abstract methods."""

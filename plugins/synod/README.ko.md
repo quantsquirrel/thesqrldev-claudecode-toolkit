@@ -173,7 +173,7 @@ Provider    Model              Latency    Status
 ───────────────────────────────────────────────────────
 gemini      flash              3.2초       ✓ 권장
 gemini      pro                12.4초      ✓ 사용 가능
-openai      gpt4o              2.8초       ✓ 권장
+openai      gpt54mini          2.8초       ✓ 권장
 openai      o3                 45.2초      ⚠ 느림
 
 [완료] 4/4 모델 사용 가능

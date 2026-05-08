@@ -161,7 +161,7 @@ tiers:
   fast:
     description: "Simple queries - cost-efficient models"
     gemini:
-      model: "flash"
+      model: "flash-lite-latest"
       thinking: "medium"
     openai:
       model: "gpt5mini"
