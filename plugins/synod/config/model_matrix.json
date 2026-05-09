@@ -1,0 +1,27 @@
+{
+  "$schema": "synod-plus/model_matrix/v1",
+  "description": "Tier → concrete model roster. Consumed by tier_matrix.py.",
+  "tiers": {
+    "simple": [
+      {"provider": "gemini", "cli": "gemini-3",   "model": "flash", "thinking": "low",    "timeout_sec": 30}
+    ],
+    "standard": [
+      {"provider": "gemini", "cli": "gemini-3",   "model": "pro",   "thinking": "medium", "timeout_sec": 120},
+      {"provider": "openai", "cli": "openai-cli", "model": "o3",    "reasoning": "medium","timeout_sec": 120}
+    ],
+    "deep": [
+      {"provider": "gemini", "cli": "gemini-3",   "model": "pro",   "thinking": "high",   "timeout_sec": 600},
+      {"provider": "openai", "cli": "openai-cli", "model": "o3",    "reasoning": "high",  "timeout_sec": 600}
+    ],
+    "ultra": [
+      {"provider": "gemini", "cli": "gemini-3",   "model": "pro",   "thinking": "high",   "timeout_sec": 1800},
+      {"provider": "openai", "cli": "openai-cli", "model": "o3",    "reasoning": "high",  "timeout_sec": 1800}
+    ]
+  },
+  "async_threshold_sec": 300,
+  "notes": [
+    "async_threshold_sec — if max timeout_sec across chosen tier meets or exceeds this, tier_matrix.py sets requires_async=true",
+    "Gemini 3.x deep-think and Opus 4.7 extended thinking can be added to 'ultra' tier when their CLIs are wired into ~/.synod/bin",
+    "This matrix is hand-edited by the lead. Workers must not modify without approval."
+  ]
+}

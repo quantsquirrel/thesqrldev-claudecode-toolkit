@@ -22,6 +22,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 
 # ---------------------------------------------------------------------------
 # Shared API key resolution: env var → ~/.synod/.env → macOS Keychain
@@ -47,14 +48,24 @@ def load_synod_env():
         pass
 
 
-def check_macos_keychain(key_name: str) -> str | None:
+def check_macos_keychain(key_name: str) -> Optional[str]:
     """Try to read an API key from macOS Keychain. Returns None on non-Mac or failure."""
     if platform.system() != "Darwin":
         return None
     try:
         result = subprocess.run(
-            ["security", "find-generic-password", "-a", os.environ.get("USER", ""), "-s", key_name, "-w"],
-            capture_output=True, text=True, timeout=5,
+            [
+                "security",
+                "find-generic-password",
+                "-a",
+                os.environ.get("USER", ""),
+                "-s",
+                key_name,
+                "-w",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()
@@ -63,7 +74,7 @@ def check_macos_keychain(key_name: str) -> str | None:
     return None
 
 
-def resolve_api_key(env_key: str) -> str | None:
+def resolve_api_key(env_key: str) -> Optional[str]:
     """Resolve API key from env var → ~/.synod/.env → macOS Keychain."""
     # 1. Environment variable (already loaded or from .env)
     key = os.environ.get(env_key)
@@ -106,17 +117,30 @@ load_synod_env()
 
 # Inline cold-start timeout defaults (formerly from model_stats.py, now archived)
 COLD_START_DEFAULTS = {
-    "gemini:flash": 60_000, "gemini:pro": 120_000,
-    "gemini:3.1-flash-lite": 60_000, "gemini:3.1-pro": 120_000,
-    "openai:gpt4o": 60_000, "openai:o3": 180_000, "openai:o4mini": 60_000,
-    "openai:gpt54": 120_000, "openai:gpt5mini": 60_000,
-    "deepseek:chat": 60_000, "deepseek:reasoner": 300_000,
-    "groq:8b": 30_000, "groq:70b": 45_000, "groq:scout": 45_000,
-    "grok:fast": 60_000, "grok:grok4": 120_000,
-    "grok:reasoning": 90_000, "grok:heavy": 180_000,
-    "mistral:large": 120_000, "mistral:small": 60_000,
-    "mistral:magistral": 120_000, "mistral:magistral-small": 60_000,
-    "openrouter:claude": 120_000, "openrouter:llama": 60_000,
+    "gemini:flash": 60_000,
+    "gemini:pro": 120_000,
+    "gemini:3.1-flash-lite": 60_000,
+    "gemini:3.1-pro": 120_000,
+    "openai:gpt4o": 60_000,
+    "openai:o3": 180_000,
+    "openai:o4mini": 60_000,
+    "openai:gpt54": 120_000,
+    "openai:gpt5mini": 60_000,
+    "deepseek:chat": 60_000,
+    "deepseek:reasoner": 300_000,
+    "groq:8b": 30_000,
+    "groq:70b": 45_000,
+    "groq:scout": 45_000,
+    "grok:fast": 60_000,
+    "grok:grok4": 120_000,
+    "grok:reasoning": 90_000,
+    "grok:heavy": 180_000,
+    "mistral:large": 120_000,
+    "mistral:small": 60_000,
+    "mistral:magistral": 120_000,
+    "mistral:magistral-small": 60_000,
+    "openrouter:claude": 120_000,
+    "openrouter:llama": 60_000,
 }
 
 
@@ -177,7 +201,9 @@ class BaseProvider(ABC):
         Returns:
             Full model name (from MODEL_MAP or override)
         """
-        env_var = f"SYNOD_{self.PROVIDER.upper()}_{model_key.upper().replace('.', '_').replace('-', '_')}"
+        env_var = (
+            f"SYNOD_{self.PROVIDER.upper()}_{model_key.upper().replace('.', '_').replace('-', '_')}"
+        )
         override = os.environ.get(env_var)
         if override:
             print(f"[Override] Using {override} (via {env_var})", file=sys.stderr)
@@ -199,7 +225,10 @@ class BaseProvider(ABC):
         if not api_key:
             print(f"Error: {self.API_KEY_ENV} not found.", file=sys.stderr)
             print(f"  Set via:  export {self.API_KEY_ENV}='your-key'", file=sys.stderr)
-            print(f"  Or save:  echo '{self.API_KEY_ENV}=\"your-key\"' >> ~/.synod/.env", file=sys.stderr)
+            print(
+                f"  Or save:  echo '{self.API_KEY_ENV}=\"your-key\"' >> ~/.synod/.env",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         # Strip whitespace
@@ -212,15 +241,17 @@ class BaseProvider(ABC):
 
         # Check minimum length (API keys are typically 30+ chars)
         if len(api_key) < 10:
-            print(f"Warning: API key is suspiciously short (less than 10 characters)", file=sys.stderr)
+            print(
+                "Warning: API key is suspiciously short (less than 10 characters)", file=sys.stderr
+            )
 
         # Check for suspicious characters (spaces, newlines, tabs)
-        if any(char in api_key for char in [' ', '\n', '\r', '\t']):
-            print(f"Warning: API key contains suspicious whitespace characters", file=sys.stderr)
+        if any(char in api_key for char in [" ", "\n", "\r", "\t"]):
+            print("Warning: API key contains suspicious whitespace characters", file=sys.stderr)
 
         return api_key
 
-    def sanitize_prompt(self, prompt: str) -> str:
+    def sanitize_prompt(self, prompt: Optional[str]) -> str:
         """Sanitize user prompt for security.
 
         Removes potentially dangerous content:
@@ -241,14 +272,14 @@ class BaseProvider(ABC):
         prompt = prompt.strip()
 
         # Remove null bytes
-        prompt = prompt.replace('\x00', '')
+        prompt = prompt.replace("\x00", "")
 
         # Limit to 1MB with warning
         MAX_PROMPT_LENGTH = 1_000_000
         if len(prompt) > MAX_PROMPT_LENGTH:
             print(
                 f"Warning: Prompt truncated from {len(prompt)} to {MAX_PROMPT_LENGTH} characters",
-                file=sys.stderr
+                file=sys.stderr,
             )
             prompt = prompt[:MAX_PROMPT_LENGTH]
 
@@ -325,7 +356,9 @@ class BaseProvider(ABC):
             if key in COLD_START_DEFAULTS:
                 timeout_ms = COLD_START_DEFAULTS[key]
                 if hasattr(args, "verbose") and args.verbose:
-                    print(f"[Adaptive] Timeout: {timeout_ms}ms (cold-start default)", file=sys.stderr)
+                    print(
+                        f"[Adaptive] Timeout: {timeout_ms}ms (cold-start default)", file=sys.stderr
+                    )
 
         # Apply bounds with warnings
         original_timeout = timeout_ms
@@ -333,13 +366,13 @@ class BaseProvider(ABC):
             timeout_ms = MIN_TIMEOUT_MS
             print(
                 f"Warning: Timeout too low ({original_timeout}ms), clamped to minimum {MIN_TIMEOUT_MS}ms",
-                file=sys.stderr
+                file=sys.stderr,
             )
         elif timeout_ms > MAX_TIMEOUT_MS:
             timeout_ms = MAX_TIMEOUT_MS
             print(
                 f"Warning: Timeout too high ({original_timeout}ms), clamped to maximum {MAX_TIMEOUT_MS}ms",
-                file=sys.stderr
+                file=sys.stderr,
             )
 
         return timeout_ms
@@ -351,9 +384,9 @@ class BaseProvider(ABC):
             model_key: Model key for stats recording
             latency_ms: Latency in milliseconds
         """
-        pass  # model_stats archived; latency recording disabled
+        _ = (model_key, latency_ms)  # model_stats archived; latency recording disabled
 
-    def sanitize_error(self, error: str) -> str:
+    def sanitize_error(self, error: Optional[str]) -> str:
         """Sanitize error messages to prevent API key leakage.
 
         Security measures:
@@ -378,17 +411,17 @@ class BaseProvider(ABC):
         # Remove common API key patterns
         # Patterns: sk-*, gsk_*, xai-*, api_key=*, token=*, bearer *, key: *
         patterns = [
-            r'sk-[a-zA-Z0-9]{20,}',  # OpenAI/Anthropic style
-            r'gsk_[a-zA-Z0-9]{20,}',  # Google style
-            r'xai-[a-zA-Z0-9]{20,}',  # xAI/Grok style
+            r"sk-[a-zA-Z0-9]{20,}",  # OpenAI/Anthropic style
+            r"gsk_[a-zA-Z0-9]{20,}",  # Google style
+            r"xai-[a-zA-Z0-9]{20,}",  # xAI/Grok style
             r'api[_-]?key[=:]\s*[\'"]?[a-zA-Z0-9_-]{10,}[\'"]?',  # api_key= or api-key:
             r'token[=:]\s*[\'"]?[a-zA-Z0-9_-]{10,}[\'"]?',  # token=
-            r'bearer\s+[a-zA-Z0-9_-]{10,}',  # Bearer tokens
+            r"bearer\s+[a-zA-Z0-9_-]{10,}",  # Bearer tokens
             r'key[=:]\s*[\'"]?[a-zA-Z0-9_-]{20,}[\'"]?',  # key=
         ]
 
         for pattern in patterns:
-            error = re.sub(pattern, '[REDACTED]', error, flags=re.IGNORECASE)
+            error = re.sub(pattern, "[REDACTED]", error, flags=re.IGNORECASE)
 
         return error
 
@@ -405,8 +438,7 @@ class BaseProvider(ABC):
         error_str_lower = error_str.lower()
 
         is_timeout = any(
-            x in error_str_lower
-            for x in ["timeout", "timed out", "deadline", "504", "gateway"]
+            x in error_str_lower for x in ["timeout", "timed out", "deadline", "504", "gateway"]
         )
         is_rate_limit = any(
             x in error_str_lower for x in ["429", "rate", "quota", "resource_exhausted"]
@@ -459,9 +491,7 @@ class BaseProvider(ABC):
         parser.add_argument(
             "positional_prompt", nargs="?", default=None, metavar="prompt", help="Prompt text"
         )
-        parser.add_argument(
-            "--prompt", "-p", default=None, help="Prompt (can also use positional)"
-        )
+        parser.add_argument("--prompt", "-p", default=None, help="Prompt (can also use positional)")
         parser.add_argument("--timeout", type=int, default=None, help="Timeout in seconds")
         parser.add_argument("--retries", type=int, default=3, help="Max retries (default: 3)")
         parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
@@ -532,7 +562,7 @@ class BaseProvider(ABC):
         prompt = self.get_prompt(args, remaining)
 
         # Validate API key
-        api_key = self.validate_api_key()
+        self.validate_api_key()
 
         # Get model key
         model_key = args.model if hasattr(args, "model") else self.DEFAULT_MODEL

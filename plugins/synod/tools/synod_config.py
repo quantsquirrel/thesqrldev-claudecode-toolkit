@@ -5,9 +5,9 @@ Provides typed access to mode parameters.
 """
 
 import os
-import yaml
-from typing import Any, Optional
+from typing import Optional
 
+import yaml
 
 _CONFIG_CACHE: Optional[dict] = None
 
@@ -36,7 +36,7 @@ def load_config(force_reload: bool = False) -> dict:
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config not found: {config_path}")
 
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         _CONFIG_CACHE = yaml.safe_load(f)
 
     return _CONFIG_CACHE
@@ -216,7 +216,7 @@ def get_template(mode: str) -> str:
         return ""
 
     try:
-        with open(templates_path, "r") as f:
+        with open(templates_path) as f:
             templates_config = yaml.safe_load(f)
         return templates_config.get("templates", {}).get(mode, "")
     except Exception:
@@ -230,8 +230,7 @@ def main():
     import sys
 
     parser = argparse.ArgumentParser(description="Query synod configuration")
-    parser.add_argument("path", nargs="+",
-                        help="Config path segments (e.g. 'timeouts model')")
+    parser.add_argument("path", nargs="+", help="Config path segments (e.g. 'timeouts model')")
     args = parser.parse_args()
 
     try:

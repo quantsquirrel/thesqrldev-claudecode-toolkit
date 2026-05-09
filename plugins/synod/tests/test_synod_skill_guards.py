@@ -9,8 +9,6 @@ Validates that:
 import re
 from pathlib import Path
 
-import pytest
-
 SKILLS_DIR = Path(__file__).parent.parent / "skills"
 SYNOD_MD = SKILLS_DIR / "synod" / "SKILL.md"
 PHASE0_MD = SKILLS_DIR / "synod" / "modules" / "synod-phase0-setup.md"
@@ -78,7 +76,7 @@ class TestZshCompatibility:
     def test_synod_md_has_run_cli_helper(self):
         text = SYNOD_MD.read_text()
         assert "run_cli()" in text or "run_cli ()" in text
-        assert '*.py' in text
+        assert "*.py" in text
         assert "python3" in text
 
     def test_phase1_uses_run_cli_pattern(self):

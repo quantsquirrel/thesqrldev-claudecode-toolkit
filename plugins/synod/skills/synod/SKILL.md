@@ -34,6 +34,7 @@ You are the **Synod Orchestrator** - a judicial coordinator managing a multi-mod
 | `SYNOD_V2_AUTO_CLASSIFY` | `1` | 자동 분류 활성화 (`0`=disabled, legacy mode) |
 | `SYNOD_V2_DYNAMIC_ROUNDS` | `1` | 동적 라운드 수 결정 활성화 (`0`=disabled) |
 | `SYNOD_V2_ADAPTIVE_TIMEOUT` | `0` | 적응형 타임아웃 활성화 - cold-start defaults 사용 (`1`=enabled) |
+| `SYNOD_EVIDENCE_FIRST` | `0` | 증거 우선 Phase 0.5/4.5 활성화 (`1`=enabled, 또는 `--evidence-first`) |
 
 ---
 
@@ -44,10 +45,12 @@ Synod execution is split into modular phases. Each phase is documented in a sepa
 | Phase | Module File | Description |
 |-------|-------------|-------------|
 | **Phase 0** | `modules/synod-phase0-setup.md` | Classification, model selection, session initialization |
+| **Phase 0.5** | `modules/synod-phase0-5-ground-truth.md` | Optional evidence-first probe, prompt lint, tier roster selection |
 | **Phase 1** | `modules/synod-phase1-solver.md` | Parallel solver execution (Claude/Gemini/OpenAI) |
 | **Phase 2** | `modules/synod-phase2-critic.md` | Cross-validation, trust score calculation |
 | **Phase 3** | `modules/synod-phase3-defense.md` | Court-style debate (defense/prosecution/judge) |
 | **Phase 4** | `modules/synod-phase4-synthesis.md` | Final output generation with confidence weighting |
+| **Phase 4.5** | `modules/synod-phase4-5-evidence-gate.md` | Optional evidence coverage annotation for final synthesis |
 | **Error Handling** | `modules/synod-error-handling.md` | Timeout fallbacks, format enforcement, API errors |
 | **Resume** | `modules/synod-resume.md` | Session resumption and cleanup |
 
@@ -157,28 +160,37 @@ IF PROBLEM is empty OR PROBLEM is whitespace-only:
    - Select model configurations
    - Create session directory and state
 5. ↓
-6. PHASE 1: Solver Round (modules/synod-phase1-solver.md)  ⛔ MANDATORY EXTERNAL CALLS
+6. PHASE 0.5: Evidence-First Gate (modules/synod-phase0-5-ground-truth.md) — optional
+   - Runs only when `SYNOD_EVIDENCE_FIRST=1` or `--evidence-first` is present
+   - Mechanically probes TARGET_PATH, lints unbacked prompt claims, selects tier roster
+   - Produces ENRICHED_PROBLEM for Phase 1; otherwise passes raw PROBLEM unchanged
+7. ↓
+8. PHASE 1: Solver Round (modules/synod-phase1-solver.md)  ⛔ MANDATORY EXTERNAL CALLS
    - Execute Claude + Gemini + OpenAI in parallel via Bash tool
    - Gemini: $GEMINI_CLI --model ... < prompt.txt > response.txt
    - OpenAI: $OPENAI_CLI --model ... < prompt.txt > response.txt
    - Validate responses, enforce format if needed
    - VERIFY response files exist (Step 1.7) — HALT if missing
    - Check early exit condition
-7. ↓
-8. PHASE 2: Critic Round (modules/synod-phase2-critic.md)
+9. ↓
+10. PHASE 2: Critic Round (modules/synod-phase2-critic.md)
    - Aggregate solutions
    - Calculate Trust Scores (CRIS rubric)
    - Cross-validate claims
-9. ↓
-10. PHASE 3: Defense Round (modules/synod-phase3-defense.md)
+11. ↓
+12. PHASE 3: Defense Round (modules/synod-phase3-defense.md)
     - Court-style debate (defense/prosecution/judge)
     - Resolve contentions
-11. ↓
-12. PHASE 4: Synthesis (modules/synod-phase4-synthesis.md)  ⛔ BLOCKED without Phase 1 files
+13. ↓
+14. PHASE 4: Synthesis (modules/synod-phase4-synthesis.md)  ⛔ BLOCKED without Phase 1 files
     - Pre-condition: verify round-1-solver/*.md files exist
     - Compile final evidence
     - Generate mode-specific output
     - Save final state
+15. ↓
+16. PHASE 4.5: Evidence Coverage Annotation (modules/synod-phase4-5-evidence-gate.md) — optional
+    - Runs only when Phase 0.5 was active
+    - Appends evidence coverage label to the user-visible verdict
 ```
 
 **On any error:** Activate fallback chain (see `modules/synod-error-handling.md`), preserve state, continue if possible.

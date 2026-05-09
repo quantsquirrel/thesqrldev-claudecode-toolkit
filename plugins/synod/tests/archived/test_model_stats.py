@@ -6,8 +6,6 @@ import json
 import os
 import sys
 import time
-from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
@@ -245,7 +243,7 @@ class TestHasSufficientData:
         stats = ModelStats(stats_path=str(tmp_path / "stats.json"))
 
         # Record 9 observations
-        for i in range(9):
+        for _i in range(9):
             stats.record_latency("gemini", "flash", 100.0)
 
         assert stats.has_sufficient_data("gemini", "flash") is False
@@ -258,7 +256,7 @@ class TestHasSufficientData:
         """Test has_sufficient_data with custom min_count."""
         stats = ModelStats(stats_path=str(tmp_path / "stats.json"))
 
-        for i in range(5):
+        for _i in range(5):
             stats.record_latency("gemini", "flash", 100.0)
 
         assert stats.has_sufficient_data("gemini", "flash", min_count=5) is True

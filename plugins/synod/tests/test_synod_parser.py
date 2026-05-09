@@ -4,8 +4,9 @@ Tests for synod-parser.py - SID signal extraction and parsing.
 
 import json
 import os
-import pytest
 import sys
+
+import pytest
 
 # Add tools directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
@@ -306,7 +307,6 @@ class TestParserCLI:
         """Test --trust flag calculates trust score."""
         sys.argv = ["synod-parser", "--trust", "0.9", "0.8", "0.9", "0.2"]
         synod_parser.main()
-        import json
         output = json.loads(capsys.readouterr().out)
         assert "trust_score" in output
         assert output["trust_score"] > 0
@@ -329,7 +329,6 @@ class TestParserCLI:
         """Test full parse via CLI argument."""
         sys.argv = ["synod-parser", sample_valid_response]
         synod_parser.main()
-        import json
         output = json.loads(capsys.readouterr().out)
         assert "confidence" in output
         assert "semantic_focus" in output
@@ -337,8 +336,11 @@ class TestParserCLI:
     def test_consensus_cli(self, capsys):
         """Test --consensus flag."""
         sys.argv = [
-            "synod-parser", "--consensus",
-            "claude:1.5:85", "gemini:1.2:78", "openai:0.8:72"
+            "synod-parser",
+            "--consensus",
+            "claude:1.5:85",
+            "gemini:1.2:78",
+            "openai:0.8:72",
         ]
         with pytest.raises(SystemExit) as exc_info:
             synod_parser.main()
@@ -349,6 +351,7 @@ class TestParserCLI:
         sys.argv = ["synod-parser"]
         # Simulate tty stdin by using a mock that returns True for isatty()
         import io
+
         mock_stdin = io.StringIO("")
         mock_stdin.isatty = lambda: True
         monkeypatch.setattr("sys.stdin", mock_stdin)
@@ -419,15 +422,39 @@ class TestCollectRoundMetrics:
     def test_collect_round_metrics(self):
         """Test aggregation of metrics from multiple parse results."""
         parsed_results = [
-            {"metrics": {"confidence_score": 80, "format_compliance": True,
-                         "response_length": 500, "semantic_focus_count": 3,
-                         "has_evidence": True, "has_logic": True, "has_code": False}},
-            {"metrics": {"confidence_score": 70, "format_compliance": True,
-                         "response_length": 400, "semantic_focus_count": 2,
-                         "has_evidence": True, "has_logic": False, "has_code": True}},
-            {"metrics": {"confidence_score": 90, "format_compliance": False,
-                         "response_length": 600, "semantic_focus_count": 4,
-                         "has_evidence": False, "has_logic": True, "has_code": False}},
+            {
+                "metrics": {
+                    "confidence_score": 80,
+                    "format_compliance": True,
+                    "response_length": 500,
+                    "semantic_focus_count": 3,
+                    "has_evidence": True,
+                    "has_logic": True,
+                    "has_code": False,
+                }
+            },
+            {
+                "metrics": {
+                    "confidence_score": 70,
+                    "format_compliance": True,
+                    "response_length": 400,
+                    "semantic_focus_count": 2,
+                    "has_evidence": True,
+                    "has_logic": False,
+                    "has_code": True,
+                }
+            },
+            {
+                "metrics": {
+                    "confidence_score": 90,
+                    "format_compliance": False,
+                    "response_length": 600,
+                    "semantic_focus_count": 4,
+                    "has_evidence": False,
+                    "has_logic": True,
+                    "has_code": False,
+                }
+            },
         ]
         result = synod_parser.collect_round_metrics(parsed_results)
         assert result["avg_confidence"] == 80  # (80+70+90)/3
@@ -439,9 +466,17 @@ class TestCollectRoundMetrics:
     def test_collect_round_metrics_single(self):
         """Test aggregation with single result."""
         parsed_results = [
-            {"metrics": {"confidence_score": 85, "format_compliance": True,
-                         "response_length": 300, "semantic_focus_count": 2,
-                         "has_evidence": True, "has_logic": True, "has_code": False}},
+            {
+                "metrics": {
+                    "confidence_score": 85,
+                    "format_compliance": True,
+                    "response_length": 300,
+                    "semantic_focus_count": 2,
+                    "has_evidence": True,
+                    "has_logic": True,
+                    "has_code": False,
+                }
+            },
         ]
         result = synod_parser.collect_round_metrics(parsed_results)
         assert result["avg_confidence"] == 85

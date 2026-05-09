@@ -19,9 +19,7 @@ Examples:
 
 import argparse
 import os
-import random
 import sys
-import time
 
 try:
     import httpx

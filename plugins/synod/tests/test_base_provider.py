@@ -5,9 +5,8 @@ Tests for base_provider.py - BaseProvider abstract class and common provider fun
 import argparse
 import os
 import sys
-import time
 from io import StringIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -146,6 +145,7 @@ class TestValidateApiKey:
 
         with patch("sys.stderr", new=StringIO()) as mock_stderr:
             key = provider.validate_api_key()
+            assert key == "key with spaces and\nnewline"
             assert "Warning" in mock_stderr.getvalue()
             assert "suspicious whitespace" in mock_stderr.getvalue()
 
@@ -551,9 +551,7 @@ class TestGenerateWithRetry:
         with pytest.raises(SystemExit) as exc_info:
             with patch("sys.stderr", new=StringIO()):
                 with patch("time.sleep"):  # Skip actual sleep
-                    provider.generate_with_retry(
-                        client, "test-model", "test prompt", max_retries=2
-                    )
+                    provider.generate_with_retry(client, "test-model", "test prompt", max_retries=2)
         assert exc_info.value.code == 1
 
 
@@ -625,9 +623,7 @@ class TestGetPrompt:
     def test_get_prompt_from_positional_arg(self):
         """Test getting prompt from positional argument."""
         provider = MockProvider()
-        args = argparse.Namespace(
-            prompt=None, positional_prompt="positional prompt"
-        )
+        args = argparse.Namespace(prompt=None, positional_prompt="positional prompt")
         with patch("sys.stdin.isatty", return_value=True):
             result = provider.get_prompt(args, [])
             assert result == "positional prompt"
@@ -635,9 +631,7 @@ class TestGetPrompt:
     def test_get_prompt_from_flag(self):
         """Test getting prompt from --prompt flag."""
         provider = MockProvider()
-        args = argparse.Namespace(
-            prompt="flag prompt", positional_prompt=None
-        )
+        args = argparse.Namespace(prompt="flag prompt", positional_prompt=None)
         with patch("sys.stdin.isatty", return_value=True):
             result = provider.get_prompt(args, [])
             assert result == "flag prompt"
@@ -645,9 +639,7 @@ class TestGetPrompt:
     def test_get_prompt_from_remaining_args(self):
         """Test getting prompt from remaining arguments."""
         provider = MockProvider()
-        args = argparse.Namespace(
-            prompt=None, positional_prompt=None
-        )
+        args = argparse.Namespace(prompt=None, positional_prompt=None)
         with patch("sys.stdin.isatty", return_value=True):
             result = provider.get_prompt(args, ["remaining", "prompt"])
             assert result == "remaining prompt"
@@ -655,9 +647,7 @@ class TestGetPrompt:
     def test_get_prompt_from_stdin(self):
         """Test getting prompt from stdin."""
         provider = MockProvider()
-        args = argparse.Namespace(
-            prompt=None, positional_prompt=None
-        )
+        args = argparse.Namespace(prompt=None, positional_prompt=None)
         with patch("sys.stdin.isatty", return_value=False):
             with patch("sys.stdin.read", return_value="stdin prompt\n"):
                 result = provider.get_prompt(args, [])
@@ -666,9 +656,7 @@ class TestGetPrompt:
     def test_get_prompt_stdin_priority(self):
         """Test that stdin has priority over other sources."""
         provider = MockProvider()
-        args = argparse.Namespace(
-            prompt="flag prompt", positional_prompt="positional"
-        )
+        args = argparse.Namespace(prompt="flag prompt", positional_prompt="positional")
         with patch("sys.stdin.isatty", return_value=False):
             with patch("sys.stdin.read", return_value="stdin prompt\n"):
                 result = provider.get_prompt(args, ["remaining"])
@@ -677,9 +665,7 @@ class TestGetPrompt:
     def test_get_prompt_no_prompt_exits(self):
         """Test that no prompt causes exit."""
         provider = MockProvider()
-        args = argparse.Namespace(
-            prompt=None, positional_prompt=None
-        )
+        args = argparse.Namespace(prompt=None, positional_prompt=None)
         with patch("sys.stdin.isatty", return_value=True):
             with pytest.raises(SystemExit) as exc_info:
                 with patch("sys.stderr", new=StringIO()):
@@ -689,9 +675,7 @@ class TestGetPrompt:
     def test_get_prompt_sanitizes(self):
         """Test that get_prompt sanitizes the result."""
         provider = MockProvider()
-        args = argparse.Namespace(
-            prompt="  prompt with\x00nulls  ", positional_prompt=None
-        )
+        args = argparse.Namespace(prompt="  prompt with\x00nulls  ", positional_prompt=None)
         with patch("sys.stdin.isatty", return_value=True):
             result = provider.get_prompt(args, [])
             assert result == "prompt withnulls"

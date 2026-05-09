@@ -232,8 +232,10 @@ def collect_round_metrics(parsed_results: list) -> dict:
     """Aggregate metrics from multiple parse results for a debate round."""
     if not parsed_results:
         return {
-            "avg_confidence": 0, "compliance_rate": 0,
-            "total_responses": 0, "avg_response_length": 0,
+            "avg_confidence": 0,
+            "compliance_rate": 0,
+            "total_responses": 0,
+            "avg_response_length": 0,
             "total_semantic_focuses": 0,
         }
 
@@ -310,11 +312,13 @@ def main():
         for entry in args.consensus:
             parts = entry.split(":")
             if len(parts) == 3:
-                scores.append({
-                    "model": parts[0],
-                    "trust_score": float(parts[1]),
-                    "confidence": float(parts[2]),
-                })
+                scores.append(
+                    {
+                        "model": parts[0],
+                        "trust_score": float(parts[1]),
+                        "confidence": float(parts[2]),
+                    }
+                )
         result = weighted_consensus(scores)
         print(json.dumps(result, indent=2))
         sys.exit(0)

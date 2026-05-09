@@ -17,6 +17,7 @@ import argparse
 import json
 import os
 import sys
+from typing import Optional
 
 # Import path setup
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,7 +26,7 @@ from canary import CANARY_MODEL_MAP, CLI_MAP, CanaryProbe
 from model_stats import ModelStats
 
 
-def probe_single(provider: str, model: str, no_cache: bool) -> dict:
+def probe_single(provider: str, model: Optional[str], no_cache: bool) -> dict:
     """Probe a single provider/model combination."""
     stats = ModelStats()
     probe = CanaryProbe(stats, use_cache=not no_cache)

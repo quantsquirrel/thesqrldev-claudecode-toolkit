@@ -17,6 +17,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Optional
 
 # Import shared key resolution from base_provider
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -48,7 +49,7 @@ REQUIRED_PACKAGES = {
 }
 
 # Provider definitions for testing
-MODELS_TO_TEST = {
+MODELS_TO_TEST: dict[str, dict[str, Any]] = {
     "gemini": {
         "cli": "gemini-3.py",
         "models": ["flash", "pro"],
@@ -107,7 +108,7 @@ class TestResult:
     success: bool
     latency_sec: float
     status: str  # "recommended" | "usable" | "slow" | "timeout" | "failed"
-    error: str | None = None
+    error: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

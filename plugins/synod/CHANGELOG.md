@@ -18,6 +18,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.5.0] - 2026-05-09
+
+### Added
+- **Phase 0.5 — Ground-Truth Probe + Prompt Lint + Tier Select** (`skills/synod/modules/synod-phase0-5-ground-truth.md`). Opt-in via `SYNOD_EVIDENCE_FIRST=1` or `--evidence-first`. Runs before Phase 1 Solver and enriches the PROBLEM passed to external models with machine-verified Primary Evidence and Known Limitations sections. Backward-compatible: legacy flow unchanged when the flag is unset.
+- **Phase 4.5 — Evidence Coverage Gate** (`skills/synod/modules/synod-phase4-5-evidence-gate.md`). Post-synthesis annotation that reports the % of claims backed by `file:line` citations (`evidence-based` ≥70%, `partial` 30–70%, `narrative-based` <30%). Informational only — never blocks output.
+- **Mechanical probes**:
+  - `tools/ground_truth_probe.py` — inspects a target path's import/test/version state and emits `integrity.json`, `top_findings`, and a `file_tree.txt` snapshot.
+  - `tools/prompt_linter.py` — regex audit for unbacked claims (e.g., `default X`, `providers/ 추상화`, `22/22 regression green`); high-severity findings can gate Phase 1 unless `--skip-lint`.
+  - `tools/tier_matrix.py` — explicit tier→model roster mapping that replaces latency-based "recommended" defaults so reasoning-strong models (pro-thinking, o3-high) are not silently demoted.
+- **Tier roster config**: `config/model_matrix.json` — `simple`/`standard`/`deep`/`ultra` tier definitions with provider/cli/model/thinking|reasoning fields and `async_threshold_sec` for wall-clock budgeting.
+
+### Compatibility
+- Default flow is unchanged — Phase 0.5 and 4.5 are dormant unless `SYNOD_EVIDENCE_FIRST=1` (or `--evidence-first`) is set, so existing v3.4.x users see no behavioral difference until they opt in.
+- `evidence_gate.py` is intentionally not shipped as a CLI; the gate runs inline in the Phase 4 orchestrator context per the pseudocode in `synod-phase4-5-evidence-gate.md`.
+
+---
+
 ## [3.4.0] - 2026-05-07
 
 ### Added

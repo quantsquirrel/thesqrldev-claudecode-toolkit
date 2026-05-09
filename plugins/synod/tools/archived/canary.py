@@ -17,6 +17,8 @@ Usage:
         # Use fallback model
 """
 
+from __future__ import annotations
+
 import json
 import os
 import subprocess
@@ -172,7 +174,9 @@ class CanaryProbe:
                 return {
                     "healthy": False,
                     "latency_ms": latency_ms,
-                    "error": result.stderr[:200] if result.stderr else f"Exit code: {result.returncode}",
+                    "error": result.stderr[:200]
+                    if result.stderr
+                    else f"Exit code: {result.returncode}",
                     "fallback_recommended": True,
                 }
 
@@ -193,7 +197,7 @@ class CanaryProbe:
                 "fallback_recommended": True,
             }
 
-    def probe(self, provider: str, model: str = None) -> dict:
+    def probe(self, provider: str, model: str | None = None) -> dict:
         """
         Execute canary probe and return status.
         Uses cache if available and valid.

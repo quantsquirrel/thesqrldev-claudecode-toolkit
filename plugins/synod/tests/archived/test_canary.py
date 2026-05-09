@@ -8,7 +8,7 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -16,10 +16,10 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
 
 from canary import (
+    CACHE_TTL_SECONDS,
     CANARY_MODEL_MAP,
     CANARY_PROMPT,
     CANARY_TIMEOUT_SECONDS,
-    CACHE_TTL_SECONDS,
     CLI_MAP,
     CanaryCache,
     CanaryProbe,
@@ -46,7 +46,15 @@ class TestConstants:
 
     def test_cli_map_has_all_providers(self):
         """Test that CLI_MAP includes all 7 providers."""
-        expected_providers = ["gemini", "openai", "deepseek", "groq", "grok", "mistral", "openrouter"]
+        expected_providers = [
+            "gemini",
+            "openai",
+            "deepseek",
+            "groq",
+            "grok",
+            "mistral",
+            "openrouter",
+        ]
         for provider in expected_providers:
             assert provider in CLI_MAP
 

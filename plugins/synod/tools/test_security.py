@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Quick test of security features in BaseProvider."""
 
-import sys
 import os
+import sys
 
 # Add tools directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from base_provider import BaseProvider
 import argparse
+
+from base_provider import BaseProvider
 
 
 class TestProvider(BaseProvider):

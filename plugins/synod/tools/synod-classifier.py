@@ -15,10 +15,12 @@ def _load_keyword_patterns():
     """Load keyword patterns from YAML config with hardcoded fallback."""
     try:
         import os
+
         tools_dir = os.path.dirname(os.path.abspath(__file__))
         if tools_dir not in sys.path:
             sys.path.insert(0, tools_dir)
         from synod_config import get_all_keywords
+
         yaml_keywords = get_all_keywords()
         if yaml_keywords:
             return yaml_keywords
@@ -27,22 +29,53 @@ def _load_keyword_patterns():
 
     # Hardcoded fallback patterns
     return {
-        'review': [
-            r'리뷰', r'review', r'검토', r'코드\s*확인', r'PR\s*리뷰',
-            r'버그\s*찾', r'문제\s*찾', r'개선\s*점', r'피드백'
+        "review": [
+            r"리뷰",
+            r"review",
+            r"검토",
+            r"코드\s*확인",
+            r"PR\s*리뷰",
+            r"버그\s*찾",
+            r"문제\s*찾",
+            r"개선\s*점",
+            r"피드백",
         ],
-        'design': [
-            r'설계', r'design', r'아키텍처', r'architecture', r'구조',
-            r'시스템\s*설계', r'API\s*설계', r'DB\s*설계', r'스키마'
+        "design": [
+            r"설계",
+            r"design",
+            r"아키텍처",
+            r"architecture",
+            r"구조",
+            r"시스템\s*설계",
+            r"API\s*설계",
+            r"DB\s*설계",
+            r"스키마",
         ],
-        'debug': [
-            r'디버그', r'debug', r'에러', r'error', r'버그', r'bug',
-            r'안\s*됨', r'작동.*않', r'실패', r'fail', r'오류', r'exception'
+        "debug": [
+            r"디버그",
+            r"debug",
+            r"에러",
+            r"error",
+            r"버그",
+            r"bug",
+            r"안\s*됨",
+            r"작동.*않",
+            r"실패",
+            r"fail",
+            r"오류",
+            r"exception",
         ],
-        'idea': [
-            r'아이디어', r'idea', r'브레인스토밍', r'brainstorm',
-            r'제안', r'suggest', r'어떻게\s*하면', r'방법', r'대안'
-        ]
+        "idea": [
+            r"아이디어",
+            r"idea",
+            r"브레인스토밍",
+            r"brainstorm",
+            r"제안",
+            r"suggest",
+            r"어떻게\s*하면",
+            r"방법",
+            r"대안",
+        ],
     }
 
 
@@ -62,12 +95,11 @@ def classify_prompt(prompt):
     # Score each mode by counting matched patterns (absolute count)
     scores = {}
     for mode, pattern_list in patterns.items():
-        matches = sum(1 for pattern in pattern_list
-                      if re.search(pattern, prompt, re.IGNORECASE))
+        matches = sum(1 for pattern in pattern_list if re.search(pattern, prompt, re.IGNORECASE))
         scores[mode] = matches
 
     # Find best mode by absolute match count
-    best_mode = max(scores, key=scores.get)
+    best_mode = max(scores, key=lambda mode: scores[mode])
     best_count = scores[best_mode]
 
     # Default to "general" if no patterns matched at all
@@ -93,19 +125,19 @@ def classify_problem_type(prompt):
         str: coding|math|creative|general
     """
     # Check for coding indicators
-    if re.search(r'```', prompt):  # code blocks
+    if re.search(r"```", prompt):  # code blocks
         return "coding"
-    if re.search(r'\b(def|class|function|import|const|let|var)\b', prompt, re.IGNORECASE):
+    if re.search(r"\b(def|class|function|import|const|let|var)\b", prompt, re.IGNORECASE):
         return "coding"
 
     # Check for math indicators
-    if re.search(r'\d+\s*[\+\-\*\/\=]\s*\d+', prompt):
+    if re.search(r"\d+\s*[\+\-\*\/\=]\s*\d+", prompt):
         return "math"
-    if re.search(r'수학|계산|algorithm', prompt, re.IGNORECASE):
+    if re.search(r"수학|계산|algorithm", prompt, re.IGNORECASE):
         return "math"
 
     # Check for creative indicators
-    if re.search(r'아이디어|브레인스토밍|창의|이름.*지어|naming', prompt, re.IGNORECASE):
+    if re.search(r"아이디어|브레인스토밍|창의|이름.*지어|naming", prompt, re.IGNORECASE):
         return "creative"
 
     return "general"
@@ -125,10 +157,10 @@ def determine_complexity(prompt):
     word_count = len(prompt.split())
 
     # Count code blocks
-    code_blocks = len(re.findall(r'```', prompt)) // 2
+    code_blocks = len(re.findall(r"```", prompt)) // 2
 
     # Count file mentions
-    file_mentions = len(re.findall(r'\.\w{2,4}\b', prompt))
+    file_mentions = len(re.findall(r"\.\w{2,4}\b", prompt))
 
     # Calculate complexity score
     score = word_count / 100 + code_blocks * 0.5 + file_mentions * 0.3
@@ -139,6 +171,7 @@ def determine_complexity(prompt):
         if tools_dir not in sys.path:
             sys.path.insert(0, tools_dir)
         from synod_config import load_config
+
         cfg = load_config()
         complexity_cfg = cfg.get("complexity", {})
         simple_max = complexity_cfg.get("simple", {}).get("max_score", 0.5)
@@ -159,24 +192,12 @@ def determine_complexity(prompt):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Classify prompts for Synod execution modes'
-    )
+    parser = argparse.ArgumentParser(description="Classify prompts for Synod execution modes")
+    parser.add_argument("prompt", nargs="?", help="Prompt text to classify (or read from stdin)")
     parser.add_argument(
-        'prompt',
-        nargs='?',
-        help='Prompt text to classify (or read from stdin)'
+        "--mode-only", action="store_true", help="Output only the mode as plain text"
     )
-    parser.add_argument(
-        '--mode-only',
-        action='store_true',
-        help='Output only the mode as plain text'
-    )
-    parser.add_argument(
-        '--complexity',
-        action='store_true',
-        help='Include complexity analysis'
-    )
+    parser.add_argument("--complexity", action="store_true", help="Include complexity analysis")
 
     args = parser.parse_args()
 
@@ -205,6 +226,7 @@ def main():
     # Determine tier from complexity (v3.1)
     try:
         from synod_config import get_tier
+
         tier = get_tier(complexity_level, confidence)
     except (ImportError, Exception):
         tier = "standard"
@@ -215,7 +237,7 @@ def main():
         "problem_type": problem_type,
         "complexity": complexity_level,
         "rounds": rounds,
-        "tier": tier
+        "tier": tier,
     }
 
     # Output JSON

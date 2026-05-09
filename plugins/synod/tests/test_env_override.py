@@ -14,7 +14,6 @@ Tests the get_model_with_override() function in:
 import importlib.util
 import os
 import sys
-from pathlib import Path
 
 import pytest
 
@@ -22,12 +21,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
 
 # Check if optional dependencies are available
-try:
-    import mistralai
-
-    MISTRAL_AVAILABLE = True
-except ImportError:
-    MISTRAL_AVAILABLE = False
+MISTRAL_AVAILABLE = importlib.util.find_spec("mistralai") is not None
 
 
 def load_cli_module(cli_filename: str):
@@ -36,9 +30,13 @@ def load_cli_module(cli_filename: str):
 
     # Check providers/extended/ if not found in tools/
     if not os.path.exists(cli_path):
-        cli_path = os.path.join(os.path.dirname(__file__), "..", "tools", "providers", "extended", cli_filename)
+        cli_path = os.path.join(
+            os.path.dirname(__file__), "..", "tools", "providers", "extended", cli_filename
+        )
 
-    spec = importlib.util.spec_from_file_location(cli_filename.replace("-", "_").replace(".py", ""), cli_path)
+    spec = importlib.util.spec_from_file_location(
+        cli_filename.replace("-", "_").replace(".py", ""), cli_path
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -152,7 +150,9 @@ class TestDeepSeekOverride:
         """Load deepseek-cli.py module."""
         return load_cli_module("deepseek-cli.py")
 
-    def test_get_model_with_override_returns_default_when_no_env_var(self, deepseek_cli, monkeypatch):
+    def test_get_model_with_override_returns_default_when_no_env_var(
+        self, deepseek_cli, monkeypatch
+    ):
         """Test that default model is returned when no env var is set."""
         monkeypatch.delenv("SYNOD_DEEPSEEK_CHAT", raising=False)
 
@@ -301,7 +301,9 @@ class TestMistralOverride:
         os.environ["SYNOD_ENABLE_MISTRAL"] = "1"
         return load_cli_module("mistral-cli.py")
 
-    def test_get_model_with_override_returns_default_when_no_env_var(self, mistral_cli, monkeypatch):
+    def test_get_model_with_override_returns_default_when_no_env_var(
+        self, mistral_cli, monkeypatch
+    ):
         """Test that default model is returned when no env var is set."""
         monkeypatch.delenv("SYNOD_MISTRAL_LARGE", raising=False)
 
@@ -349,7 +351,9 @@ class TestOpenRouterOverride:
         """Load openrouter-cli.py module."""
         return load_cli_module("openrouter-cli.py")
 
-    def test_get_model_with_override_returns_default_when_no_env_var(self, openrouter_cli, monkeypatch):
+    def test_get_model_with_override_returns_default_when_no_env_var(
+        self, openrouter_cli, monkeypatch
+    ):
         """Test that default model is returned when no env var is set."""
         monkeypatch.delenv("SYNOD_OPENROUTER_CLAUDE", raising=False)
 
@@ -419,7 +423,9 @@ class TestCrossProviderPatterns:
                 os.environ["SYNOD_ENABLE_MISTRAL"] = "1"
             module = load_cli_module(cli_file)
             provider_class = self._get_provider_class(module, cli_file)
-            assert hasattr(provider_class, "get_model_with_override"), f"{cli_file} missing get_model_with_override"
+            assert hasattr(provider_class, "get_model_with_override"), (
+                f"{cli_file} missing get_model_with_override"
+            )
 
     def test_env_var_naming_consistency(self):
         """Test that all providers use consistent SYNOD_{PROVIDER}_{MODEL_KEY} pattern."""

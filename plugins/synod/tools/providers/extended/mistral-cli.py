@@ -44,7 +44,7 @@ except ImportError:
 
 # Import base provider
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from base_provider import BaseProvider
+from base_provider import BaseProvider  # noqa: E402
 
 
 class MistralProvider(BaseProvider):
@@ -113,7 +113,15 @@ class MistralProvider(BaseProvider):
         parser.add_argument(
             "-m",
             "--model",
-            choices=["large", "medium", "small", "codestral", "devstral", "magistral", "magistral-small"],
+            choices=[
+                "large",
+                "medium",
+                "small",
+                "codestral",
+                "devstral",
+                "magistral",
+                "magistral-small",
+            ],
             default="medium",
             help="Model to use (default: medium)",
         )

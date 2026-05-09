@@ -5,12 +5,12 @@ import io
 import json
 import os
 import sys
+
 import pytest
 
 # Load the classifier module (hyphenated filename requires importlib)
 _classifier_path = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "tools", "synod-classifier.py"
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tools", "synod-classifier.py"
 )
 spec = importlib.util.spec_from_file_location("synod_classifier", _classifier_path)
 classifier = importlib.util.module_from_spec(spec)
@@ -39,6 +39,7 @@ class TestKeywordPatternLoading:
     def test_patterns_match_yaml_config(self):
         """Test loaded patterns match YAML config values."""
         from tools.synod_config import get_all_keywords
+
         yaml_keywords = get_all_keywords()
         loaded_patterns = classifier._load_keyword_patterns()
 

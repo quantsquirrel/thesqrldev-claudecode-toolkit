@@ -1,7 +1,6 @@
 """Tests for synod_progress.py - Rich-based progress visualization."""
 
 import io
-import json
 import sys
 import time
 from unittest import mock
@@ -195,7 +194,7 @@ class TestConfiguration:
         assert "claude" in synod_progress.MODEL_CONFIG
 
         # Check structure
-        for model, config in synod_progress.MODEL_CONFIG.items():
+        for _model, config in synod_progress.MODEL_CONFIG.items():
             assert "name" in config
             assert "color" in config
             assert "icon" in config
@@ -229,7 +228,7 @@ class TestContextManager:
 
         assert progress._live is None
 
-    @mock.patch('tools.synod_progress.Live')
+    @mock.patch("tools.synod_progress.Live")
     def test_context_manager_with_rich(self, mock_live):
         """Test context manager with Rich available."""
         if not synod_progress.RICH_AVAILABLE:
@@ -261,9 +260,9 @@ class TestStdinProcessing:
             '{"event":"model_complete","model":"gemini","duration_ms":5000}',
             '{"event":"phase_end","phase":1}',
         ]
-        mock_stdin = io.StringIO('\n'.join(events))
-        monkeypatch.setattr(sys, 'stdin', mock_stdin)
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
+        mock_stdin = io.StringIO("\n".join(events))
+        monkeypatch.setattr(sys, "stdin", mock_stdin)
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
 
         synod_progress.process_stdin()
 
@@ -279,13 +278,13 @@ class TestStdinProcessing:
 
         events = [
             '{"event":"phase_start","phase":1}',
-            'invalid json here',
-            '',  # empty line
+            "invalid json here",
+            "",  # empty line
             '{"event":"phase_end","phase":1}',
         ]
-        mock_stdin = io.StringIO('\n'.join(events))
-        monkeypatch.setattr(sys, 'stdin', mock_stdin)
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
+        mock_stdin = io.StringIO("\n".join(events))
+        monkeypatch.setattr(sys, "stdin", mock_stdin)
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
 
         # Should not raise, should skip invalid JSON
         synod_progress.process_stdin()
@@ -301,9 +300,9 @@ class TestStdinProcessing:
         events = [
             '{"event":"model_error","model":"openai","error":"timeout"}',
         ]
-        mock_stdin = io.StringIO('\n'.join(events))
-        monkeypatch.setattr(sys, 'stdin', mock_stdin)
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
+        mock_stdin = io.StringIO("\n".join(events))
+        monkeypatch.setattr(sys, "stdin", mock_stdin)
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
 
         synod_progress.process_stdin()
 
@@ -325,8 +324,8 @@ class TestBuildDisplay:
         panel = progress._build_display()
 
         # Check it's a Panel (Rich object)
-        assert hasattr(panel, 'renderable')
-        assert hasattr(panel, 'title')
+        assert hasattr(panel, "renderable")
+        assert hasattr(panel, "title")
 
     def test_build_display_includes_phase_info(self):
         """Test _build_display includes phase information in title."""

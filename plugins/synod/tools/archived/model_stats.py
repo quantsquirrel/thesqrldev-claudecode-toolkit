@@ -8,13 +8,14 @@ for adaptive timeout management.
 Data stored at ~/.synod/model-stats.json with file locking for concurrent access.
 """
 
+from __future__ import annotations
+
 import fcntl
 import json
 import os
 import tempfile
 import time
 from pathlib import Path
-
 
 # Cold-start default timeouts (ms) - used when no historical data exists
 COLD_START_DEFAULTS = {
@@ -140,7 +141,7 @@ class ModelStats:
                     self._data = json.load(f)
                     self._last_load_time = time.time()
                     return self._data
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 pass
 
         # Initialize empty structure
@@ -172,9 +173,7 @@ class ModelStats:
 
     def _atomic_write(self, data: dict) -> None:
         """Atomic write: write to temp file, then rename."""
-        temp_fd, temp_path = tempfile.mkstemp(
-            dir=str(self.stats_path.parent), suffix=".tmp"
-        )
+        temp_fd, temp_path = tempfile.mkstemp(dir=str(self.stats_path.parent), suffix=".tmp")
         try:
             with os.fdopen(temp_fd, "w") as f:
                 json.dump(data, f, indent=2)

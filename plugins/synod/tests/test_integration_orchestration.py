@@ -11,19 +11,18 @@ Tests end-to-end data flow between phases:
 import importlib.util
 import json
 import os
-import sys
-from unittest import mock
 
 import pytest
 
 # Import standard modules
 from tools.synod_config import (
     get_mode_config,
-    get_timeouts,
     get_threshold,
+    get_timeouts,
     load_config,
 )
 from tools.synod_progress import SynodProgress
+
 
 # Import hyphenated modules using importlib
 def _import_hyphenated_module(module_name, file_name):
@@ -44,6 +43,7 @@ parser = _import_hyphenated_module("synod_parser", "synod-parser.py")
 def reset_config_cache():
     """Reset config cache before each test."""
     import tools.synod_config as config_module
+
     config_module._CONFIG_CACHE = None
     yield
     config_module._CONFIG_CACHE = None
@@ -66,7 +66,7 @@ class TestPhaseOrchestration:
         assert set(modes.keys()) == {"review", "design", "debug", "idea", "general"}
 
         # Each mode has required fields
-        for mode_name, mode_config in modes.items():
+        for _mode_name, mode_config in modes.items():
             assert "description" in mode_config
             assert "models" in mode_config
             assert "rounds" in mode_config
@@ -178,7 +178,7 @@ The code is acceptable but could be improved.
 
         # Calculate expected
         total_trust = 1.5 + 1.2 + 1.8  # 4.5
-        expected_final = (1.5*85 + 1.2*90 + 1.8*80) / total_trust
+        expected_final = (1.5 * 85 + 1.2 * 90 + 1.8 * 80) / total_trust
 
         assert consensus["final_confidence"] == pytest.approx(expected_final, abs=0.1)
         assert consensus["dominant_model"] == "claude"  # Highest trust
@@ -297,6 +297,7 @@ class TestProblemTypeIntegration:
     def test_problem_type_in_full_classifier_json(self, capsys):
         """Test problem_type is always present in classifier main() JSON output."""
         import sys as _sys
+
         original_argv = _sys.argv
         try:
             _sys.argv = ["synod-classifier.py", "def hello(): pass"]
@@ -464,7 +465,9 @@ class TestConfigProgressIntegration:
         assert rounds == 2
 
         # Complex prompt (long with code blocks)
-        complex_prompt = "Review this code:\n" + "```python\n" + "def foo():\n    pass\n" * 50 + "```\n"
+        complex_prompt = (
+            "Review this code:\n" + "```python\n" + "def foo():\n    pass\n" * 50 + "```\n"
+        )
         complexity, rounds = classifier.determine_complexity(complex_prompt)
         assert rounds >= 2
 
@@ -491,6 +494,7 @@ class TestConfigProgressIntegration:
         # Phase 1d: Parse response (mocked)
         mock_response = '<confidence score="80"><evidence>Good</evidence></confidence>\n<semantic_focus>Key points</semantic_focus>'
         result = parser.parse_response(mock_response)
+        assert result["confidence"]["score"] == 80
 
         progress.model_complete("gemini", duration_ms=3000)
 
@@ -524,11 +528,13 @@ class TestConfigProgressIntegration:
             # Mock trust calculation
             trust = parser.calculate_trust_score(0.85, 0.8, 0.75, 0.35)
 
-            model_responses.append({
-                "model": model_name,
-                "trust_score": trust["trust_score"],
-                "confidence": confidence_score,
-            })
+            model_responses.append(
+                {
+                    "model": model_name,
+                    "trust_score": trust["trust_score"],
+                    "confidence": confidence_score,
+                }
+            )
 
             progress.model_complete(model_name, duration_ms=3000)
 

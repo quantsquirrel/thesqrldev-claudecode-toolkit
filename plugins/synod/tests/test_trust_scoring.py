@@ -1,10 +1,8 @@
 """Tests for CRIS trust score enhancements - confidence intervals and weighted consensus."""
 
+import importlib.util
 import os
 import sys
-import importlib.util
-
-import pytest
 
 # Add tools directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))

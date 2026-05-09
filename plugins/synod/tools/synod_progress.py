@@ -18,16 +18,15 @@ Usage (library mode):
 import json
 import sys
 import time
-from contextlib import contextmanager
-from typing import Optional
+from typing import Any, Optional
 
 try:
     from rich.console import Console
     from rich.live import Live
     from rich.panel import Panel
-    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
     from rich.table import Table
     from rich.text import Text
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -52,14 +51,14 @@ PHASE_NAMES = {
 class SynodProgress:
     """Real-time progress display for Synod debate phases."""
 
-    def __init__(self, console: Optional[object] = None):
+    def __init__(self, console: Optional[Any] = None):
         self.console = console or (Console(stderr=True) if RICH_AVAILABLE else None)
         self.current_phase = 0
         self.phase_name = ""
         self.model_status: dict[str, str] = {}  # model -> status
         self.model_start_times: dict[str, float] = {}
         self.model_durations: dict[str, float] = {}
-        self._live = None
+        self._live: Optional[Any] = None
 
     def _build_display(self) -> Panel:
         """Build the Rich display panel."""

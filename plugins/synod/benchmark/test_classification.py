@@ -10,7 +10,6 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Dict, Tuple
 
 # Test cases: 50 total across 5 modes
 TEST_CASES = [
@@ -27,7 +26,6 @@ TEST_CASES = [
     {"prompt": "이 함수 리뷰해줘", "expected": "review"},
     {"prompt": "코드 품질 검토", "expected": "review"},
     {"prompt": "리팩토링 포인트 찾아줘", "expected": "review"},
-
     # Design (12)
     {"prompt": "API 설계해줘", "expected": "design"},
     {"prompt": "시스템 아키텍처 만들어줘", "expected": "design"},
@@ -41,7 +39,6 @@ TEST_CASES = [
     {"prompt": "시스템 설계 도와줘", "expected": "design"},
     {"prompt": "인터페이스 설계", "expected": "design"},
     {"prompt": "모듈 구조 설계", "expected": "design"},
-
     # Debug (12)
     {"prompt": "에러 수정해줘", "expected": "debug"},
     {"prompt": "버그 고쳐줘", "expected": "debug"},
@@ -55,7 +52,6 @@ TEST_CASES = [
     {"prompt": "에러 메시지 분석", "expected": "debug"},
     {"prompt": "디버그 도와줘", "expected": "debug"},
     {"prompt": "버그 원인 분석", "expected": "debug"},
-
     # Idea (10)
     {"prompt": "아이디어 좀 줘", "expected": "idea"},
     {"prompt": "브레인스토밍 하자", "expected": "idea"},
@@ -67,7 +63,6 @@ TEST_CASES = [
     {"prompt": "아이디어 있어?", "expected": "idea"},
     {"prompt": "창의적인 방법 뭐 있을까", "expected": "idea"},
     {"prompt": "다른 접근법 제안", "expected": "idea"},
-
     # General (4)
     {"prompt": "안녕", "expected": "general"},
     {"prompt": "Hello", "expected": "general"},
@@ -80,10 +75,7 @@ def run_classifier(classifier_path: Path, prompt: str) -> str:
     """Run the classifier and return the predicted mode."""
     try:
         result = subprocess.run(
-            ["python3", str(classifier_path), prompt],
-            capture_output=True,
-            text=True,
-            timeout=5
+            ["python3", str(classifier_path), prompt], capture_output=True, text=True, timeout=5
         )
 
         if result.returncode != 0:
@@ -108,7 +100,7 @@ def run_classifier(classifier_path: Path, prompt: str) -> str:
         return "error"
 
 
-def run_benchmark(classifier_path: Path) -> Tuple[int, int, List[Dict]]:
+def run_benchmark(classifier_path: Path) -> tuple[int, int, list[dict]]:
     """
     Run all test cases and return (correct_count, total_count, failures).
     """
@@ -129,18 +121,16 @@ def run_benchmark(classifier_path: Path) -> Tuple[int, int, List[Dict]]:
             status = "✓"
         else:
             status = "✗"
-            failures.append({
-                "prompt": prompt,
-                "expected": expected,
-                "actual": actual
-            })
+            failures.append({"prompt": prompt, "expected": expected, "actual": actual})
 
-        print(f"[{i:2d}/{total}] {status} {prompt[:40]:40s} | Expected: {expected:8s} | Got: {actual:8s}")
+        print(
+            f"[{i:2d}/{total}] {status} {prompt[:40]:40s} | Expected: {expected:8s} | Got: {actual:8s}"
+        )
 
     return correct, total, failures
 
 
-def print_results(correct: int, total: int, failures: List[Dict]) -> None:
+def print_results(correct: int, total: int, failures: list[dict]) -> None:
     """Print benchmark results."""
     accuracy = (correct / total) * 100
 
@@ -151,7 +141,7 @@ def print_results(correct: int, total: int, failures: List[Dict]) -> None:
     print(f"Correct: {correct}")
     print(f"Failed: {len(failures)}")
     print(f"Accuracy: {accuracy:.2f}%")
-    print(f"Target: 90.00%")
+    print("Target: 90.00%")
 
     if accuracy >= 90:
         print("\n✓ PASS: Accuracy meets or exceeds target (≥90%)")
@@ -173,7 +163,9 @@ def print_results(correct: int, total: int, failures: List[Dict]) -> None:
 def main() -> int:
     """Main entry point."""
     # Locate the classifier
-    classifier_path = Path("/Users/ahnjundaram_g/dev/tools/claude-synod-debate/tools/synod-classifier.py")
+    classifier_path = Path(
+        "/Users/ahnjundaram_g/dev/tools/claude-synod-debate/tools/synod-classifier.py"
+    )
 
     if not classifier_path.exists():
         print(f"Error: Classifier not found at {classifier_path}")

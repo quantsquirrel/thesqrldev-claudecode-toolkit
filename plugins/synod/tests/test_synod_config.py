@@ -1,19 +1,18 @@
 """Tests for synod_config module."""
 
 import pytest
-import os
+
 from tools.synod_config import (
-    load_config,
+    get_all_keywords,
+    get_complexity_rounds,
+    get_focus,
     get_mode_config,
     get_model_config,
-    get_focus,
     get_rounds,
-    get_complexity_rounds,
-    list_modes,
-    get_timeouts,
-    get_all_keywords,
     get_threshold,
-    _CONFIG_CACHE,
+    get_timeouts,
+    list_modes,
+    load_config,
 )
 
 
@@ -21,6 +20,7 @@ from tools.synod_config import (
 def reset_cache():
     """Reset the config cache before each test."""
     import tools.synod_config as config_module
+
     config_module._CONFIG_CACHE = None
     yield
     config_module._CONFIG_CACHE = None
@@ -244,6 +244,7 @@ def test_get_threshold_unknown_returns_default():
 def test_config_cli_main(capsys):
     """Test the CLI main() function for config access."""
     import sys
+
     from tools.synod_config import main
 
     # Test timeouts.model
@@ -256,6 +257,7 @@ def test_config_cli_main(capsys):
 def test_config_cli_nested_path(capsys):
     """Test CLI with nested path for mode model config."""
     import sys
+
     from tools.synod_config import main
 
     sys.argv = ["synod_config.py", "modes", "review", "models", "gemini", "model"]
@@ -266,8 +268,9 @@ def test_config_cli_nested_path(capsys):
 
 def test_config_cli_json_output(capsys):
     """Test CLI outputs JSON for dict/list results."""
-    import sys
     import json
+    import sys
+
     from tools.synod_config import main
 
     sys.argv = ["synod_config.py", "timeouts"]
@@ -282,6 +285,7 @@ def test_config_cli_json_output(capsys):
 def test_config_cli_missing_path_exits():
     """Test CLI exits with code 1 for nonexistent path."""
     import sys
+
     from tools.synod_config import main
 
     sys.argv = ["synod_config.py", "nonexistent", "path"]

@@ -8,10 +8,9 @@ and maintain consistent behavior.
 """
 
 import importlib.util
-import inspect
 import os
 import sys
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -38,28 +37,27 @@ def load_provider(filename):
 
         # Check providers/extended/ if not found in tools/
         if not os.path.exists(filepath):
-            filepath = os.path.join(os.path.dirname(__file__), "..", "tools", "providers", "extended", filename)
+            filepath = os.path.join(
+                os.path.dirname(__file__), "..", "tools", "providers", "extended", filename
+            )
 
         spec = importlib.util.spec_from_file_location(
-            filename.replace("-", "_").replace(".py", ""),
-            filepath
+            filename.replace("-", "_").replace(".py", ""), filepath
         )
         module = importlib.util.module_from_spec(spec)
 
         # Redirect stderr to suppress import messages
-        with patch('sys.stderr'):
+        with patch("sys.stderr"):
             spec.loader.exec_module(module)
 
         # Find the provider class
         for name in dir(module):
             obj = getattr(module, name)
-            if (isinstance(obj, type) and
-                issubclass(obj, BaseProvider) and
-                obj is not BaseProvider):
+            if isinstance(obj, type) and issubclass(obj, BaseProvider) and obj is not BaseProvider:
                 return module, obj
         return None, None
 
-    except (ImportError, SystemExit) as e:
+    except (ImportError, SystemExit):
         # Skip providers that can't be loaded
         return None, None
 
@@ -73,7 +71,7 @@ PROVIDER_FILES = [
     "groq-cli.py",
     "grok-cli.py",
     "mistral-cli.py",
-    "openrouter-cli.py"
+    "openrouter-cli.py",
 ]
 
 for filename in PROVIDER_FILES:
@@ -83,10 +81,7 @@ for filename in PROVIDER_FILES:
 
 
 # Skip all tests if no providers loaded
-pytestmark = pytest.mark.skipif(
-    len(PROVIDERS) == 0,
-    reason="No providers available for testing"
-)
+pytestmark = pytest.mark.skipif(len(PROVIDERS) == 0, reason="No providers available for testing")
 
 
 class TestCrossProviderInheritance:
@@ -98,12 +93,12 @@ class TestCrossProviderInheritance:
 
         for filename, provider_class in PROVIDERS.items():
             for method_name in required_methods:
-                assert hasattr(provider_class, method_name), \
+                assert hasattr(provider_class, method_name), (
                     f"{filename}: Missing method {method_name}"
+                )
 
                 method = getattr(provider_class, method_name)
-                assert callable(method), \
-                    f"{filename}: {method_name} is not callable"
+                assert callable(method), f"{filename}: {method_name} is not callable"
 
     def test_all_providers_have_provider_constant(self):
         """Verify all providers have PROVIDER, API_KEY_ENV, MODEL_MAP, DEFAULT_MODEL."""
@@ -111,19 +106,19 @@ class TestCrossProviderInheritance:
 
         for filename, provider_class in PROVIDERS.items():
             for attr_name in required_attrs:
-                assert hasattr(provider_class, attr_name), \
+                assert hasattr(provider_class, attr_name), (
                     f"{filename}: Missing class attribute {attr_name}"
+                )
 
                 value = getattr(provider_class, attr_name)
 
                 if attr_name == "MODEL_MAP":
-                    assert isinstance(value, dict), \
+                    assert isinstance(value, dict), (
                         f"{filename}: MODEL_MAP must be dict, got {type(value)}"
-                    assert len(value) > 0, \
-                        f"{filename}: MODEL_MAP is empty"
+                    )
+                    assert len(value) > 0, f"{filename}: MODEL_MAP is empty"
                 else:
-                    assert value, \
-                        f"{filename}: {attr_name} is empty"
+                    assert value, f"{filename}: {attr_name} is empty"
 
     def test_all_providers_default_model_in_model_map(self):
         """Verify DEFAULT_MODEL key exists in MODEL_MAP."""
@@ -131,16 +126,19 @@ class TestCrossProviderInheritance:
             default_model = provider_class.DEFAULT_MODEL
             model_map = provider_class.MODEL_MAP
 
-            assert default_model in model_map, \
+            assert default_model in model_map, (
                 f"{filename}: DEFAULT_MODEL '{default_model}' not in MODEL_MAP keys: {list(model_map.keys())}"
+            )
 
     def test_all_providers_inherit_from_base_provider(self):
         """Verify all providers are proper subclasses of BaseProvider."""
         for filename, provider_class in PROVIDERS.items():
-            assert issubclass(provider_class, BaseProvider), \
+            assert issubclass(provider_class, BaseProvider), (
                 f"{filename}: Not a subclass of BaseProvider"
-            assert provider_class is not BaseProvider, \
+            )
+            assert provider_class is not BaseProvider, (
                 f"{filename}: Should not be BaseProvider itself"
+            )
 
 
 class TestModelOverrideIntegration:
@@ -160,8 +158,7 @@ class TestModelOverrideIntegration:
             monkeypatch.setenv(env_var, override_value)
 
             result = provider.get_model_with_override(default_model_key)
-            assert result == override_value, \
-                f"{filename}: Override failed for {env_var}"
+            assert result == override_value, f"{filename}: Override failed for {env_var}"
 
             monkeypatch.delenv(env_var)
 
@@ -171,7 +168,7 @@ class TestModelOverrideIntegration:
             provider = provider_class()
 
             # Find dotted keys in MODEL_MAP
-            dotted_keys = [k for k in provider.MODEL_MAP.keys() if '.' in k or '-' in k]
+            dotted_keys = [k for k in provider.MODEL_MAP.keys() if "." in k or "-" in k]
 
             if not dotted_keys:
                 continue
@@ -183,8 +180,9 @@ class TestModelOverrideIntegration:
                 monkeypatch.setenv(env_var, override_value)
                 result = provider.get_model_with_override(model_key)
 
-                assert result == override_value, \
+                assert result == override_value, (
                     f"{filename}: Dotted key override failed for {model_key}"
+                )
 
                 monkeypatch.delenv(env_var)
 
@@ -197,8 +195,9 @@ class TestModelOverrideIntegration:
             result = provider.get_model_with_override(unknown_key)
             expected = provider.MODEL_MAP[provider.DEFAULT_MODEL]
 
-            assert result == expected, \
+            assert result == expected, (
                 f"{filename}: Should fallback to DEFAULT_MODEL value for unknown key"
+            )
 
     def test_no_override_returns_model_map_value(self):
         """Without override, should return MODEL_MAP value."""
@@ -207,8 +206,9 @@ class TestModelOverrideIntegration:
 
             for model_key, expected_value in provider.MODEL_MAP.items():
                 result = provider.get_model_with_override(model_key)
-                assert result == expected_value, \
+                assert result == expected_value, (
                     f"{filename}: Should return MODEL_MAP value without override"
+                )
 
 
 class TestTimeoutIntegration:
@@ -225,14 +225,12 @@ class TestTimeoutIntegration:
             # Test below minimum
             args_low = Mock(timeout=0.001)  # 1ms
             result_low = provider.get_timeout_ms(args_low, provider.DEFAULT_MODEL)
-            assert result_low >= MIN_TIMEOUT_MS, \
-                f"{filename}: Timeout below minimum not clamped"
+            assert result_low >= MIN_TIMEOUT_MS, f"{filename}: Timeout below minimum not clamped"
 
             # Test above maximum
             args_high = Mock(timeout=700)  # 700 seconds = 700000ms
             result_high = provider.get_timeout_ms(args_high, provider.DEFAULT_MODEL)
-            assert result_high <= MAX_TIMEOUT_MS, \
-                f"{filename}: Timeout above maximum not clamped"
+            assert result_high <= MAX_TIMEOUT_MS, f"{filename}: Timeout above maximum not clamped"
 
     def test_default_timeout_reasonable(self):
         """All providers should have default timeout >= 30000ms."""
@@ -243,8 +241,9 @@ class TestTimeoutIntegration:
             args = Mock(timeout=None)
 
             result = provider.get_timeout_ms(args, provider.DEFAULT_MODEL)
-            assert result >= MIN_REASONABLE_TIMEOUT, \
+            assert result >= MIN_REASONABLE_TIMEOUT, (
                 f"{filename}: Default timeout too low ({result}ms)"
+            )
 
     def test_timeout_conversion_seconds_to_ms(self):
         """Verify timeout is properly converted from seconds to milliseconds."""
@@ -255,8 +254,7 @@ class TestTimeoutIntegration:
             result = provider.get_timeout_ms(args, provider.DEFAULT_MODEL)
 
             # Should be 60000ms (within bounds)
-            assert 5_000 <= result <= 600_000, \
-                f"{filename}: Timeout conversion out of bounds"
+            assert 5_000 <= result <= 600_000, f"{filename}: Timeout conversion out of bounds"
 
 
 class TestErrorHandlingConsistency:
@@ -269,7 +267,7 @@ class TestErrorHandlingConsistency:
             "request timed out",
             "deadline exceeded",
             "504 Gateway Timeout",
-            "gateway timeout"
+            "gateway timeout",
         ]
 
         for filename, provider_class in PROVIDERS.items():
@@ -277,10 +275,10 @@ class TestErrorHandlingConsistency:
 
             for error_msg in timeout_errors:
                 is_retryable, category = provider.is_retryable_error(error_msg)
-                assert is_retryable, \
-                    f"{filename}: Should detect '{error_msg}' as retryable"
-                assert category == "timeout_or_overload", \
+                assert is_retryable, f"{filename}: Should detect '{error_msg}' as retryable"
+                assert category == "timeout_or_overload", (
                     f"{filename}: Wrong category for timeout error"
+                )
 
     def test_all_providers_detect_rate_limit_errors(self):
         """Test 429, rate limit detection."""
@@ -288,7 +286,7 @@ class TestErrorHandlingConsistency:
             "429 Too Many Requests",
             "rate limit exceeded",
             "quota exceeded",
-            "resource_exhausted"
+            "resource_exhausted",
         ]
 
         for filename, provider_class in PROVIDERS.items():
@@ -296,28 +294,22 @@ class TestErrorHandlingConsistency:
 
             for error_msg in rate_limit_errors:
                 is_retryable, category = provider.is_retryable_error(error_msg)
-                assert is_retryable, \
-                    f"{filename}: Should detect '{error_msg}' as retryable"
-                assert category == "rate_limit", \
-                    f"{filename}: Wrong category for rate limit error"
+                assert is_retryable, f"{filename}: Should detect '{error_msg}' as retryable"
+                assert category == "rate_limit", f"{filename}: Wrong category for rate limit error"
 
     def test_all_providers_detect_overload_errors(self):
         """Test 503, overload detection."""
-        overload_errors = [
-            "503 Service Unavailable",
-            "service overloaded",
-            "502 Bad Gateway"
-        ]
+        overload_errors = ["503 Service Unavailable", "service overloaded", "502 Bad Gateway"]
 
         for filename, provider_class in PROVIDERS.items():
             provider = provider_class()
 
             for error_msg in overload_errors:
                 is_retryable, category = provider.is_retryable_error(error_msg)
-                assert is_retryable, \
-                    f"{filename}: Should detect '{error_msg}' as retryable"
-                assert category == "timeout_or_overload", \
+                assert is_retryable, f"{filename}: Should detect '{error_msg}' as retryable"
+                assert category == "timeout_or_overload", (
                     f"{filename}: Wrong category for overload error"
+                )
 
     def test_all_providers_detect_non_retryable_errors(self):
         """Test non-retryable errors are correctly identified."""
@@ -325,7 +317,7 @@ class TestErrorHandlingConsistency:
             "400 Bad Request",
             "401 Unauthorized",
             "403 Forbidden",
-            "invalid api key"
+            "invalid api key",
         ]
 
         for filename, provider_class in PROVIDERS.items():
@@ -333,10 +325,10 @@ class TestErrorHandlingConsistency:
 
             for error_msg in non_retryable_errors:
                 is_retryable, category = provider.is_retryable_error(error_msg)
-                assert not is_retryable, \
-                    f"{filename}: Should detect '{error_msg}' as non-retryable"
-                assert category == "non_retryable", \
+                assert not is_retryable, f"{filename}: Should detect '{error_msg}' as non-retryable"
+                assert category == "non_retryable", (
                     f"{filename}: Wrong category for non-retryable error"
+                )
 
     def test_all_providers_sanitize_errors(self):
         """Test that API key patterns are redacted."""
@@ -345,7 +337,7 @@ class TestErrorHandlingConsistency:
             ("Error: gsk_abcdef1234567890xyz123", "[REDACTED]"),
             ("xai-1234567890abcdefghij1234 is invalid", "[REDACTED]"),
             ("api_key=secret123456789", "[REDACTED]"),
-            ("Bearer abc1234567890", "[REDACTED]")
+            ("Bearer abc1234567890", "[REDACTED]"),
         ]
 
         for filename, provider_class in PROVIDERS.items():
@@ -353,10 +345,12 @@ class TestErrorHandlingConsistency:
 
             for error_input, expected_pattern in test_cases:
                 result = provider.sanitize_error(error_input)
-                assert "[REDACTED]" in result, \
+                assert expected_pattern in result, (
                     f"{filename}: Failed to redact secret in '{error_input}'"
-                assert "sk-" not in result and "gsk_" not in result and "xai-" not in result, \
+                )
+                assert "sk-" not in result and "gsk_" not in result and "xai-" not in result, (
                     f"{filename}: API key pattern still visible in result"
+                )
 
 
 class TestAPIKeyValidation:
@@ -367,7 +361,7 @@ class TestAPIKeyValidation:
         # Mock resolve_api_key to return None (simulates no key in env, .env, or Keychain)
         monkeypatch.setattr("base_provider.resolve_api_key", lambda key: None)
 
-        for filename, provider_class in PROVIDERS.items():
+        for _filename, provider_class in PROVIDERS.items():
             provider = provider_class()
 
             # Should raise SystemExit
@@ -400,12 +394,11 @@ class TestAPIKeyValidation:
             monkeypatch.setenv(api_key_env, test_key)
 
             result = provider.validate_api_key()
-            assert result == test_key.strip(), \
-                f"{filename}: API key not properly stripped"
+            assert result == test_key.strip(), f"{filename}: API key not properly stripped"
 
     def test_api_key_validation_rejects_empty(self, monkeypatch):
         """Verify empty API keys (after stripping) cause SystemExit (base class behavior)."""
-        for filename, provider_class in PROVIDERS.items():
+        for _filename, provider_class in PROVIDERS.items():
             provider = provider_class()
             api_key_env = provider.API_KEY_ENV
 
@@ -426,8 +419,7 @@ class TestParserIntegration:
 
             try:
                 parser = provider.build_parser()
-                assert parser is not None, \
-                    f"{filename}: build_parser returned None"
+                assert parser is not None, f"{filename}: build_parser returned None"
             except Exception as e:
                 pytest.fail(f"{filename}: build_parser raised {e}")
 
@@ -443,8 +435,7 @@ class TestParserIntegration:
             args, _ = parser.parse_known_args([])
 
             for arg_name in common_args:
-                assert hasattr(args, arg_name), \
-                    f"{filename}: Missing common argument --{arg_name}"
+                assert hasattr(args, arg_name), f"{filename}: Missing common argument --{arg_name}"
 
     def test_all_parsers_have_model_arg(self):
         """All providers should add a --model or -m argument."""
@@ -457,8 +448,7 @@ class TestParserIntegration:
 
             # Model arg might be optional, but should exist
             has_model = hasattr(args, "model")
-            assert has_model, \
-                f"{filename}: Missing --model argument"
+            assert has_model, f"{filename}: Missing --model argument"
 
     def test_parser_handles_positional_prompt(self):
         """All parsers should handle positional prompt."""
@@ -469,10 +459,12 @@ class TestParserIntegration:
             # Parse with positional prompt
             args, _ = parser.parse_known_args(["test prompt"])
 
-            assert hasattr(args, "positional_prompt"), \
+            assert hasattr(args, "positional_prompt"), (
                 f"{filename}: Parser doesn't handle positional prompt"
-            assert args.positional_prompt == "test prompt", \
+            )
+            assert args.positional_prompt == "test prompt", (
                 f"{filename}: Positional prompt not captured correctly"
+            )
 
 
 class TestPromptHandling:
@@ -486,8 +478,7 @@ class TestPromptHandling:
             prompt_with_nulls = "test\x00prompt\x00here"
             result = provider.sanitize_prompt(prompt_with_nulls)
 
-            assert "\x00" not in result, \
-                f"{filename}: Null bytes not removed from prompt"
+            assert "\x00" not in result, f"{filename}: Null bytes not removed from prompt"
 
     def test_sanitize_prompt_truncates_long_prompts(self):
         """All providers should truncate prompts over 1MB."""
@@ -498,8 +489,7 @@ class TestPromptHandling:
             long_prompt = "a" * 1_100_000
             result = provider.sanitize_prompt(long_prompt)
 
-            assert len(result) <= 1_000_000, \
-                f"{filename}: Long prompt not truncated"
+            assert len(result) <= 1_000_000, f"{filename}: Long prompt not truncated"
 
     def test_sanitize_prompt_strips_whitespace(self):
         """All providers should strip leading/trailing whitespace."""
@@ -509,8 +499,7 @@ class TestPromptHandling:
             prompt = "  \n test prompt \t\n  "
             result = provider.sanitize_prompt(prompt)
 
-            assert result == "test prompt", \
-                f"{filename}: Whitespace not stripped from prompt"
+            assert result == "test prompt", f"{filename}: Whitespace not stripped from prompt"
 
     def test_sanitize_prompt_handles_empty(self):
         """All providers should handle empty prompts gracefully."""
@@ -518,12 +507,10 @@ class TestPromptHandling:
             provider = provider_class()
 
             result = provider.sanitize_prompt("")
-            assert result == "", \
-                f"{filename}: Empty prompt not handled correctly"
+            assert result == "", f"{filename}: Empty prompt not handled correctly"
 
             result_none = provider.sanitize_prompt(None)
-            assert result_none == "", \
-                f"{filename}: None prompt not handled correctly"
+            assert result_none == "", f"{filename}: None prompt not handled correctly"
 
 
 class TestRetryLogic:
@@ -531,21 +518,21 @@ class TestRetryLogic:
 
     def test_wait_with_backoff_rate_limit(self):
         """Rate limits should have longer backoff than timeouts."""
-        for filename, provider_class in PROVIDERS.items():
+        for _filename, provider_class in PROVIDERS.items():
             provider = provider_class()
 
             # We can't easily test the actual wait time without mocking time.sleep
             # But we can verify the method doesn't crash
-            with patch('time.sleep'):
+            with patch("time.sleep"):
                 provider.wait_with_backoff(0, "rate_limit", 3)
                 provider.wait_with_backoff(1, "rate_limit", 3)
 
     def test_wait_with_backoff_timeout(self):
         """Timeout errors should have standard backoff."""
-        for filename, provider_class in PROVIDERS.items():
+        for _filename, provider_class in PROVIDERS.items():
             provider = provider_class()
 
-            with patch('time.sleep'):
+            with patch("time.sleep"):
                 provider.wait_with_backoff(0, "timeout_or_overload", 3)
                 provider.wait_with_backoff(1, "timeout_or_overload", 3)
 
@@ -572,32 +559,34 @@ class TestProviderNames:
         """PROVIDER constant should be lowercase."""
         for filename, provider_class in PROVIDERS.items():
             provider_name = provider_class.PROVIDER
-            assert provider_name.islower(), \
+            assert provider_name.islower(), (
                 f"{filename}: PROVIDER '{provider_name}' should be lowercase"
+            )
 
     def test_provider_names_alphanumeric(self):
         """PROVIDER names should be alphanumeric (no spaces)."""
         for filename, provider_class in PROVIDERS.items():
             provider_name = provider_class.PROVIDER
-            assert provider_name.replace("-", "").replace("_", "").isalnum(), \
+            assert provider_name.replace("-", "").replace("_", "").isalnum(), (
                 f"{filename}: PROVIDER '{provider_name}' contains invalid characters"
+            )
 
 
 # Summary test to show which providers were loaded
 def test_provider_loading_summary():
     """Show which providers were successfully loaded."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Provider Loading Summary")
-    print("="*60)
+    print("=" * 60)
 
     for filename in PROVIDER_FILES:
         status = "LOADED" if filename in PROVIDERS else "SKIPPED"
         provider_name = PROVIDERS[filename].PROVIDER if filename in PROVIDERS else "N/A"
         print(f"{filename:25} {status:10} {provider_name}")
 
-    print("="*60)
+    print("=" * 60)
     print(f"Total providers loaded: {len(PROVIDERS)}/{len(PROVIDER_FILES)}")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     assert len(PROVIDERS) > 0, "No providers loaded for testing"
 
