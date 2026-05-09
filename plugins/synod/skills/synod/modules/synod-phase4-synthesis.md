@@ -178,25 +178,53 @@ print(get_template('$MODE'))
 
 ## Step 4.4: Include Decision Rationale
 
-Add a collapsible section showing deliberation process:
+Add a collapsible section showing the deliberation process. The "모델 기여"
+list MUST be populated from each agent's PRIMARY semantic_focus claim
+extracted in Phase 1, rendered under the brand emoji prefix that pairs
+with each model's color identity (matches the HUD in
+`tools/synod_progress.py` and the BRANDING constants in
+`tools/model_branding.py`).
+
+**Per-agent claim extraction.** For each agent in `[claude, gemini, openai]`:
+
+1. Read `${SESSION_DIR}/round-1-solver/{agent}-parsed.json`.
+2. Take `semantic_focus[0]` (PRIMARY claim).
+3. If the value is empty or missing, render the placeholder
+   `*(no primary claim extracted)*` instead.
+4. If longer than 120 characters, truncate and append `…`.
+
+**Brand markers** (do not substitute — these match `tools/model_branding.py`).
+Each marker is a monochrome unicode glyph that visually echoes the
+provider's brand shape. Claude Code's markdown renderer does not apply
+HTML inline color or data-URI SVG, so colored text is unavailable on
+the markdown surface — the HUD (`tools/synod_progress.py`) carries the
+color identity via Rich.
+
+| Model | Markdown marker | Brand shape | Rich color | Hex (HUD truecolor) |
+|---|---|---|---|---|
+| Claude | `✻` (U+273B) | Anthropic asterisk | `orange3` | `#D97757` |
+| Gemini | `✦` (U+2726) | Gemini sparkle | `blue` | `#4285F4` |
+| OpenAI | `❀` (U+2740) | OpenAI knot/floret | `green` | `#10A37F` |
+
+**Render exactly:**
 
 ```markdown
 <details>
 <summary>숙의 과정</summary>
 
 ### 모델 기여
-- **Claude (Validator):** {key contribution}
-- **Gemini (Architect):** {key contribution}
-- **OpenAI (Explorer):** {key contribution}
+- ✻ **Claude (Validator):** {claude_primary_claim}
+- ✦ **Gemini (Architect):** {gemini_primary_claim}
+- ❀ **OpenAI (Explorer):** {openai_primary_claim}
 
 ### 해결된 주요 쟁점
 1. {contention} -> {resolution}
 2. {contention} -> {resolution}
 
 ### 신뢰 점수
-- Claude: {score} ({rating})
-- Gemini: {score} ({rating})
-- OpenAI: {score} ({rating})
+- ✻ Claude: {score} ({rating})
+- ✦ Gemini: {score} ({rating})
+- ❀ OpenAI: {score} ({rating})
 
 </details>
 ```

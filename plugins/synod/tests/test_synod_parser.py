@@ -4,6 +4,7 @@ Tests for synod-parser.py - SID signal extraction and parsing.
 
 import json
 import os
+import re
 import sys
 
 import pytest
@@ -146,6 +147,29 @@ class TestExtractSemanticFocus:
         text = "<semantic_focus></semantic_focus>"
         result = synod_parser.extract_semantic_focus(text)
         assert result == []
+
+    def test_strips_numeric_prefix_from_first_item(self):
+        """First item must not retain '1. ' prefix from numbered split.
+
+        The split pattern consumes the newline before each '\\d+. ' marker
+        for items 1..N, but item 0 starts at content.strip() with no leading
+        newline, so its '1. ' prefix survives the split. The extractor must
+        explicitly strip a leading numeric prefix from every item.
+        """
+        text = (
+            "<semantic_focus>\n"
+            "1. PRIMARY claim text\n"
+            "2. SECONDARY claim\n"
+            "3. TERTIARY claim\n"
+            "</semantic_focus>"
+        )
+        result = synod_parser.extract_semantic_focus(text)
+        assert len(result) == 3
+        assert result[0] == "PRIMARY claim text"
+        assert result[1] == "SECONDARY claim"
+        assert result[2] == "TERTIARY claim"
+        for item in result:
+            assert not re.match(r"^\d+\.\s", item), f"prefix leaked: {item!r}"
 
 
 class TestCalculateTrustScore:

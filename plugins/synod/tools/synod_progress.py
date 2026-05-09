@@ -16,9 +16,17 @@ Usage (library mode):
 """
 
 import json
+import os
 import sys
 import time
 from typing import Any, Optional
+
+# Make sibling modules importable both when run as a script
+# (`python3 tools/synod_progress.py`) and when imported as a package
+# member (`from tools import synod_progress`).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from model_branding import BRANDING  # noqa: E402
 
 try:
     from rich.console import Console
@@ -32,11 +40,28 @@ except ImportError:
     RICH_AVAILABLE = False
 
 
-# Model display names and colors
+# Model display names, colors, and brand hex codes.
+# `color` and `hex` come from BRANDING (single source of truth);
+# `name` and `icon` are HUD-specific (Phase 1 role label + shape glyph).
 MODEL_CONFIG = {
-    "gemini": {"name": "Gemini Architect", "color": "blue", "icon": "◆"},
-    "openai": {"name": "OpenAI Explorer", "color": "green", "icon": "●"},
-    "claude": {"name": "Claude Validator", "color": "magenta", "icon": "▲"},
+    "gemini": {
+        "name": "Gemini Architect",
+        "color": BRANDING["gemini"]["rich"],
+        "hex": BRANDING["gemini"]["hex"],
+        "icon": "◆",
+    },
+    "openai": {
+        "name": "OpenAI Explorer",
+        "color": BRANDING["openai"]["rich"],
+        "hex": BRANDING["openai"]["hex"],
+        "icon": "●",
+    },
+    "claude": {
+        "name": "Claude Validator",
+        "color": BRANDING["claude"]["rich"],
+        "hex": BRANDING["claude"]["hex"],
+        "icon": "▲",
+    },
 }
 
 PHASE_NAMES = {

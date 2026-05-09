@@ -68,9 +68,12 @@ def extract_semantic_focus(text: str) -> list[str]:
         return []
 
     content = match.group(1).strip()
-    # Split by newlines or numbered items
+    # Split by newlines or numbered items. The split consumes the newline
+    # before each "N. " marker for items 1..N, but the first item starts at
+    # content.strip() with no leading newline, so its "N. " prefix survives.
+    # Strip a leading numeric prefix from every item to make output uniform.
     items = re.split(r"\n\s*\d+\.\s*|\n", content)
-    return [item.strip() for item in items if item.strip()]
+    return [re.sub(r"^\d+\.\s*", "", item.strip()) for item in items if item.strip()]
 
 
 def extract_key_sentences(text: str, limit: int = 3) -> list[str]:
