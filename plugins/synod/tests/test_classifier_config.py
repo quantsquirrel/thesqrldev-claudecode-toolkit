@@ -218,17 +218,17 @@ class TestProblemTypeModelAdjustment:
             adjustment = _get_problem_type_adjustment(problem_type, mode)
             assert adjustment.get("gemini_thinking") == "high"
 
-    def test_math_problem_type_prefers_o3(self):
-        """When problem_type=math, prefer o3 for OpenAI."""
+    def test_math_problem_type_prefers_cliproxy_gpt55fast(self):
+        """When problem_type=math, keep OpenAI on CLIProxy gpt55fast."""
         problem_type = "math"
         adjustment = _get_problem_type_adjustment(problem_type, "general")
-        assert adjustment.get("openai_model") == "o3"
+        assert adjustment.get("openai_model") == "gpt55fast"
 
-    def test_creative_problem_type_prefers_pro(self):
-        """When problem_type=creative, prefer pro for Gemini."""
+    def test_creative_problem_type_keeps_agy_35_flash(self):
+        """When problem_type=creative, keep Gemini on agy 3.5 Flash."""
         problem_type = "creative"
         adjustment = _get_problem_type_adjustment(problem_type, "general")
-        assert adjustment.get("gemini_model") == "pro"
+        assert adjustment.get("gemini_model") == "3.5-flash"
 
     def test_general_problem_type_no_adjustment(self):
         """When problem_type=general, no adjustment should be made."""
@@ -259,10 +259,10 @@ def _get_problem_type_adjustment(problem_type: str, mode: str) -> dict:
         adjustments["gemini_thinking"] = "high"
 
     if problem_type == "math":
-        adjustments["openai_model"] = "o3"
+        adjustments["openai_model"] = "gpt55fast"
 
     if problem_type == "creative":
-        adjustments["gemini_model"] = "pro"
+        adjustments["gemini_model"] = "3.5-flash"
 
     return adjustments
 

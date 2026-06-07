@@ -272,27 +272,27 @@ class TestProblemTypeIntegration:
             assert adjusted_thinking != base_thinking
 
     def test_problem_type_to_model_adjustment_math(self):
-        """Test math problem_type prefers o3 model for OpenAI."""
+        """Test math problem_type keeps OpenAI on CLIProxy gpt55fast."""
         prompt = "수학 문제를 풀어줘"
         problem_type = classifier.classify_problem_type(prompt)
         assert problem_type == "math"
 
-        # Math problems should prefer o3 for reasoning
-        # Check that general mode default is gpt54 (which would be overridden)
+        # Math problems should stay on CLIProxy gpt55fast
+        # Check that general mode default is already CLIProxy gpt55fast
         general_config = get_mode_config("general")
-        assert general_config["models"]["openai"]["model"] == "gpt54"
-        # Adjustment: math -> o3
+        assert general_config["models"]["openai"]["model"] == "gpt55fast"
+        # Adjustment: math -> gpt55fast
 
     def test_problem_type_to_model_adjustment_creative(self):
-        """Test creative problem_type prefers pro model for Gemini."""
+        """Test creative problem_type keeps Gemini on agy 3.5 Flash."""
         prompt = "아이디어 좀 줘"
         problem_type = classifier.classify_problem_type(prompt)
         assert problem_type == "creative"
 
-        # Creative problems should prefer pro for Gemini
+        # Creative problems should stay on agy Gemini 3.5 Flash
         general_config = get_mode_config("general")
-        assert general_config["models"]["gemini"]["model"] == "flash"
-        # Adjustment: creative -> pro
+        assert general_config["models"]["gemini"]["model"] == "3.5-flash"
+        # Adjustment: creative -> 3.5-flash
 
     def test_problem_type_in_full_classifier_json(self, capsys):
         """Test problem_type is always present in classifier main() JSON output."""
@@ -484,7 +484,7 @@ class TestConfigProgressIntegration:
 
         # Phase 1b: Get mode config
         mode_config = get_mode_config(mode)
-        assert mode_config["models"]["gemini"]["model"] == "flash"
+        assert mode_config["models"]["gemini"]["model"] == "3.5-flash"
 
         # Phase 1c: Progress tracking
         progress = SynodProgress()

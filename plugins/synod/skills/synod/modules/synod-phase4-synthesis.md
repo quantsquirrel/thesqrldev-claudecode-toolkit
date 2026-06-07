@@ -176,6 +176,48 @@ print(get_template('$MODE'))
 
 </details>
 
+## Step 4.3b: Deanonymize Before Branded Output (SYNOD_ANONYMIZE=1 only)
+
+> **Flag-gated — skip entirely when `SYNOD_ANONYMIZE` is unset or `"0"` (default).**
+> When the flag is off, all branding behaves exactly as in v3.6 — no change.
+
+When `SYNOD_ANONYMIZE=1`, call `deanonymize()` on the compiled synthesis
+content **before** rendering the branded per-model claim summary in Step 4.4.
+This restores real model names so the user sees familiar provider branding in
+the final output even though Phases 1-3 ran anonymously.
+
+```bash
+if [[ "${SYNOD_ANONYMIZE:-0}" == "1" ]]; then
+  # Re-hydrate alias map — must be the same map built in Phase 1 Step 1.0.
+  if [[ -z "${SYNOD_ANON_MAP:-}" ]]; then
+    echo "[Warning] SYNOD_ANONYMIZE=1 but SYNOD_ANON_MAP is unset — rebuilding map" >&2
+    SYNOD_ANON_MAP=$(python3 -c "
+import sys; sys.path.insert(0,'${TOOLS_DIR}')
+import model_branding, json
+print(json.dumps(model_branding.build_anon_map(['claude','gemini','openai'])))
+")
+  fi
+
+  # Apply deanonymization to the synthesis draft before writing the final file.
+  # SYNTHESIS_DRAFT must hold the accumulated markdown text up to this point.
+  SYNTHESIS_DRAFT=$(python3 -c "
+import sys, json; sys.path.insert(0,'${TOOLS_DIR}')
+import model_branding
+anon_map = json.loads('''${SYNOD_ANON_MAP}''')
+text = open('/dev/stdin').read()
+print(model_branding.deanonymize(text, anon_map), end='')
+" <<< "$SYNTHESIS_DRAFT")
+
+  echo "[Phase 4] deanonymize() applied — real model names restored for user-facing output" >&2
+fi
+```
+
+After this step, `SYNTHESIS_DRAFT` contains real provider names (Claude,
+Gemini, OpenAI) and the branded Step 4.4 summary renders correctly with the
+correct glyphs (✻ / ✦ / ❀) and trust scores.
+
+---
+
 ## Step 4.4: Include Decision Rationale
 
 Add a collapsible section showing the deliberation process. The "모델 기여"

@@ -87,20 +87,20 @@ class TestTierConfig:
         assert get_tier("") == "standard"
 
     def test_get_tier_config_fast(self):
-        """fast tier config has gemini flash-lite-latest and openai gpt5mini."""
+        """fast tier config keeps Gemini 3.5 Flash and uses CLIProxy mini."""
         from tools.synod_config import get_tier_config
 
         config = get_tier_config("fast")
-        assert config["gemini"]["model"] == "flash-lite-latest"
-        assert config["openai"]["model"] == "gpt5mini"
+        assert config["gemini"]["model"] == "3.5-flash"
+        assert config["openai"]["model"] == "gpt54mini"
 
     def test_get_tier_config_deep(self):
-        """deep tier config has gemini pro and openai o3."""
+        """deep tier config keeps Gemini 3.5 Flash and uses CLIProxy gpt55fast."""
         from tools.synod_config import get_tier_config
 
         config = get_tier_config("deep")
-        assert config["gemini"]["model"] == "pro"
-        assert config["openai"]["model"] == "o3"
+        assert config["gemini"]["model"] == "3.5-flash"
+        assert config["openai"]["model"] == "gpt55fast"
 
     def test_get_tier_config_standard_has_no_model_overrides(self):
         """standard tier has description but no model overrides."""
@@ -118,12 +118,11 @@ class TestTierConfig:
         assert get_tier_config("nonexistent") == {}
 
     def test_get_tiered_model_config_overrides_mode(self):
-        """Tier 'fast' overrides review mode's openai from o3 to gpt5mini."""
+        """Tier 'fast' overrides review mode's openai to CLIProxy mini."""
         from tools.synod_config import get_tiered_model_config
 
-        # review mode default: openai o3, reasoning medium
         config = get_tiered_model_config("review", "openai", "fast")
-        assert config["model"] == "gpt5mini"
+        assert config["model"] == "gpt54mini"
 
     def test_get_tiered_model_config_none_tier_preserves_mode(self):
         """tier=None preserves the original mode config."""
@@ -145,10 +144,10 @@ class TestTierConfig:
         """Tier config merges thinking/reasoning into mode config."""
         from tools.synod_config import get_tiered_model_config
 
-        # general mode gemini: flash, thinking medium
-        # deep tier gemini: pro, thinking high
+        # general mode gemini: 3.5-flash, thinking medium
+        # deep tier gemini: same model family, thinking high
         config = get_tiered_model_config("general", "gemini", "deep")
-        assert config["model"] == "pro"
+        assert config["model"] == "3.5-flash"
         assert config["thinking"] == "high"
 
     # --- Confidence-to-Tier Linkage (v3.2) ---

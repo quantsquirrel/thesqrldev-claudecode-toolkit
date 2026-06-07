@@ -41,8 +41,9 @@ Phase 0.5 closes that gap with three cheap mechanical checks:
    findings gate Phase 1 unless the user passes `--skip-lint`.
 3. **Tier Selection** — replace latency-based "recommended" defaults with an
    explicit tier → model roster mapping (`config/model_matrix.json`). The
-   strongest reasoning models (pro-thinking, o3-high) are no longer silently
-   demoted for being slow.
+   Gemini lane remains pinned to Antigravity Gemini 3.5 Flash, while the
+   OpenAI lane uses CLIProxyAPI aliases instead of being silently demoted for
+   latency.
 
 ## Step 0.5.1 — Ground-Truth Probe (conditional)
 

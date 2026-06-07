@@ -19,14 +19,16 @@
 ## Timeout Fallback Chain
 
 ### If Gemini times out (MODEL_TIMEOUT, default 180s):
-1. Retry: `$GEMINI_CLI --model flash --thinking medium` (downgrade)
-2. Retry: `$GEMINI_CLI --model flash --thinking low`
-3. Final: Continue without Gemini, note in synthesis: "[Gemini 사용 불가 - 시간 초과]"
+1. Retry: `$GEMINI_CLI --model 3.5-flash --thinking medium` (compat flag)
+2. Retry: `$GEMINI_CLI --model 3.5-flash --thinking low` (compat flag)
+3. Legacy fallback if `agy-cli` is unavailable and `gemini-3` still works locally: `$LEGACY_GEMINI_CLI --model flash --thinking low`
+4. Final: Continue without Gemini, note in synthesis: "[Gemini 사용 불가 - 시간 초과]"
 
 ### If OpenAI times out (MODEL_TIMEOUT, default 180s):
-1. Retry: `$OPENAI_CLI --model o3 --reasoning medium` (downgrade)
-2. Retry: `$OPENAI_CLI --model gpt4o`
-3. Final: Continue without OpenAI, note in synthesis: "[OpenAI 사용 불가 - 시간 초과]"
+1. Retry: `$OPENAI_CLI --model gpt55fast`
+2. Retry: `$OPENAI_CLI --model gpt54mini`
+3. Legacy fallback if `cliproxy-cli` is unavailable and direct OpenAI credentials still work: `$LEGACY_OPENAI_CLI --model gpt54mini`
+4. Final: Continue without OpenAI, note in synthesis: "[OpenAI 사용 불가 - 시간 초과]"
 
 ### Extended Provider Fallbacks:
 
@@ -125,7 +127,7 @@ Add to `meta.json` when errors occur:
       "round": 1,
       "provider": "gemini",
       "type": "timeout",
-      "fallback_used": "flash-medium",
+      "fallback_used": "3.5-flash-medium",
       "timestamp": "{ISO_TIMESTAMP}"
     }
   ]

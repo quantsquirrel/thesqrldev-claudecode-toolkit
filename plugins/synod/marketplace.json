@@ -1,6 +1,6 @@
 {
   "name": "synod",
-  "version": "3.4.0",
+  "version": "3.6.0",
   "displayName": "Synod: Multi-Agent Debate System",
   "description": "Research-backed multi-agent deliberation with Claude, Gemini, and OpenAI - structured 3-round debates for superior decision-making",
   "longDescription": "Synod brings peer-reviewed multi-agent debate methodologies to Claude Code. Instead of relying on a single LLM prone to confirmation bias and hallucination, Synod orchestrates structured debates between Claude, Gemini, and OpenAI across three rounds: Solver, Critic, and Defense/Prosecution. Built on ReConcile (ACL 2024), AgentsCourt, ConfMAD, and A-HMAD research, it features confidence scoring (0-100), trust calculation using the CortexDebate formula, and anti-conformity mechanisms. Perfect for code review, architecture design, debugging, and brainstorming. Research shows 3-round debates capture >95% of quality improvements with token-efficient parallel execution.",
@@ -76,14 +76,26 @@
   "externalDependencies": {
     "apis": [
       {
-        "name": "Google Gemini API",
+        "name": "Antigravity CLI (agy-cli)",
         "required": true,
-        "envVar": "GEMINI_API_KEY"
+        "note": "Primary Gemini access path. Authenticate via `agy` CLI; no separate env key required."
+      },
+      {
+        "name": "CLIProxyAPI (cliproxy-cli)",
+        "required": true,
+        "note": "Primary OpenAI access path. Run locally on port 8317; CLIPROXY_API_KEY is optional when using Synod's default local key."
+      },
+      {
+        "name": "Google Gemini API",
+        "required": false,
+        "envVar": "GEMINI_API_KEY",
+        "note": "Legacy fallback only (gemini-3.py). Not needed when using agy-cli."
       },
       {
         "name": "OpenAI API",
-        "required": true,
-        "envVar": "OPENAI_API_KEY"
+        "required": false,
+        "envVar": "OPENAI_API_KEY",
+        "note": "Legacy fallback only (openai-cli.py). Not needed when using cliproxy-cli."
       }
     ]
   },

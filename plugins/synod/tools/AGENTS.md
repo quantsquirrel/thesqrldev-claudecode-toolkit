@@ -3,7 +3,9 @@
 
 # Tools Directory - LLM Integration CLI Utilities
 
-This directory contains standalone Python CLI utilities for integrating external LLM models (Google Gemini, OpenAI) with the Synod plugin framework. Each tool provides robust timeout handling, adaptive retry logic, and streaming support.
+This directory contains standalone CLI utilities for integrating external LLM models with the Synod plugin framework. Current Synod setup defaults route Gemini through `agy-cli` (Antigravity Gemini 3.5 Flash) and OpenAI through `cliproxy-cli.py` (CLIProxyAPI localhost:8317).
+
+> **Backend lifetime (cutover):** the `agy-cli`/`cliproxy-cli` bridges are a personal, time-limited convenience that **expires ~2026-06-30**. The *durable, canonical* backend is **direct** — `gemini-3.py` + `openai-cli.py` talking to the vendor APIs with the user's own keys. Despite the "legacy fallback only" labels below (accurate for the *current* routing window), direct is the long-term path. `provider_backend.py` rewrites a bridge roster to direct on demand; flip with `SYNOD_PROVIDER_BACKEND=direct` and validate offline first via `python3 tools/cutover_check.py`. See `tools/cutover.sh` and `CUTOVER_RUNBOOK.md`.
 
 ## Purpose
 
@@ -19,8 +21,10 @@ CLI utilities for querying multiple LLM providers with:
 ```
 tools/
 ├── synod-parser.py        # Response parser & Trust Score calculator
-├── gemini-3.py            # Google Gemini integration
-├── openai-cli.py          # OpenAI integration
+├── agy-cli                # Antigravity Gemini 3.5 Flash wrapper
+├── cliproxy-cli.py        # CLIProxyAPI OpenAI-compatible wrapper
+├── gemini-3.py            # Legacy direct Google Gemini integration
+├── openai-cli.py          # Legacy direct OpenAI integration
 ├── AGENTS.md              # This file
 └── tests/                 # Unit tests (at project root)
     └── test_*.py
@@ -96,6 +100,8 @@ tools/
 ---
 
 ### gemini-3.py
+
+> **LEGACY FALLBACK ONLY** — Synod's primary Gemini path is `agy-cli`. Use `gemini-3.py` only when `agy-cli` is unavailable or for historical test reproduction. Requires `GEMINI_API_KEY`.
 
 **Purpose**: Query Google Gemini models with adaptive thinking budget and streaming support.
 
@@ -188,6 +194,8 @@ Attempt 3: thinking=low, success → return response
 ---
 
 ### openai-cli.py
+
+> **LEGACY FALLBACK ONLY** — Synod's primary OpenAI path is `cliproxy-cli.py` (CLIProxyAPI). Use `openai-cli.py` only when CLIProxyAPI is unavailable or for historical test reproduction. Requires `OPENAI_API_KEY`.
 
 **Purpose**: Query OpenAI models with reasoning effort and adaptive retry support.
 
@@ -451,7 +459,7 @@ gemini-3 "prompt" | synod-parser | jq '.confidence.score'
 
 ### Test Structure
 
-Tests are located at project root: `/Users/ahnjundaram_g/dev/tools/synod-plugin/tests/`
+Tests are located at project root: `<plugin-root>/tests/`
 
 ```
 tests/
@@ -555,16 +563,19 @@ Tools must work on macOS/Linux with POSIX sed/grep:
 
 | Package | Version | Used By | Installation |
 |---------|---------|---------|--------------|
-| google-genai | >=1.0.0 | gemini-3.py | `pip install google-genai` |
-| openai | >=1.0.0 | openai-cli.py | `pip install openai` |
-| httpx | >=0.24.0 | openai-cli.py | `pip install httpx` |
+| openai | >=1.0.0 | cliproxy-cli.py | `pip install openai` |
+| httpx | >=0.24.0 | cliproxy-cli.py | `pip install httpx` |
+| google-genai | >=1.0.0 | gemini-3.py legacy tests only | `pip install google-genai` |
 
 ### Environment Variables
 
 | Variable | Required | Used By | Example |
 |----------|----------|---------|---------|
-| GEMINI_API_KEY | Yes | gemini-3.py | `export GEMINI_API_KEY="..."` |
-| OPENAI_API_KEY | Yes | openai-cli.py | `export OPENAI_API_KEY="..."` |
+| agy login/session | Yes | agy-cli | `agy` should already be authenticated |
+| CLIProxyAPI on 8317 | Yes | cliproxy-cli.py | `~/CLIProxyAPI/config.yaml` api-keys |
+| CLIPROXY_API_KEY | Optional | cliproxy-cli.py | `export CLIPROXY_API_KEY="..."` |
+| GEMINI_API_KEY | Legacy only | gemini-3.py | `export GEMINI_API_KEY="..."` |
+| OPENAI_API_KEY | Legacy only | openai-cli.py | `export OPENAI_API_KEY="..."` |
 
 ### Python Version
 
@@ -650,16 +661,16 @@ Error: Empty response
 
 ### Tools not executable
 ```bash
-chmod +x /Users/ahnjundaram_g/dev/tools/synod-plugin/tools/*.py
+chmod +x <plugin-root>/tools/*.py
 ```
 
 ### Import errors in scripts
 ```bash
 # Verify tools are in PATH or use full path
-/Users/ahnjundaram_g/dev/tools/synod-plugin/tools/gemini-3.py "prompt"
+<plugin-root>/tools/gemini-3.py "prompt"
 
 # Or make symlinks
-ln -s /Users/ahnjundaram_g/dev/tools/synod-plugin/tools/*.py /usr/local/bin/
+ln -s <plugin-root>/tools/*.py /usr/local/bin/
 ```
 
 ### Streaming issues

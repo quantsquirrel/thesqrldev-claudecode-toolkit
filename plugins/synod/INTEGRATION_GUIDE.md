@@ -37,7 +37,7 @@
 ### 1.2 라이브러리 설치
 
 ```bash
-cd /Users/ahnjundaram_g/dev/tools/synod
+cd <plugin-root>
 
 # Cohere SDK
 pip install cohere

@@ -6,11 +6,11 @@ modes:
     description: "Code review and static analysis"
     models:
       gemini:
-        model: "flash"
+        model: "3.5-flash"
         thinking: "high"
       openai:
-        model: "o3"
-        reasoning: "medium"
+        model: "gpt55fast"
+        reasoning: null
     rounds:
       base: 3
       dynamic_range: [2, 4]
@@ -23,11 +23,11 @@ modes:
     description: "Architecture and system design decisions"
     models:
       gemini:
-        model: "pro"
+        model: "3.5-flash"
         thinking: "high"
       openai:
-        model: "o3"
-        reasoning: "high"
+        model: "gpt55fast"
+        reasoning: null
     rounds:
       base: 4
       dynamic_range: [3, 4]
@@ -40,11 +40,11 @@ modes:
     description: "Troubleshooting and root cause analysis"
     models:
       gemini:
-        model: "flash"
+        model: "3.5-flash"
         thinking: "high"
       openai:
-        model: "o3"
-        reasoning: "high"
+        model: "gpt55fast"
+        reasoning: null
     rounds:
       base: 3
       dynamic_range: [2, 4]
@@ -57,10 +57,10 @@ modes:
     description: "Brainstorming and creative ideation"
     models:
       gemini:
-        model: "pro"
+        model: "3.5-flash"
         thinking: "high"
       openai:
-        model: "gpt54"
+        model: "gpt55fast"
         reasoning: null
     rounds:
       base: 4
@@ -74,10 +74,10 @@ modes:
     description: "Balanced comprehensive analysis"
     models:
       gemini:
-        model: "flash"
+        model: "3.5-flash"
         thinking: "medium"
       openai:
-        model: "gpt54"
+        model: "gpt55fast"
         reasoning: null
     rounds:
       base: 3
@@ -161,10 +161,10 @@ tiers:
   fast:
     description: "Simple queries - cost-efficient models"
     gemini:
-      model: "flash-lite-latest"
+      model: "3.5-flash"
       thinking: "medium"
     openai:
-      model: "gpt5mini"
+      model: "gpt54mini"
       reasoning: null
     timeouts:
       model: 60
@@ -176,12 +176,15 @@ tiers:
   deep:
     description: "Complex queries - strongest models"
     gemini:
-      model: "pro"
+      model: "3.5-flash"
       thinking: "high"
     openai:
-      model: "o3"
-      reasoning: "high"
+      model: "gpt55fast"
+      reasoning: null
     timeouts:
+      # model:240 is the authoritative per-call ceiling; model_matrix.json deep
+      # timeout_sec is aligned to this value (was 600, corrected in v3.6.1).
+      # outer/bash add buffer layers above the model ceiling.
       model: 240
       outer: 300
       bash: 360
@@ -200,3 +203,20 @@ thresholds:
   trust_high: 1.5
   trust_cap: 2.0
   early_exit_confidence: 90
+
+
+# Previous direct-API defaults retained for recovery/reference only.
+# Primary runtime should prefer agy-cli and cliproxy-cli.
+legacy_fallbacks:
+  gemini:
+    cli: "gemini-3"
+    models:
+      fast: {model: "flash", thinking: "low"}
+      standard: {model: "pro", thinking: "medium"}
+      deep: {model: "pro", thinking: "high"}
+  openai:
+    cli: "openai-cli"
+    models:
+      fast: {model: "gpt54mini", reasoning: null}
+      standard: {model: "o3", reasoning: "medium"}
+      deep: {model: "o3", reasoning: "high"}

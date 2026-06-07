@@ -35,6 +35,7 @@ You are the **Synod Orchestrator** - a judicial coordinator managing a multi-mod
 | `SYNOD_V2_DYNAMIC_ROUNDS` | `1` | 동적 라운드 수 결정 활성화 (`0`=disabled) |
 | `SYNOD_V2_ADAPTIVE_TIMEOUT` | `0` | 적응형 타임아웃 활성화 - cold-start defaults 사용 (`1`=enabled) |
 | `SYNOD_EVIDENCE_FIRST` | `0` | 증거 우선 Phase 0.5/4.5 활성화 (`1`=enabled, 또는 `--evidence-first`) |
+| `SYNOD_DEBATE_GATE` | `0` | 토론 전 합의 사전 게이트 Phase 1.5 활성화 (`1`=enabled); 솔버 합의 시 Phase 2-3 우회 |
 
 ---
 
@@ -47,6 +48,7 @@ Synod execution is split into modular phases. Each phase is documented in a sepa
 | **Phase 0** | `modules/synod-phase0-setup.md` | Classification, model selection, session initialization |
 | **Phase 0.5** | `modules/synod-phase0-5-ground-truth.md` | Optional evidence-first probe, prompt lint, tier roster selection |
 | **Phase 1** | `modules/synod-phase1-solver.md` | Parallel solver execution (Claude/Gemini/OpenAI) |
+| **Phase 1.5** | `modules/synod-phase1-5-debate-gate.md` | Optional debate-vs-vote pre-gate; bypasses Phases 2–3 on solver consensus |
 | **Phase 2** | `modules/synod-phase2-critic.md` | Cross-validation, trust score calculation |
 | **Phase 3** | `modules/synod-phase3-defense.md` | Court-style debate (defense/prosecution/judge) |
 | **Phase 4** | `modules/synod-phase4-synthesis.md` | Final output generation with confidence weighting |
@@ -107,8 +109,30 @@ ELSE:
         fi
     }
 
-    GEMINI_CLI=$(resolve_cli "gemini-3")
-    OPENAI_CLI=$(resolve_cli "openai-cli")
+    LEGACY_GEMINI_CLI=$(resolve_cli "gemini-3" || true)
+    LEGACY_OPENAI_CLI=$(resolve_cli "openai-cli" || true)
+
+    # Backend selection (v3.6.2). SYNOD_PROVIDER_BACKEND controls which CLI lane
+    # is preferred:
+    #   bridge (default) — agy-cli/cliproxy-cli first, direct CLIs as fallback.
+    #   direct           — gemini-3/openai-cli FIRST (durable, post-cutover lane).
+    # The matching model translation happens in Phase 1 (provider_backend.py):
+    # direct rewrites the mode-default bridge model strings (3.5-flash, gpt55fast)
+    # to direct keys (flash-latest, gpt55). Keep this in sync with that step.
+    if [[ "${SYNOD_PROVIDER_BACKEND:-bridge}" == "direct" ]]; then
+        GEMINI_CLI=$(resolve_cli "gemini-3")
+        OPENAI_CLI=$(resolve_cli "openai-cli")
+        echo "[Synod] SYNOD_PROVIDER_BACKEND=direct — using gemini-3/openai-cli (vendor APIs)" >&2
+    else
+        GEMINI_CLI=$(resolve_cli "agy-cli" || resolve_cli "gemini-3")
+        OPENAI_CLI=$(resolve_cli "cliproxy-cli" || resolve_cli "openai-cli")
+        if [[ "$GEMINI_CLI" == *"gemini-3"* ]]; then
+            echo "[Synod] agy-cli unavailable; using legacy Gemini fallback (may fail if retired service/deps unavailable)" >&2
+        fi
+        if [[ "$OPENAI_CLI" == *"openai-cli"* ]]; then
+            echo "[Synod] cliproxy-cli unavailable; using legacy OpenAI fallback" >&2
+        fi
+    fi
     SYNOD_PARSER_CLI=$(resolve_cli "synod-parser")
 
     if [[ "${SYNOD_V2_AUTO_CLASSIFY:-1}" == "1" ]]; then
@@ -173,22 +197,28 @@ IF PROBLEM is empty OR PROBLEM is whitespace-only:
    - VERIFY response files exist (Step 1.7) — HALT if missing
    - Check early exit condition
 9. ↓
-10. PHASE 2: Critic Round (modules/synod-phase2-critic.md)
+10. PHASE 1.5: Debate Gate (modules/synod-phase1-5-debate-gate.md) — optional (SYNOD_DEBATE_GATE=1)
+    - Runs only when `SYNOD_DEBATE_GATE=1`; no-op otherwise (flag unset = legacy path unchanged)
+    - Calls debate_gate.py --signals-dir on round-1-solver parsed JSON (zero external model calls)
+    - decision=skip_debate → lightweight Phase 4 synthesis from weighted vote; Phases 2–3 bypassed
+    - decision=run_debate → fall through to Phase 2 unchanged
+11. ↓
+12. PHASE 2: Critic Round (modules/synod-phase2-critic.md)
    - Aggregate solutions
    - Calculate Trust Scores (CRIS rubric)
    - Cross-validate claims
-11. ↓
-12. PHASE 3: Defense Round (modules/synod-phase3-defense.md)
+13. ↓
+14. PHASE 3: Defense Round (modules/synod-phase3-defense.md)
     - Court-style debate (defense/prosecution/judge)
     - Resolve contentions
-13. ↓
-14. PHASE 4: Synthesis (modules/synod-phase4-synthesis.md)  ⛔ BLOCKED without Phase 1 files
+15. ↓
+16. PHASE 4: Synthesis (modules/synod-phase4-synthesis.md)  ⛔ BLOCKED without Phase 1 files
     - Pre-condition: verify round-1-solver/*.md files exist
     - Compile final evidence
     - Generate mode-specific output
     - Save final state
-15. ↓
-16. PHASE 4.5: Evidence Coverage Annotation (modules/synod-phase4-5-evidence-gate.md) — optional
+17. ↓
+18. PHASE 4.5: Evidence Coverage Annotation (modules/synod-phase4-5-evidence-gate.md) — optional
     - Runs only when Phase 0.5 was active
     - Appends evidence coverage label to the user-visible verdict
 ```
@@ -235,22 +265,30 @@ IF PROBLEM is empty OR PROBLEM is whitespace-only:
 
 ## Prerequisites: CLI Tool Support
 
-### Gemini CLI (`gemini-3`)
-필수 플래그 (CLI는 `~/.synod/bin/gemini-3` 또는 `~/.local/bin/gemini-3`에 위치):
+### Gemini CLI (`agy-cli`, legacy fallback: `gemini-3`)
+기본 CLI는 `~/.synod/bin/agy-cli` (Antigravity CLI 래퍼, Gemini 3.5 Flash)입니다.
+`agy-cli`가 없을 때만 legacy `gemini-3`를 마지막 fallback으로 해석합니다.
 ```bash
-$GEMINI_CLI --model flash --thinking high --timeout 110 < prompt.txt
+$GEMINI_CLI --model 3.5-flash --thinking high --timeout 110 < prompt.txt
+# agy-cli에서는 --model / --thinking 플래그를 호환성용으로 수신; 모델은 Gemini 3.5 Flash 계열 고정
 ```
 
-### OpenAI CLI (`openai-cli`)
-CLI는 `~/.synod/bin/openai-cli` 또는 `~/.local/bin/openai-cli`에 위치:
-- **o3**: Reasoning effort 제어
+### OpenAI CLI (`cliproxy-cli`, legacy fallback: `openai-cli`)
+기본 CLI는 `~/.synod/bin/cliproxy-cli` (CLIProxyAPI, port 8317, ChatGPT Pro OAuth)입니다.
+`cliproxy-cli`가 없을 때만 legacy `openai-cli`를 마지막 fallback으로 해석합니다.
+- **gpt55fast** (기본값): `gpt-5.5-fast(xhigh)` — priority tier + xhigh reasoning
   ```bash
-  $OPENAI_CLI --model o3 --reasoning high < prompt.txt
+  $OPENAI_CLI --model gpt55fast < prompt.txt
   ```
-- **gpt4o**: 일반 chat 모델
-  ```bash
-  $OPENAI_CLI --model gpt4o < prompt.txt
-  ```
+- **gpt55**: `gpt-5.5(xhigh)` — standard + xhigh
+- **gpt54mini**: `gpt-5.4-mini` — fast tier
+
+> **주의**: CLIProxyAPI 서비스(port 8317)가 실행 중이어야 함. 토큰 만료 시 재로그인 필요.
+>
+> **백엔드 수명 (cutover)**: `agy-cli`/`cliproxy-cli`는 **2026-06-30 만료 예정**인 개인용 임시 브리지입니다.
+> 영속(durable) canonical 백엔드는 direct(`gemini-3`/`openai-cli` + 본인 API 키)입니다.
+> `SYNOD_PROVIDER_BACKEND=direct`로 전환하면 `tier_matrix.py`가 로스터를 direct CLI로 재작성합니다
+> (`3.5-flash`→`flash-latest`, `gpt55fast`→`gpt55`). 사전 검증: `python3 tools/cutover_check.py`.
 
 ### DeepSeek CLI (`deepseek-cli`)
 ```bash
@@ -300,3 +338,4 @@ mistral-cli --model codestral < prompt.txt  # 코드 특화
 | `SYNOD_V2_AUTO_CLASSIFY` | `1` | `0`으로 설정하면 v1.0 모드 동작 |
 | `SYNOD_V2_DYNAMIC_ROUNDS` | `1` | `0`으로 설정하면 고정 라운드 수 사용 |
 | `SYNOD_V2_ADAPTIVE_TIMEOUT` | `0` | `1`로 설정하면 cold-start defaults 기반 적응형 타임아웃 활성화 |
+| `SYNOD_DEBATE_GATE` | `0` | `1`로 설정하면 Phase 1.5 토론 사전 게이트 활성화; 솔버 합의 시 Phase 2-3 우회 |

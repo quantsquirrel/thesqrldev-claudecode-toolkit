@@ -37,6 +37,7 @@ try:
 
     RICH_AVAILABLE = True
 except ImportError:
+    Console = Live = Panel = Table = Text = None  # type: ignore[misc]
     RICH_AVAILABLE = False
 
 

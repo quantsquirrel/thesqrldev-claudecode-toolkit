@@ -1,7 +1,7 @@
-# Synod v3.3 - Agent Architecture
+# Synod v3.6.0 - Agent Architecture
 
 **Project:** Multi-agent deliberation system for Claude Code
-**Version:** 3.3.0
+**Version:** 3.6.0
 **Repository:** https://github.com/quantsquirrel/claude-synod-debate
 **License:** MIT
 
@@ -128,17 +128,17 @@ claude-synod-debate/
 │   │   ├── SKILL.md
 │   │   ├── AGENTS.md
 │   │   └── modules/                 # Modularized phase instructions
-│   ├── setup/                       # /synod:setup installer
+│   │       ├── synod-phase0-setup.md
+│   │       ├── synod-phase1-solver.md
+│   │       ├── synod-phase2-critic.md
+│   │       ├── synod-phase3-defense.md
+│   │       ├── synod-phase4-synthesis.md
+│   │       ├── synod-error-handling.md
+│   │       └── synod-resume.md
+│   ├── synod-setup/                 # /synod:setup installer
 │   │   └── SKILL.md
-│   └── cancel/                      # /synod:cancel command
+│   └── synod-cancel/                # /synod:cancel command
 │       └── SKILL.md
-│       ├── synod-phase0-setup.md
-│       ├── synod-phase1-solver.md
-│       ├── synod-phase2-critic.md
-│       ├── synod-phase3-defense.md
-│       ├── synod-phase4-synthesis.md
-│       ├── synod-error-handling.md
-│       └── synod-resume.md
 ├── tools/                           # Core Python tools
 │   ├── base_provider.py             # Abstract CLI provider base class
 │   ├── gemini-3.py                  # Gemini API integration
@@ -225,4 +225,4 @@ export OPENAI_API_KEY="..."   # Required
 ---
 
 **Last Updated:** 2026-03-08
-**Status:** Complete (v3.3.0)
+**Status:** Complete (v3.6.0)

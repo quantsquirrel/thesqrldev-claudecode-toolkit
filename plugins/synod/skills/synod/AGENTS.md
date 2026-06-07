@@ -3,9 +3,9 @@
 
 # Skills Directory - Synod Multi-Agent Deliberation System
 
-This directory contains Claude Code skill definitions for the Synod v1.0 multi-agent deliberation plugin. Skills are executable commands that users invoke via the Claude Code CLI to trigger structured multi-model debate.
+This directory contains Claude Code skill definitions for the Synod v3.6.0 multi-agent deliberation plugin. Skills are executable commands that users invoke via the Claude Code CLI to trigger structured multi-model debate.
 
-**Directory:** `/Users/ahnjundaram_g/dev/tools/synod-plugin/skills/`
+**Directory:** `<plugin-root>/skills/`
 
 ---
 
@@ -24,13 +24,13 @@ Synod provides two primary skills:
 
 ### 1. synod.md - Multi-Agent Deliberation Orchestrator
 
-**Description:** Multi-agent debate system with Gemini and OpenAI integration (Synod v1.0)
+**Description:** Multi-agent debate system with Gemini and OpenAI integration (Synod v3.6.0)
 
 **File:** `synod.md`
 
 **Metadata:**
 ```yaml
-description: Multi-agent debate system with Gemini and OpenAI integration (Synod v1.0)
+description: Multi-agent debate system with Gemini and OpenAI integration (Synod v3.6.0)
 argument-hint: [mode] [prompt] - modes: review|design|debug|idea|resume
 allowed-tools: [Read, Write, Bash, Glob, Grep, Task]
 ```
@@ -46,11 +46,11 @@ allowed-tools: [Read, Write, Bash, Glob, Grep, Task]
 
 | Mode | Use Case | Gemini Model | OpenAI Model | Rounds | Temperature |
 |------|----------|--------------|--------------|--------|-------------|
-| `review` | Code review and static analysis | Flash (high thinking) | o3 (medium reasoning) | 3 | 0.7 / 0.5 |
-| `design` | Architecture and system design decisions | Pro (high thinking) | o3 (high reasoning) | 4 | 0.7 / 0.5 |
-| `debug` | Debugging, troubleshooting, root cause analysis | Flash (high thinking) | o3 (high reasoning) | 3 | 0.7 / 0.5 |
-| `idea` | Brainstorming, ideation, concept exploration | Pro (high thinking) | gpt4o (standard) | 4 | 0.7 |
-| `general` | General questions, explanations, comparisons | Flash (medium thinking) | gpt4o (standard) | 3 | 0.7 |
+| `review` | Code review and static analysis | Gemini 3.5 Flash (agy-cli) | gpt55fast via CLIProxyAPI | 3 | wrapper-controlled |
+| `design` | Architecture and system design decisions | Gemini 3.5 Flash (agy-cli) | gpt55fast via CLIProxyAPI | 4 | wrapper-controlled |
+| `debug` | Debugging, troubleshooting, root cause analysis | Gemini 3.5 Flash (agy-cli) | gpt55fast via CLIProxyAPI | 3 | wrapper-controlled |
+| `idea` | Brainstorming, ideation, concept exploration | Gemini 3.5 Flash (agy-cli) | gpt55fast via CLIProxyAPI | 4 | wrapper-controlled |
+| `general` | General questions, explanations, comparisons | Gemini 3.5 Flash (agy-cli) | gpt55fast via CLIProxyAPI | 3 | wrapper-controlled |
 
 #### Model Personas
 
@@ -191,7 +191,7 @@ Resume preserves:
 
 **Timeout Fallback Chain:**
 1. Retry with downgraded thinking/reasoning level
-2. Retry with lower model tier (flash instead of pro, gpt4o instead of o3)
+2. Retry with lower model tier (same agy Gemini 3.5 Flash family; CLIProxy gpt54mini instead of gpt55fast)
 3. Continue without model if retries exhausted (note in synthesis)
 
 **Format Enforcement:**
@@ -212,11 +212,13 @@ Resume preserves:
 
 #### Configuration Requirements
 
-**Required Environment Variables:**
+**Required Local Services:**
 ```bash
-export GEMINI_API_KEY="your-gemini-api-key"
-export OPENAI_API_KEY="your-openai-api-key"
+agy --version                  # Antigravity CLI is installed and logged in
+lsof -nP -iTCP:8317 -sTCP:LISTEN  # CLIProxyAPI is listening locally
 ```
+
+`CLIPROXY_API_KEY` is optional when the local proxy uses Synod's default local key.
 
 **Optional:**
 ```bash
@@ -233,8 +235,10 @@ export SYNOD_SESSION_DIR="~/.synod/sessions"  # Default: ~/.synod/sessions
 
 | Tool | Purpose | Fallback |
 |------|---------|----------|
-| `gemini-3` | Gemini API wrapper with temperature/thinking support | Auto-downgrade to flash |
-| `openai-cli` | OpenAI API wrapper with reasoning support | Auto-switch to gpt4o |
+| `agy-cli` | Antigravity wrapper pinned to Gemini 3.5 Flash family | Keeps current 3.5 Flash strength or pins to Medium |
+| `cliproxy-cli` | CLIProxyAPI OpenAI-compatible wrapper | Legacy o3/gpt4o aliases map to gpt55fast |
+| `gemini-3` | Legacy direct Gemini API wrapper | Last-ditch fallback/reference only |
+| `openai-cli` | Legacy direct OpenAI API wrapper | Last-ditch fallback/reference only |
 | `synod-parser` | Parse confidence scores and semantic focus | Inline parser fallback |
 
 #### Examples
@@ -296,7 +300,7 @@ allowed-tools: [Read, Write, Bash, Glob]
 Cancels the currently active Synod session:
 
 1. **Find Active Session:** Searches `${SYNOD_SESSION_DIR:-~/.synod/sessions}` for sessions with status != "complete"
-2. **Kill Processes:** Terminates any background processes (gemini-3, openai-cli)
+2. **Kill Processes:** Terminates any background processes (agy-cli, cliproxy-cli, legacy gemini-3/openai-cli)
 3. **Update Status:** Marks session status as "cancelled" in status.json
 4. **Preserve State:** All completed round data retained for audit/resumption
 
@@ -373,8 +377,10 @@ Skills depend on tools in `../tools/`:
 | Tool | Location | Purpose |
 |------|----------|---------|
 | `synod-parser.py` | `../tools/synod-parser.py` | Parse confidence scores, calculate Trust Scores |
-| `gemini-3.py` | `../tools/gemini-3.py` | Gemini API integration wrapper |
-| `openai-cli.py` | `../tools/openai-cli.py` | OpenAI API integration wrapper |
+| `agy-cli` | `../tools/agy-cli` | Antigravity Gemini 3.5 Flash wrapper |
+| `cliproxy-cli.py` | `../tools/cliproxy-cli.py` | CLIProxyAPI integration wrapper |
+| `gemini-3.py` | `../tools/gemini-3.py` | Legacy direct Gemini fallback/reference |
+| `openai-cli.py` | `../tools/openai-cli.py` | Legacy direct OpenAI fallback/reference |
 
 ### Plugin Configuration
 
@@ -383,10 +389,9 @@ Defined in `../plugin.json`:
 ```json
 {
   "skills": ["synod", "cancel-synod"],
-  "tools": ["synod-parser.py", "gemini-3.py", "openai-cli.py"],
+  "tools": ["synod-parser.py", "agy-cli", "cliproxy-cli.py", "gemini-3.py", "openai-cli.py"],
   "config": {
-    "GEMINI_API_KEY": {"required": true},
-    "OPENAI_API_KEY": {"required": true},
+    "CLIPROXY_API_KEY": {"required": false},
     "SYNOD_SESSION_DIR": {"required": false, "default": "~/.synod/sessions"}
   }
 }
@@ -498,8 +503,8 @@ cat ~/.synod/sessions/synod-YYYYMMDD-HHMMSS-xxx/round-2-critic/trust-scores.json
 - Fix: Provide actual content to `/synod` command
 
 **"API key not found"**
-- Cause: Missing GEMINI_API_KEY or OPENAI_API_KEY
-- Fix: `export GEMINI_API_KEY="..."; export OPENAI_API_KEY="..."`
+- Cause: agy not logged in or CLIProxyAPI is not listening on port 8317
+- Fix: log in to Antigravity CLI and start CLIProxyAPI; set `CLIPROXY_API_KEY` only if the proxy uses a custom key
 
 **"Timeout after 3 retries"**
 - Cause: Model API not responding
@@ -540,6 +545,6 @@ cat ~/.synod/sessions/synod-YYYYMMDD-HHMMSS-xxx/round-2-critic/trust-scores.json
 ---
 
 **Generated:** 2026-01-31
-**Version:** Synod v1.0
+**Version:** Synod v3.6.0
 **Skills:** 2 (synod, cancel-synod)
 **Status:** Complete

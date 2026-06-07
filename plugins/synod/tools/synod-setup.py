@@ -2,7 +2,7 @@
 """
 synod-setup - Synod 초기 설정 및 모델 가용성 테스트
 
-Handles: dependency installation, CLI wrapper creation, API key validation, model testing.
+Handles: dependency installation, CLI wrapper creation, local auth/proxy validation, model testing.
 
 Usage:
     synod-setup
@@ -29,9 +29,21 @@ SYNOD_DIR = Path("~/.synod").expanduser()
 SYNOD_BIN = SYNOD_DIR / "bin"
 
 # CLI wrapper targets: command_name -> script_filename
-CLI_TOOLS = {
+PRIMARY_CLI_TOOLS = {
+    "agy-cli": "agy-cli",
+    "cliproxy-cli": "cliproxy-cli.py",
+}
+
+# Legacy direct-API CLIs are not default test targets, but they remain installed
+# as last-ditch fallbacks for older sessions/configs and manual recovery.
+LEGACY_FALLBACK_CLI_TOOLS = {
     "gemini-3": "gemini-3.py",
     "openai-cli": "openai-cli.py",
+}
+
+CLI_TOOLS = {
+    **PRIMARY_CLI_TOOLS,
+    **LEGACY_FALLBACK_CLI_TOOLS,
     "deepseek-cli": "providers/extended/deepseek-cli.py",
     "groq-cli": "providers/extended/groq-cli.py",
     "grok-cli": "providers/extended/grok-cli.py",
@@ -41,25 +53,32 @@ CLI_TOOLS = {
     "synod-classifier": "synod-classifier.py",
 }
 
-# Required Python packages: pip_name -> import_name
+# Required Python packages for primary Synod routing.
 REQUIRED_PACKAGES = {
-    "google-genai": "google.genai",
     "openai": "openai",
     "httpx": "httpx",
+}
+
+# Optional packages for legacy fallback wrappers. Setup does not force-install
+# these because the primary path no longer depends on direct Gemini/OpenAI APIs.
+OPTIONAL_FALLBACK_PACKAGES = {
+    "google-genai": "google.genai",
 }
 
 # Provider definitions for testing
 MODELS_TO_TEST: dict[str, dict[str, Any]] = {
     "gemini": {
-        "cli": "gemini-3.py",
-        "models": ["flash", "pro"],
-        "env_key": "GEMINI_API_KEY",
-        "env_key_compat": "GOOGLE_API_KEY",
+        "cli": "agy-cli",
+        "models": ["3.5-flash"],
+        "env_key": None,
+        "auth_note": "Antigravity OAuth/session",
     },
     "openai": {
-        "cli": "openai-cli.py",
-        "models": ["gpt54mini", "o3"],
-        "env_key": "OPENAI_API_KEY",
+        "cli": "cliproxy-cli.py",
+        "models": ["gpt55fast"],
+        "env_key": "CLIPROXY_API_KEY",
+        "optional_env_key": True,
+        "auth_note": "CLIProxyAPI localhost:8317",
     },
     "deepseek": {
         "cli": "deepseek-cli.py",
@@ -89,10 +108,8 @@ MODELS_TO_TEST: dict[str, dict[str, Any]] = {
 }
 
 TEST_TARGETS = [
-    ("gemini", "flash"),
-    ("gemini", "pro"),
-    ("openai", "gpt54mini"),
-    ("openai", "o3"),
+    ("gemini", "3.5-flash"),
+    ("openai", "gpt55fast"),
     ("openrouter", "claude"),
 ]
 
@@ -184,7 +201,10 @@ def install_cli_wrappers() -> dict[str, str]:
             continue
 
         target = SYNOD_BIN / cmd_name
-        wrapper_content = f'#!/bin/sh\nexec python3 "{source}" "$@"\n'
+        if source.suffix == ".py":
+            wrapper_content = f'#!/bin/sh\nexec python3 "{source}" "$@"\n'
+        else:
+            wrapper_content = f'#!/bin/sh\nexec sh "{source}" "$@"\n'
 
         # Write wrapper script
         target.write_text(wrapper_content)
@@ -200,19 +220,25 @@ def install_cli_wrappers() -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Step 2: API Key Validation
+# Step 2: Local Auth / Proxy Validation
 # ---------------------------------------------------------------------------
 
 
 def check_api_key(provider: str) -> tuple[bool, str]:
-    """API key check: env var → ~/.synod/.env → macOS Keychain → compat key."""
+    """Auth check: local session, env var → ~/.synod/.env → macOS Keychain."""
     config = MODELS_TO_TEST[provider]
     env_key = config["env_key"]
+
+    if not env_key:
+        return True, config.get("auth_note", "no API key required")
 
     # Multi-source resolution (env → .env file → Keychain)
     resolved = resolve_api_key(env_key)
     if resolved:
         return True, env_key
+
+    if config.get("optional_env_key"):
+        return True, f"{env_key} (optional; {config.get('auth_note', 'default local auth')})"
 
     # Backward compat: check alternate key name for Gemini
     if "env_key_compat" in config:
@@ -227,8 +253,8 @@ def check_api_key(provider: str) -> tuple[bool, str]:
 
 
 def check_all_api_keys() -> list[str]:
-    """Check API keys for all providers with available CLI tools."""
-    print("\nStep 2/3: API 키 확인")
+    """Check local auth/proxy access for all providers with available CLI tools."""
+    print("\nStep 2/3: 로컬 세션/프록시 확인")
     providers_with_keys = []
 
     for provider in MODELS_TO_TEST:
@@ -258,8 +284,13 @@ def test_model(provider: str, model: str, timeout: int = TIMEOUT_THRESHOLD) -> T
 
     start_time = time.time()
     try:
+        if cli_path.suffix == ".py":
+            cmd = ["python3", str(cli_path), "--model", model, TEST_PROMPT]
+        else:
+            cmd = ["sh", str(cli_path), "--model", model, TEST_PROMPT]
+
         result = subprocess.run(
-            ["python3", str(cli_path), "--model", model, TEST_PROMPT],
+            cmd,
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -373,6 +404,8 @@ def save_results(results: list[TestResult], recommendations: dict) -> None:
             for r in results
         ],
         "recommendations": recommendations,
+        "primary_tools": PRIMARY_CLI_TOOLS,
+        "legacy_fallback_tools": LEGACY_FALLBACK_CLI_TOOLS,
     }
 
     with open(output_path, "w") as f:
@@ -397,7 +430,7 @@ def main():
     # Step 1: CLI wrappers
     install_cli_wrappers()
 
-    # Step 2: API keys
+    # Step 2: local auth/proxy
     providers_with_keys = check_all_api_keys()
 
     # Step 3: Model testing
@@ -408,7 +441,7 @@ def main():
     ]
 
     if not targets:
-        print("\n[키 없음] 대화형 입력으로 API 키를 설정합니다.")
+        print("\n[인증 없음] 대화형 입력으로 API 키를 설정합니다.")
         print("  (입력한 키는 ~/.synod/.env에 저장되어 다음부터 자동 로드됩니다)\n")
 
         changed = False
@@ -417,7 +450,7 @@ def main():
             if not any(p == provider for p, _ in TEST_TARGETS):
                 continue
             env_key = config["env_key"]
-            if os.environ.get(env_key):
+            if not env_key or os.environ.get(env_key):
                 continue
             try:
                 val = input(f"  {env_key} (Enter로 건너뛰기): ").strip()
@@ -494,7 +527,7 @@ def main():
         print("1개 모델만 사용 가능합니다. Claude + 1 모델로 동작합니다.")
         sys.exit(0)
     else:
-        print("사용 가능한 외부 모델이 없습니다. API 키와 네트워크를 확인하세요.")
+        print("사용 가능한 외부 모델이 없습니다. agy 로그인, CLIProxyAPI, 네트워크를 확인하세요.")
         sys.exit(1)
 
 

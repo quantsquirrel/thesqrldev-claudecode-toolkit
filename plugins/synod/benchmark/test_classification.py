@@ -162,10 +162,8 @@ def print_results(correct: int, total: int, failures: list[dict]) -> None:
 
 def main() -> int:
     """Main entry point."""
-    # Locate the classifier
-    classifier_path = Path(
-        "/Users/ahnjundaram_g/dev/tools/claude-synod-debate/tools/synod-classifier.py"
-    )
+    # Locate the classifier relative to this file (repo-portable; no hardcoded home).
+    classifier_path = Path(__file__).resolve().parent.parent / "tools" / "synod-classifier.py"
 
     if not classifier_path.exists():
         print(f"Error: Classifier not found at {classifier_path}")

@@ -88,3 +88,18 @@ class TestZshCompatibility:
         text = SYNOD_MD.read_text()
         # resolve_cli should NOT return "python3 ${TOOLS_DIR}/..."
         assert 'echo "python3 ${TOOLS_DIR}' not in text
+
+
+class TestPhase1ModelOverrideGuards:
+    def test_direct_backend_uses_tools_dir_for_provider_backend(self):
+        text = PHASE1_MD.read_text()
+
+        assert '_PB="${TOOLS_DIR}/provider_backend.py"' in text
+        assert '_PB="${PLUGIN_ROOT}/tools/provider_backend.py"' not in text
+
+    def test_model_override_null_reasoning_stays_empty(self):
+        text = PHASE1_MD.read_text()
+
+        assert "_TIER_GEMINI_THINKING=$(_ov \"${_G}('thinking') or '')\")" in text
+        assert "_TIER_OPENAI_REASONING=$(_ov \"${_O}('reasoning') or '')\")" in text
+        assert 'OPENAI_REASONING="$_TIER_OPENAI_REASONING"' in text

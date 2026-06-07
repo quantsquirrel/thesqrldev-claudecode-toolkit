@@ -235,7 +235,8 @@ class TestParseResponse:
         assert result["confidence"]["score"] == 85
         assert len(result["semantic_focus"]) == 3
         assert result["can_exit_early"] is True
-        assert result["high_confidence"] is True
+        # score=85 is below the >= 90 high-confidence threshold
+        assert result["high_confidence"] is False
 
     def test_parse_invalid_response_applies_defaults(self, sample_invalid_response):
         """Test that defaults are applied for invalid format."""
@@ -268,14 +269,37 @@ class TestParseResponse:
         result = synod_parser.parse_response(sample_valid_response)
         assert result["raw_length"] == len(sample_valid_response)
 
-    def test_confidence_below_85_not_high(self):
-        """Test high_confidence flag for scores below 85."""
+    def test_confidence_below_90_not_high(self):
+        """Test high_confidence flag for scores below 90 (new threshold)."""
         text = """
-        <confidence score="80"></confidence>
+        <confidence score="89"></confidence>
         <semantic_focus>Focus</semantic_focus>
         """
         result = synod_parser.parse_response(text)
         assert result["high_confidence"] is False
+
+    def test_confidence_at_90_is_high(self):
+        """Test high_confidence flag is True at exactly the >= 90 boundary."""
+        text = """
+        <confidence score="90"></confidence>
+        <semantic_focus>Focus</semantic_focus>
+        """
+        result = synod_parser.parse_response(text)
+        assert result["high_confidence"] is True
+
+    def test_confidence_score_clamped_above_100(self):
+        """Test that out-of-range score (e.g. 999) is clamped to 100."""
+        text = '<confidence score="999"></confidence>'
+        result = synod_parser.extract_confidence(text)
+        assert result is not None
+        assert result["score"] == 100
+
+    def test_confidence_score_clamped_to_zero(self):
+        """Test that a score of 0 is preserved (lower boundary)."""
+        text = '<confidence score="0"></confidence>'
+        result = synod_parser.extract_confidence(text)
+        assert result is not None
+        assert result["score"] == 0
 
 
 class TestExtractKeySentences:

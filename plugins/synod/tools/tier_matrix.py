@@ -12,7 +12,20 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Same-dir import so `python3 tools/tier_matrix.py` and spec-loaded test imports
+# both resolve provider_backend without a package install.
+sys.path.insert(0, str(Path(__file__).parent))
+import provider_backend  # noqa: E402
+
+# Canonical tier names used as keys in model_matrix.json.
 VALID_TIERS = {"simple", "standard", "deep", "ultra"}
+
+# Alias map: v3.1 classifier vocabulary → v3.5 matrix vocabulary.
+# "fast" (emitted by synod_config.get_tier / synod-classifier.py) is the
+# same intent as "simple" in the matrix.  Applied before the VALID_TIERS
+# check so the cheap lane is never silently downgraded to "standard".
+TIER_ALIASES: dict[str, str] = {"fast": "simple"}
+
 SCRIPT_DIR = Path(__file__).parent
 # Plugin layout: plugins/synod/tools/tier_matrix.py  +  plugins/synod/config/model_matrix.json
 DEFAULT_MATRIX = SCRIPT_DIR.parent / "config" / "model_matrix.json"
@@ -29,7 +42,9 @@ def load_matrix(matrix_path: Path) -> dict:
 
 def resolve_tier(tier_arg: str, classifier_json: Optional[str]) -> str:
     if tier_arg != "auto":
-        return tier_arg
+        # Normalise v3.1 aliases (e.g. "fast" → "simple") on the explicit path too,
+        # so `--tier fast` works even though it is not a raw matrix key.
+        return TIER_ALIASES.get(tier_arg, tier_arg)
 
     if classifier_json is None:
         return "standard"
@@ -38,7 +53,15 @@ def resolve_tier(tier_arg: str, classifier_json: Optional[str]) -> str:
         with open(classifier_json, encoding="utf-8") as f:
             data = json.load(f)
         candidate = data.get("tier", "standard")
-        return candidate if candidate in VALID_TIERS else "standard"
+        # Apply alias normalisation before validity check so "fast" → "simple".
+        candidate = TIER_ALIASES.get(candidate, candidate)
+        if candidate not in VALID_TIERS:
+            print(
+                f"warning: unknown tier '{candidate}' in classifier JSON, falling back to 'standard'",
+                file=sys.stderr,
+            )
+            return "standard"
+        return candidate
     except (OSError, json.JSONDecodeError):
         return "standard"
 
@@ -48,8 +71,8 @@ def main() -> None:
     parser.add_argument(
         "--tier",
         default="standard",
-        choices=["auto", "simple", "standard", "deep", "ultra"],
-        help="Reasoning tier (default: standard)",
+        choices=["auto", "fast", "simple", "standard", "deep", "ultra"],
+        help="Reasoning tier (default: standard). 'fast' is an alias for 'simple'.",
     )
     parser.add_argument(
         "--classifier-json",
@@ -61,6 +84,15 @@ def main() -> None:
         metavar="PATH",
         default=str(DEFAULT_MATRIX),
         help="Path to model_matrix.json (default: <plugin>/config/model_matrix.json)",
+    )
+    parser.add_argument(
+        "--backend",
+        default=None,
+        help=(
+            "Provider backend: bridge|direct "
+            f"(default: ${provider_backend.BACKEND_ENV} or '{provider_backend.DEFAULT_BACKEND}'). "
+            "'direct' rewrites agy-cli/cliproxy-cli rosters to gemini-3/openai-cli."
+        ),
     )
     args = parser.parse_args()
 
@@ -79,11 +111,22 @@ def main() -> None:
         sys.exit(2)
 
     models: list = tier_map[tier]
+
+    # Rewrite the roster for the active provider backend (bridge default,
+    # direct for the post-cutover durable lane). Bridge is an identity copy.
+    backend = provider_backend.get_backend(args.backend)
+    try:
+        models = provider_backend.resolve_roster(models, backend)
+    except provider_backend.BackendResolutionError as exc:
+        print(f"error: backend resolution failed for tier '{tier}': {exc}", file=sys.stderr)
+        sys.exit(2)
+
     max_timeout: int = max((m.get("timeout_sec", 0) for m in models), default=0)
     requires_async: bool = max_timeout >= async_threshold
 
     result = {
         "tier": tier,
+        "backend": backend,
         "models": models,
         "estimated_wall_time_sec": max_timeout,
         "requires_async": requires_async,

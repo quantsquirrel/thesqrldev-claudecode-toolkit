@@ -94,9 +94,9 @@ flowchart TB
 git clone https://github.com/quantsquirrel/claude-synod-debate.git
 cd claude-synod-debate
 
-# 2️⃣ Set your API keys (one-time)
-export GEMINI_API_KEY="your-gemini-key"
-export OPENAI_API_KEY="your-openai-key"
+# 2️⃣ Local model bridges
+#    - log in to Antigravity CLI (`agy`)
+#    - run CLIProxyAPI on localhost:8317
 
 # 3️⃣ Run setup (installs deps, configures CLI tools, tests models)
 /synod-setup
@@ -154,32 +154,28 @@ export OPENAI_API_KEY="your-openai-key"
 ```
 [Synod Setup] 초기 설정을 시작합니다...
 
-Step 0/4: Python 의존성 확인
-  ✓ google-genai 설치됨
+Step 0/3: Python 의존성 확인
   ✓ openai 설치됨
   ✓ httpx 설치됨
 
-Step 1/4: CLI 도구 확인
-  ✓ gemini-3.py
-  ✓ openai-cli.py
+Step 1/3: CLI 도구 설치 (~/.synod/bin)
+  ✓ agy-cli 설치됨
+  ✓ cliproxy-cli 설치됨
+  ✓ gemini-3 설치됨 (legacy fallback)
+  ✓ openai-cli 설치됨 (legacy fallback)
 
-Step 2/4: API 키 확인
-  ✓ GOOGLE_API_KEY (설정됨)
-  ✓ OPENAI_API_KEY (설정됨)
+Step 2/3: 로컬 세션/프록시 확인
+  ✓ Antigravity OAuth/session (설정됨)
+  ✓ CLIPROXY_API_KEY (optional; CLIProxyAPI localhost:8317) (설정됨)
 
-Step 3/4: MCP 라우팅 호환성 확인
-  ✓ MCP 라우팅 미감지
-
-Step 4/4: 모델 응답 시간 측정 (타임아웃: 120초)
+Step 3/3: 모델 응답 시간 측정 (타임아웃: 120초)
 
 Provider    Model              Latency    Status
 ───────────────────────────────────────────────
-gemini      flash              3.2초      ✓ 권장
-gemini      pro                12.4초     ✓ 사용 가능
-openai      gpt54mini          2.8초      ✓ 권장
-openai      o3                 45.2초     ⚠ 느림
+gemini      3.5-flash          3.2초      ✓ 권장
+openai      gpt55fast          2.8초      ✓ 권장
 
-[완료] 4/4 모델 사용 가능
+[완료] 2/2 모델 사용 가능
 Synod를 사용할 준비가 되었습니다!
 ```
 
@@ -203,8 +199,10 @@ Synod를 사용할 준비가 되었습니다!
 
 | Provider | CLI | Best For | Status |
 |:--------:|:---:|:---------|:------:|
-| 🔵 **Gemini** | `gemini-3` | Default debater, thinking modes | Required |
-| 🟢 **OpenAI** | `openai-cli` | Default debater, o3 reasoning | Required |
+| 🔵 **Gemini** | `agy-cli` | Antigravity Gemini 3.5 Flash | Required |
+| 🔵 Gemini legacy | `gemini-3` | Previous direct API defaults | Fallback only |
+| 🟢 **OpenAI** | `cliproxy-cli` | CLIProxyAPI / ChatGPT Pro OAuth | Required |
+| 🟢 OpenAI legacy | `openai-cli` | Previous direct API defaults | Fallback only |
 | 🟣 **DeepSeek** | `deepseek-cli` | Math, reasoning (R1) | Optional |
 | ⚡ **Groq** | `groq-cli` | Ultra-fast inference (LPU) | Optional |
 | 🌐 **OpenRouter** | `openrouter-cli` | Multi-model fallback | Recommended |
@@ -256,11 +254,11 @@ export MISTRAL_API_KEY="your-mistral-key"
 
 | | Mode | Summon When... | Configuration |
 |:---:|:---:|:---------------|:--------------|
-| 🔍 | **`review`** | Analyzing code, security, PRs | `Gemini Flash` ⚔️ `GPT-4o` |
-| 🏗️ | **`design`** | Architecting systems | `Gemini Pro` ⚔️ `GPT-4o` |
-| 🐛 | **`debug`** | Hunting elusive bugs | `Gemini Flash` ⚔️ `GPT-4o` |
-| 💡 | **`idea`** | Brainstorming solutions | `Gemini Pro` ⚔️ `GPT-4o` |
-| 🌐 | **`general`** | Everything else | `Gemini Flash` ⚔️ `GPT-4o` |
+| 🔍 | **`review`** | Analyzing code, security, PRs | `Gemini 3.5 Flash` ⚔️ `CLIProxy gpt55fast` |
+| 🏗️ | **`design`** | Architecting systems | `Gemini 3.5 Flash` ⚔️ `CLIProxy gpt55fast` |
+| 🐛 | **`debug`** | Hunting elusive bugs | `Gemini 3.5 Flash` ⚔️ `CLIProxy gpt55fast` |
+| 💡 | **`idea`** | Brainstorming solutions | `Gemini 3.5 Flash` ⚔️ `CLIProxy gpt55fast` |
+| 🌐 | **`general`** | Everything else | `Gemini 3.5 Flash` ⚔️ `CLIProxy gpt55fast` |
 
 </div>
 
@@ -363,15 +361,15 @@ Trust Score = ──────────────────────
 git clone https://github.com/quantsquirrel/claude-synod-debate.git
 cd claude-synod-debate
 
-# Set API keys
-export GEMINI_API_KEY="your-gemini-key"
-export OPENAI_API_KEY="your-openai-key"
+# Prerequisites: agy logged in, CLIProxyAPI running on localhost:8317
+# Optional override if your proxy uses a non-default key:
+export CLIPROXY_API_KEY="your-local-proxy-key"
 
 # Run setup inside Claude Code (auto-installs Python deps, creates CLI wrappers, tests models)
 /synod-setup
 ```
 
-Skills auto-load from `plugin.json` when you open Claude Code inside this directory. `/synod-setup` handles the rest: Python dependencies (`google-genai`, `openai`, `httpx`), CLI tool wrappers in `~/.synod/bin/`, API key validation, and model connectivity testing.
+Skills auto-load from `plugin.json` when you open Claude Code inside this directory. `/synod-setup` handles the rest: Python dependencies (`openai`, `httpx`), CLI tool wrappers in `~/.synod/bin/`, local auth validation, and model connectivity testing.
 
 </details>
 
@@ -383,7 +381,7 @@ Skills auto-load from `plugin.json` when you open Claude Code inside this direct
 ```bash
 git clone https://github.com/quantsquirrel/claude-synod-debate.git
 cd claude-synod-debate
-pip install google-genai openai httpx
+pip install openai httpx
 
 # Create CLI wrappers and test models
 python3 tools/synod-setup.py
@@ -397,9 +395,8 @@ python3 tools/synod-setup.py
 <br/>
 
 ```bash
-# Required
-export GEMINI_API_KEY="your-gemini-key"
-export OPENAI_API_KEY="your-openai-key"
+# Optional if CLIProxyAPI uses a custom local key
+export CLIPROXY_API_KEY="your-local-proxy-key"
 
 # Optional
 export SYNOD_SESSION_DIR="~/.synod/sessions"
@@ -438,7 +435,7 @@ export SYNOD_RETENTION_DAYS=30
 
 <br/>
 
-Synod executes external models (Gemini, OpenAI) exclusively via **CLI tools** (`gemini-3`, `openai-cli`). If your environment includes MCP routing plugins that redirect model calls through `ask_codex` or `ask_gemini`, Synod's built-in defense-in-depth guards prevent interception:
+Synod executes external models (Gemini, OpenAI) exclusively via **CLI tools** (`agy-cli`, `cliproxy-cli`, legacy fallback `gemini-3`/`openai-cli`). If your environment includes MCP routing plugins that redirect model calls through `ask_codex` or `ask_gemini`, Synod's built-in defense-in-depth guards prevent interception:
 
 1. **`allowed-tools` frontmatter** — Schema-level restriction excludes MCP tools
 2. **Markdown directives** — Explicit prohibition in skill entry point and Phase 0/1

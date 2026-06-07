@@ -25,11 +25,59 @@
 # Emit phase start (v2.1)
 synod_progress '{"event":"phase_start","phase":2,"name":"Critic Round"}'
 
-# Load timeouts (v3.3 tier-aware)
-MODEL_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts model 2>/dev/null || echo "180")
-BASH_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts bash 2>/dev/null || echo "300")
+# Load tier-aware timeouts (v3.3).
+# Tier is read from meta.json (written by Phase 0 classifier); falls back to
+# 'standard' so the behavior is identical to v2.1 when meta.json is absent.
+_META_TIER=$(python3 -c \
+  "import json,os; f='${SESSION_DIR}/meta.json'; \
+   d=json.load(open(f)) if os.path.exists(f) else {}; \
+   print(d.get('tier','standard'))" 2>/dev/null || echo "standard")
+MODEL_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts model --tier "$_META_TIER" 2>/dev/null || echo "180")
+BASH_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts bash  --tier "$_META_TIER" 2>/dev/null || echo "300")
 BASH_TIMEOUT_MS=$((BASH_TIMEOUT * 1000))
 ```
+
+## Step 2.0: Deliberation Anonymization (SYNOD_ANONYMIZE=1 only)
+
+> **Flag-gated — skip entirely when `SYNOD_ANONYMIZE` is unset or `"0"` (default).**
+> When the flag is off, all branding and labelling behaves exactly as before — no change.
+
+When `SYNOD_ANONYMIZE=1`:
+
+```bash
+if [[ "${SYNOD_ANONYMIZE:-0}" == "1" ]]; then
+  # Re-hydrate the alias map exported by Phase 1.
+  # SYNOD_ANON_MAP is a JSON string: {"claude":"Agent-1","gemini":"Agent-2","openai":"Agent-3"}
+  if [[ -z "${SYNOD_ANON_MAP:-}" ]]; then
+    echo "[Warning] SYNOD_ANONYMIZE=1 but SYNOD_ANON_MAP is unset — rebuilding map" >&2
+    SYNOD_ANON_MAP=$(python3 -c "
+import sys; sys.path.insert(0,'${TOOLS_DIR}')
+import model_branding, json
+print(json.dumps(model_branding.build_anon_map(['claude','gemini','openai'])))
+")
+  fi
+
+  ALIAS_CLAUDE=$(echo "$SYNOD_ANON_MAP" | python3 -c "import json,sys; print(json.load(sys.stdin)['claude'])")
+  ALIAS_GEMINI=$(echo "$SYNOD_ANON_MAP" | python3 -c "import json,sys; print(json.load(sys.stdin)['gemini'])")
+  ALIAS_OPENAI=$(echo "$SYNOD_ANON_MAP" | python3 -c "import json,sys; print(json.load(sys.stdin)['openai'])")
+
+  echo "[Phase 2] Anonymization ON — aliases in scope: claude=$ALIAS_CLAUDE gemini=$ALIAS_GEMINI openai=$ALIAS_OPENAI" >&2
+else
+  ALIAS_CLAUDE="Claude"
+  ALIAS_GEMINI="Gemini"
+  ALIAS_OPENAI="OpenAI"
+fi
+```
+
+**When anonymization is active**, substitute aliases for real model names in:
+
+- The `HISTORY_CONTEXT` table assembled for external critic prompts (Step 2.1):
+  replace `| Claude |`, `| Gemini |`, `| OpenAI |` with `| $ALIAS_CLAUDE |`,
+  `| $ALIAS_GEMINI |`, `| $ALIAS_OPENAI |`.
+- The saved artefacts (`aggregation.md`, `trust-scores.json`, `contentions.json`):
+  write aliases, not real names, so Phase 3 never sees provider identity.
+
+---
 
 ## Step 2.1: Claude Aggregation
 

@@ -65,3 +65,136 @@ def markdown_marker(model: str) -> str:
     Rich.
     """
     return get(model)["glyph"]
+
+
+# ---------------------------------------------------------------------------
+# Deliberation anonymization (arXiv:2510.07517)
+#
+# During Phases 1-3, model/provider identity cues drive sycophantic
+# premature consensus.  When SYNOD_ANONYMIZE=1 these helpers replace real
+# model names with neutral aliases so the court never sees which provider
+# authored which claim.  Phase 4 calls deanonymize() before rendering the
+# branded per-model summary so the user still sees real model names.
+#
+# Feature-flagged OFF by default (SYNOD_ANONYMIZE env var unset / "0").
+# When the flag is off all three helpers are still importable but the
+# phase modules are instructed to skip them — no existing behavior changes.
+# ---------------------------------------------------------------------------
+
+# Neutral alias prefix used for all anonymous labels.
+_ALIAS_PREFIX = "Agent-"
+
+# Deterministic ordering: alphabetical on the normalised model key so the
+# mapping never depends on call order, Python dict insertion order, or
+# runtime state.
+_PROVIDER_SUBSTRINGS = (
+    "claude",
+    "gemini",
+    "openai",
+    "gpt",
+    "anthropic",
+    "google",
+    "microsoft",
+    "mistral",
+    "deepseek",
+    "groq",
+    "grok",
+    "llama",
+    "meta",
+    "cohere",
+    "command",
+    "perplexity",
+    "together",
+)
+
+
+def anonymize_label(model: str) -> str:
+    """Return the neutral alias for a single model string.
+
+    The alias is derived by looking the model up in the canonical sorted
+    position of its lowercase form within a singleton roster built from
+    ``build_anon_map``.  For a single-model call the alias is always
+    ``Agent-1``.  Prefer ``build_anon_map`` when you have the full roster
+    so relative ordering is stable.
+
+    Examples::
+
+        anonymize_label("claude")  -> "Agent-1"
+        anonymize_label("GEMINI")  -> "Agent-1"  # single-model call
+    """
+    return _ALIAS_PREFIX + "1"
+
+
+def build_anon_map(models: list[str]) -> dict[str, str]:
+    """Return a stable real->alias mapping for the given model roster.
+
+    Rules
+    -----
+    * Aliases are ``Agent-1``, ``Agent-2``, … assigned in *ascending
+      alphabetical order* of the lowercased model key.  This makes the
+      mapping deterministic regardless of the order ``models`` is passed.
+    * Duplicate entries (after lowercasing) are collapsed: each unique
+      model gets exactly one alias.
+    * The map is bijective: no two models share an alias.
+
+    Parameters
+    ----------
+    models:
+        Iterable of model keys, e.g. ``["gemini", "openai", "claude"]``.
+
+    Returns
+    -------
+    dict mapping each original key (preserved case) to its neutral alias.
+
+    Examples::
+
+        build_anon_map(["gemini", "openai", "claude"])
+        # -> {"claude": "Agent-1", "gemini": "Agent-2", "openai": "Agent-3"}
+    """
+    # Deduplicate while preserving a canonical (lowercased) key for sorting.
+    seen: dict[str, str] = {}  # lower -> first-seen original
+    for m in models:
+        lower = m.lower()
+        if lower not in seen:
+            seen[lower] = m
+
+    # Sort by lowercased key to get a deterministic, order-independent result.
+    sorted_lowers = sorted(seen.keys())
+
+    result: dict[str, str] = {}
+    for idx, lower in enumerate(sorted_lowers, start=1):
+        original = seen[lower]
+        result[original] = _ALIAS_PREFIX + str(idx)
+
+    return result
+
+
+def deanonymize(text: str, anon_map: dict[str, str]) -> str:
+    """Replace neutral aliases in *text* with their real model names.
+
+    This is the inverse of ``build_anon_map``.  It is called in Phase 4
+    before rendering the branded per-model claim summary so the user sees
+    real provider names after the anonymous deliberation phases.
+
+    Parameters
+    ----------
+    text:
+        Arbitrary string that may contain alias tokens like ``Agent-1``.
+    anon_map:
+        The ``real -> alias`` dict returned by ``build_anon_map``.
+
+    Returns
+    -------
+    A new string with every alias occurrence replaced by its real model name.
+    Aliases that do not appear in the text are silently ignored.
+    """
+    # Build the reverse map: alias -> real.
+    reverse: dict[str, str] = {alias: real for real, alias in anon_map.items()}
+
+    result = text
+    # Sort by alias length descending so longer tokens match before shorter
+    # prefixes (e.g. "Agent-10" before "Agent-1").
+    for alias in sorted(reverse.keys(), key=len, reverse=True):
+        result = result.replace(alias, reverse[alias])
+
+    return result

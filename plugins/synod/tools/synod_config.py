@@ -231,6 +231,12 @@ def main():
 
     parser = argparse.ArgumentParser(description="Query synod configuration")
     parser.add_argument("path", nargs="+", help="Config path segments (e.g. 'timeouts model')")
+    parser.add_argument(
+        "--tier",
+        default=None,
+        help="Optional tier name (fast, standard, deep). When the path starts with "
+        "'timeouts', routes through get_timeouts(tier) for tier-aware values.",
+    )
     args = parser.parse_args()
 
     try:
@@ -239,13 +245,27 @@ def main():
         print("Error: config not found", file=sys.stderr)
         sys.exit(1)
 
-    result = config
-    for key in args.path:
-        if isinstance(result, dict):
-            result = result.get(key)
-        else:
-            result = None
-            break
+    # When --tier is supplied and the path starts with 'timeouts', delegate to
+    # get_timeouts() so tier-specific overrides are applied rather than doing
+    # raw dict traversal which always returns global defaults.
+    if args.tier is not None and args.path and args.path[0] == "timeouts":
+        tier_timeouts = get_timeouts(args.tier)
+        # Traverse any remaining path segments (e.g. "timeouts model" -> "model")
+        result = tier_timeouts
+        for key in args.path[1:]:
+            if isinstance(result, dict):
+                result = result.get(key)
+            else:
+                result = None
+                break
+    else:
+        result = config
+        for key in args.path:
+            if isinstance(result, dict):
+                result = result.get(key)
+            else:
+                result = None
+                break
 
     if result is None:
         sys.exit(1)

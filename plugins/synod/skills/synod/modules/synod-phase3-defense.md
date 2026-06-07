@@ -25,11 +25,62 @@
 # Emit phase start (v2.1)
 synod_progress '{"event":"phase_start","phase":3,"name":"Defense Round"}'
 
-# Load timeouts (v3.3 tier-aware)
-MODEL_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts model 2>/dev/null || echo "180")
-BASH_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts bash 2>/dev/null || echo "300")
+# Load tier-aware timeouts (v3.3).
+# Tier is read from meta.json (written by Phase 0 classifier); falls back to
+# 'standard' so the behavior is identical to v2.1 when meta.json is absent.
+_META_TIER=$(python3 -c \
+  "import json,os; f='${SESSION_DIR}/meta.json'; \
+   d=json.load(open(f)) if os.path.exists(f) else {}; \
+   print(d.get('tier','standard'))" 2>/dev/null || echo "standard")
+MODEL_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts model --tier "$_META_TIER" 2>/dev/null || echo "180")
+BASH_TIMEOUT=$(python3 "${TOOLS_DIR}/synod_config.py" timeouts bash  --tier "$_META_TIER" 2>/dev/null || echo "300")
 BASH_TIMEOUT_MS=$((BASH_TIMEOUT * 1000))
 ```
+
+## Step 3.0: Deliberation Anonymization (SYNOD_ANONYMIZE=1 only)
+
+> **Flag-gated — skip entirely when `SYNOD_ANONYMIZE` is unset or `"0"` (default).**
+> When the flag is off, all branding and labelling behaves exactly as before — no change.
+
+When `SYNOD_ANONYMIZE=1`:
+
+```bash
+if [[ "${SYNOD_ANONYMIZE:-0}" == "1" ]]; then
+  # Re-hydrate the alias map (originally built in Phase 1 Step 1.0).
+  if [[ -z "${SYNOD_ANON_MAP:-}" ]]; then
+    echo "[Warning] SYNOD_ANONYMIZE=1 but SYNOD_ANON_MAP is unset — rebuilding map" >&2
+    SYNOD_ANON_MAP=$(python3 -c "
+import sys; sys.path.insert(0,'${TOOLS_DIR}')
+import model_branding, json
+print(json.dumps(model_branding.build_anon_map(['claude','gemini','openai'])))
+")
+  fi
+
+  ALIAS_CLAUDE=$(echo "$SYNOD_ANON_MAP" | python3 -c "import json,sys; print(json.load(sys.stdin)['claude'])")
+  ALIAS_GEMINI=$(echo "$SYNOD_ANON_MAP" | python3 -c "import json,sys; print(json.load(sys.stdin)['gemini'])")
+  ALIAS_OPENAI=$(echo "$SYNOD_ANON_MAP" | python3 -c "import json,sys; print(json.load(sys.stdin)['openai'])")
+
+  echo "[Phase 3] Anonymization ON — court references use aliases: claude=$ALIAS_CLAUDE gemini=$ALIAS_GEMINI openai=$ALIAS_OPENAI" >&2
+else
+  ALIAS_CLAUDE="Claude"
+  ALIAS_GEMINI="Gemini"
+  ALIAS_OPENAI="OpenAI"
+fi
+```
+
+**When anonymization is active**, all court-facing context must use aliases:
+
+- The defense prompt (`gemini-defense-prompt.txt`) and prosecution prompt
+  (`openai-prosecution-prompt.txt`) must reference the **defendant solution**
+  by its alias (e.g. `$ALIAS_GEMINI proposed …`), never by provider name.
+- `BEST_SOLUTION_SUMMARY` and `CONTENTIONS_FROM_CRITIC_ROUND` inserted into
+  prompts must have real model names replaced with their aliases.
+- Saved artefacts (`defense-args.md`, `prosecution-args.md`,
+  `preliminary-ruling.md`, `judge-deliberation.md`) are written with aliases
+  so Phase 4 receives anonymized input and calls `deanonymize()` only once at
+  display time.
+
+---
 
 ## Step 3.1: Assign Court Roles
 

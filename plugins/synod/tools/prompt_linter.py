@@ -38,7 +38,7 @@ def _rule_unbacked_default(line_text: str, line_no: int, full_text: str, line_st
     unbacked-default (high)
     Pattern: 'default' followed by a non-paren token (avoids function calls).
     """
-    pattern = re.compile(r"default\s+\S+(?!\s*\()", re.IGNORECASE)
+    pattern = re.compile(r"default\s+\w+\b(?!\s*\()", re.IGNORECASE)
     warnings = []
     for m in pattern.finditer(line_text):
         abs_end = line_start + m.end()

@@ -22,7 +22,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 # ---------------------------------------------------------------------------
 # Shared API key resolution: env var → ~/.synod/.env → macOS Keychain
@@ -142,6 +142,105 @@ COLD_START_DEFAULTS = {
     "openrouter:claude": 120_000,
     "openrouter:llama": 60_000,
 }
+
+
+# ---------------------------------------------------------------------------
+# Prompt-prefix caching helpers (opt-in via SYNOD_PROMPT_CACHE=1)
+#
+# Background: Anthropic and OpenAI both support a form of prompt/prefix caching
+# that avoids recomputing large stable context windows on every round.
+#
+#   Anthropic  — cache_control: {"type": "ephemeral"} on the *last* content
+#                block of the prefix you want cached.
+#   OpenAI     — no explicit marker needed for server-side caching, but
+#                structuring messages with a stable system/prefix first and
+#                dynamic content last maximises automatic cache hits.
+#
+# Usage pattern (cache-friendly message ordering):
+#   [stable prefix: task description + ground-truth + prior transcript]
+#   [dynamic suffix: this-round instruction / user turn]
+#
+# The helpers below build OpenAI-compatible message lists that embed the
+# Anthropic-style cache_control annotation on the stable prefix block.
+# Proxies / endpoints that do not understand cache_control will simply ignore
+# the extra field — the request shape remains valid.
+#
+# Live-verification gap: whether these markers produce actual cache HIT/MISS
+# savings (reduced latency, lower cost) can only be confirmed against a live
+# cache-supporting endpoint (Anthropic Claude API or OpenAI with prompt
+# caching enabled).  The tests here verify request-shape correctness only.
+# ---------------------------------------------------------------------------
+
+SYNOD_PROMPT_CACHE_ENV = "SYNOD_PROMPT_CACHE"
+
+
+def is_prompt_cache_enabled() -> bool:
+    """Return True when SYNOD_PROMPT_CACHE=1 (default: 0 = disabled).
+
+    Opt-in flag — all existing behaviour is unchanged when the env var is
+    absent or set to any value other than "1".
+    """
+    return os.environ.get(SYNOD_PROMPT_CACHE_ENV, "0") == "1"
+
+
+def build_cached_messages(
+    stable_prefix: str,
+    dynamic_suffix: str,
+) -> "list[dict[str, Any]]":
+    """Build an OpenAI-compatible messages list with a cacheable stable prefix.
+
+    Cache-friendly ordering rule: stable content (task description,
+    ground-truth probe, prior-round transcripts) comes FIRST; dynamic
+    per-round instructions are appended LAST.  This maximises the length of
+    the shared prefix that caching infrastructure can reuse.
+
+    When SYNOD_PROMPT_CACHE=1 the stable prefix block carries a
+    ``cache_control`` field that signals Anthropic-style ephemeral caching.
+    OpenAI-compatible proxies that do not understand the field will silently
+    ignore it — the request remains well-formed.
+
+    When SYNOD_PROMPT_CACHE=0 (default) the messages list is identical to the
+    uncached path so no behaviour changes.
+
+    Args:
+        stable_prefix: Large, slow-changing context (task + evidence + history).
+        dynamic_suffix: Small, per-round dynamic instruction or user turn.
+
+    Returns:
+        List of message dicts ready to pass to client.chat.completions.create().
+    """
+    if is_prompt_cache_enabled():
+        prefix_content: Any = [
+            {
+                "type": "text",
+                "text": stable_prefix,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+    else:
+        prefix_content = stable_prefix
+
+    messages: list[dict[str, Any]] = [
+        {"role": "system", "content": prefix_content},
+        {"role": "user", "content": dynamic_suffix},
+    ]
+    return messages
+
+
+def build_single_turn_messages(prompt: str) -> "list[dict[str, Any]]":
+    """Build a simple single-turn messages list, optionally with cache marker.
+
+    When the caller has a single undivided prompt (legacy path), this helper
+    wraps it as a user message.  No cache_control is added because there is no
+    separate stable prefix to mark — the full prompt is treated as dynamic.
+
+    Args:
+        prompt: Full prompt string.
+
+    Returns:
+        List with a single user-role message dict.
+    """
+    return [{"role": "user", "content": prompt}]
 
 
 class BaseProvider(ABC):

@@ -72,13 +72,13 @@ def test_get_mode_config_unknown_falls_back_to_general():
 def test_get_model_config_gemini_review():
     """Test get_model_config for gemini in review mode."""
     config = get_model_config("review", "gemini")
-    assert config == {"model": "flash", "thinking": "high"}
+    assert config == {"model": "3.5-flash", "thinking": "high"}
 
 
 def test_get_model_config_openai_design():
     """Test get_model_config for openai in design mode."""
     config = get_model_config("design", "openai")
-    assert config == {"model": "o3", "reasoning": "high"}
+    assert config == {"model": "gpt55fast", "reasoning": None}
 
 
 def test_get_focus_returns_string():
@@ -263,7 +263,7 @@ def test_config_cli_nested_path(capsys):
     sys.argv = ["synod_config.py", "modes", "review", "models", "gemini", "model"]
     main()
     captured = capsys.readouterr()
-    assert captured.out.strip() == "flash"
+    assert captured.out.strip() == "3.5-flash"
 
 
 def test_config_cli_json_output(capsys):
@@ -328,3 +328,87 @@ def test_get_template_unknown_returns_empty():
 
     template = get_template("nonexistent_mode")
     assert template == ""
+
+
+# --- v3.3: Tests for --tier flag on timeouts subcommand ---
+
+
+def test_config_cli_timeouts_tier_deep(capsys):
+    """timeouts model --tier deep returns deep tier model timeout (240), not default (180)."""
+    import sys
+
+    from tools.synod_config import main
+
+    sys.argv = ["synod_config.py", "timeouts", "model", "--tier", "deep"]
+    main()
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "240"
+
+
+def test_config_cli_timeouts_tier_fast(capsys):
+    """timeouts model --tier fast returns fast tier model timeout (60), not default (180)."""
+    import sys
+
+    from tools.synod_config import main
+
+    sys.argv = ["synod_config.py", "timeouts", "model", "--tier", "fast"]
+    main()
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "60"
+
+
+def test_config_cli_timeouts_tier_deep_differs_from_fast(capsys):
+    """deep and fast tier model timeouts are different values."""
+    import sys
+
+    from tools.synod_config import main
+
+    sys.argv = ["synod_config.py", "timeouts", "model", "--tier", "deep"]
+    main()
+    deep_out = capsys.readouterr().out.strip()
+
+    sys.argv = ["synod_config.py", "timeouts", "model", "--tier", "fast"]
+    main()
+    fast_out = capsys.readouterr().out.strip()
+
+    assert deep_out != fast_out
+
+
+def test_config_cli_timeouts_no_tier_backward_compat(capsys):
+    """timeouts model without --tier still returns default (180) for backward compat."""
+    import sys
+
+    from tools.synod_config import main
+
+    sys.argv = ["synod_config.py", "timeouts", "model"]
+    main()
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "180"
+
+
+def test_config_cli_timeouts_tier_standard_returns_defaults(capsys):
+    """timeouts model --tier standard returns global default (180)."""
+    import sys
+
+    from tools.synod_config import main
+
+    sys.argv = ["synod_config.py", "timeouts", "model", "--tier", "standard"]
+    main()
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "180"
+
+
+def test_config_cli_timeouts_tier_deep_full_dict(capsys):
+    """timeouts --tier deep returns all three keys with deep overrides."""
+    import json
+    import sys
+
+    from tools.synod_config import main
+
+    sys.argv = ["synod_config.py", "timeouts", "--tier", "deep"]
+    main()
+    captured = capsys.readouterr()
+    result = json.loads(captured.out.strip())
+    assert result["model"] == 240
+    assert result["outer"] == 300
+    assert result["bash"] == 360

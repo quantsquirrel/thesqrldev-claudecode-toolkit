@@ -62,16 +62,33 @@ class TestConfidenceInterval:
         assert result["margin"] > 0
 
     def test_confidence_interval_bounds_clamped(self):
-        """Confidence interval should be clamped to [0, 2.0]."""
-        # Test lower bound clamping
+        """Lower bound always clamped to 0; upper clamped only when upper_bound given."""
+        # Test lower bound clamping (always applies)
         low_scores = [0.01, 0.02, 0.03]
         result_low = calculate_confidence_interval(low_scores)
         assert result_low["lower"] >= 0
 
-        # Test upper bound clamping
+        # Trust-score callers pass upper_bound=2.0 explicitly
         high_scores = [1.95, 1.98, 2.0]
-        result_high = calculate_confidence_interval(high_scores)
+        result_high = calculate_confidence_interval(high_scores, upper_bound=2.0)
         assert result_high["upper"] <= 2.0
+
+    def test_confidence_interval_no_upper_clamp_for_100_scale(self):
+        """0-100 confidence inputs must not be clamped to 2.0."""
+        scores = [80.0, 85.0, 90.0, 95.0]
+        result = calculate_confidence_interval(scores)
+        # upper bound must reflect the actual data range, not be silently capped at 2.0
+        assert result["upper"] > 2.0
+
+    def test_confidence_interval_n2_uses_t_12706(self):
+        """n=2 (df=1) must use t=12.706, not z=1.96."""
+        scores = [1.0, 1.5]
+        result_t = calculate_confidence_interval(scores)
+        # margin with t=12.706: std_dev=sqrt(0.125)=0.3536, SE=0.3536/sqrt(2)=0.25
+        # margin_t = 12.706 * 0.25 = 3.1765
+        # margin with z=1.96: 1.96 * 0.25 = 0.49
+        # The t-based margin must be substantially larger than z-based
+        assert result_t["margin"] > 3.0  # well above z-based ~0.49
 
     def test_confidence_interval_90_percent(self):
         """90% CI should be narrower than 95% CI."""

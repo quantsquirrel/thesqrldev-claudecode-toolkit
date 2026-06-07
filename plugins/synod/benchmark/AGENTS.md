@@ -63,7 +63,7 @@ benchmark/
 
 ```bash
 # 1. Install benchmark dependencies
-cd /Users/ahnjundaram_g/dev/tools/synod-plugin
+cd <plugin-root>
 pip install -e ".[benchmark]"
 
 # 2. Or install from requirements.txt directly
