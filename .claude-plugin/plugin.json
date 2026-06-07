@@ -1,7 +1,7 @@
 {
   "name": "thesqrldev-toolkit",
   "version": "1.0.0",
-  "description": "thesqrldev team's Claude Code toolkit - handoff, synod, blueprint, forge",
+  "description": "thesqrldev team's Claude Code toolkit - handoff, blueprint, forge",
   "author": {
     "name": "quantsquirrel",
     "url": "https://github.com/quantsquirrel"
@@ -13,7 +13,6 @@
     "toolkit",
     "marketplace",
     "handoff",
-    "synod",
     "blueprint",
     "forge"
   ]

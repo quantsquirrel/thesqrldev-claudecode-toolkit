@@ -7,7 +7,6 @@
 | 플러그인 | 설명 | 레포 |
 |---------|------|------|
 | **handoff** | 세션 컨텍스트 핸드오프 — autocompact 전 저장, 클립보드로 복원 | [claude-handoff-baton](https://github.com/quantsquirrel/claude-handoff-baton) |
-| **synod** | 멀티 에이전트 토론 시스템 (Claude + Gemini + OpenAI) | [claude-synod-debate](https://github.com/quantsquirrel/claude-synod-debate) |
 | **blueprint** | PDCA 사이클, Gap 분석, 개발 파이프라인 | [claude-blueprint-helix](https://github.com/quantsquirrel/claude-blueprint-helix) |
 | **forge** | TDD 기반 스킬 자동 진화 + 통계적 검증 | [claude-forge-smith](https://github.com/quantsquirrel/claude-forge-smith) |
 
@@ -19,12 +18,11 @@ claude plugin marketplace add quantsquirrel/thesqrldev-claudecode-toolkit
 
 # 2. 플러그인 설치
 claude plugin install handoff@thesqrldev-claudecode-toolkit
-claude plugin install synod@thesqrldev-claudecode-toolkit
 claude plugin install blueprint@thesqrldev-claudecode-toolkit
 claude plugin install forge@thesqrldev-claudecode-toolkit
 ```
 
-4개 플러그인 + 관리 스킬이 설치됩니다.
+3개 플러그인 + 관리 스킬이 설치됩니다.
 
 ### 팀 설정 (자동 설치)
 
@@ -42,7 +40,6 @@ claude plugin install forge@thesqrldev-claudecode-toolkit
   },
   "enabledPlugins": {
     "handoff@thesqrldev-claudecode-toolkit": true,
-    "synod@thesqrldev-claudecode-toolkit": true,
     "blueprint@thesqrldev-claudecode-toolkit": true,
     "forge@thesqrldev-claudecode-toolkit": true
   }
