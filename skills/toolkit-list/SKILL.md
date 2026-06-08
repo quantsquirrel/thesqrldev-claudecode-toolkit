@@ -14,7 +14,6 @@ Display a table:
 | Plugin | Version | SHA | Status |
 |--------|---------|-----|--------|
 | handoff | 2.3.0 | abc1234 | synced |
-| synod | 3.0.0 | def5678 | synced |
 | blueprint | 1.0.0 | ghi9012 | synced |
 | forge | 1.0.0 | jkl3456 | synced |
 

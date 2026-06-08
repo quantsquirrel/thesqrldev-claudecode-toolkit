@@ -7,7 +7,6 @@ A curated Claude Code plugin toolkit by [quantsquirrel](https://github.com/quant
 | Plugin | Description | Repo |
 |--------|-------------|------|
 | **handoff** | Session context handoff — save before autocompact, restore with clipboard | [claude-handoff-baton](https://github.com/quantsquirrel/claude-handoff-baton) |
-| **synod** | Multi-agent deliberation with structured debate (Claude + Gemini + OpenAI) | [claude-synod-debate](https://github.com/quantsquirrel/claude-synod-debate) |
 | **blueprint** | PDCA cycle, Gap Analysis, Dev Pipeline for systematic development | [claude-blueprint-helix](https://github.com/quantsquirrel/claude-blueprint-helix) |
 | **forge** | TDD-powered automatic skill evolution with statistical validation | [claude-forge-smith](https://github.com/quantsquirrel/claude-forge-smith) |
 
@@ -19,12 +18,11 @@ claude plugin marketplace add quantsquirrel/thesqrldev-claudecode-toolkit
 
 # 2. Install plugins
 claude plugin install handoff@thesqrldev-claudecode-toolkit
-claude plugin install synod@thesqrldev-claudecode-toolkit
 claude plugin install blueprint@thesqrldev-claudecode-toolkit
 claude plugin install forge@thesqrldev-claudecode-toolkit
 ```
 
-All four plugins + management skills are available after installation.
+All three plugins + management skills are available after installation.
 
 ### Team Setup (auto-install)
 
@@ -42,7 +40,6 @@ Add this to your project's `.claude/settings.json` so team members get plugins a
   },
   "enabledPlugins": {
     "handoff@thesqrldev-claudecode-toolkit": true,
-    "synod@thesqrldev-claudecode-toolkit": true,
     "blueprint@thesqrldev-claudecode-toolkit": true,
     "forge@thesqrldev-claudecode-toolkit": true
   }
